@@ -3,6 +3,10 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+/// Archivo: schema.prisma
+/// Responsabilidad: Definir el modelo de datos inicial de Reserva Latina para restaurantes, configuración operativa, mesas, huéspedes y reservas.
+/// Tipo: esquema de datos
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +14,139 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationApprovalMode {
+  AUTO
+  MANUAL
+}
+
+enum WaitlistMode {
+  MANUAL
+  AUTO
+}
+
+model Restaurant {
+  id           String              @id @default(cuid())
+  name         String
+  slug         String              @unique
+  timezone     String              @default("Europe/Madrid")
+  phone        String?
+  email        String?
+  isActive     Boolean             @default(true)
+  version      Int                 @default(1)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  settings     RestaurantSettings?
+  tables       DiningTable[]
+  guests       Guest[]
+  reservations Reservation[]
+
+  @@index([isActive])
+}
+
+model RestaurantSettings {
+  id                                String                  @id @default(cuid())
+  restaurantId                      String                  @unique
+  reservationApprovalMode           ReservationApprovalMode @default(AUTO)
+  waitlistMode                      WaitlistMode            @default(MANUAL)
+  defaultReservationDurationMinutes Int                     @default(90)
+  reservationBufferMinutes          Int                     @default(15)
+  cancellationWindowHours           Int                     @default(24)
+  allowTableCombination             Boolean                 @default(true)
+  enableAutoTableAssignment         Boolean                 @default(true)
+  version                           Int                     @default(1)
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  restaurant                        Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model DiningTable {
+  id               String             @id @default(cuid())
+  restaurantId     String
+  name             String
+  capacity         Int                @default(4)
+  isActive         Boolean            @default(true)
+  isCombinable     Boolean            @default(false)
+  sortOrder        Int                @default(0)
+  version          Int                @default(1)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  restaurant       Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservationLinks ReservationTable[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId, isActive])
+}
+
+model Guest {
+  id           String        @id @default(cuid())
+  restaurantId String
+  fullName     String
+  phone        String
+  email        String?
+  notes        String?
+  noShowCount  Int           @default(0)
+  version      Int           @default(1)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  @@unique([restaurantId, phone])
+  @@index([restaurantId, fullName])
+  @@index([restaurantId, email])
+}
+
+model Reservation {
+  id                     String             @id @default(cuid())
+  restaurantId           String
+  guestId                String
+  status                 ReservationStatus  @default(PENDING)
+  partySize              Int
+  startAt                DateTime
+  endAt                  DateTime
+  cancellationDeadlineAt DateTime?
+  cancelledAt            DateTime?
+  checkedInAt            DateTime?
+  completedAt            DateTime?
+  noShowMarkedAt         DateTime?
+  specialRequests        String?
+  internalNotes          String?
+  version                Int                @default(1)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  restaurant             Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  guest                  Guest              @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  tableAssignments       ReservationTable[]
+
+  @@index([restaurantId, status, startAt])
+  @@index([restaurantId, startAt, endAt])
+  @@index([restaurantId, guestId])
+}
+
+model ReservationTable {
+  id            String      @id @default(cuid())
+  reservationId String
+  tableId       String
+  assignedSeats Int?
+  version       Int         @default(1)
+  assignedAt    DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  table         DiningTable @relation(fields: [tableId], references: [id], onDelete: Restrict)
+
+  @@unique([reservationId, tableId])
+  @@index([tableId, assignedAt])
 }
