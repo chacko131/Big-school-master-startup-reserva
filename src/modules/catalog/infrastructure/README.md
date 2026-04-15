@@ -25,4 +25,8 @@ Porque la aplicación debe poder cambiar de tecnología sin reescribir sus regla
 
 ## Estado actual
 
-Solo existe la carpeta base para empezar después con los adaptadores reales.
+Ya existe un primer bloque real de infraestructura.
+
+- repositorios Prisma para `Restaurant`, `DiningTable` y `RestaurantSettings`
+- acceso al cliente Prisma compartido conectado a Neon
+- una composición base para ensamblar los repositorios del módulo `catalog`

@@ -25,4 +25,8 @@ Porque la aplicación debe poder cambiar de tecnología sin reescribir sus regla
 
 ## Estado actual
 
-La carpeta está preparada para conectar el dominio con Neon y Prisma.
+Ya existe un primer bloque real de infraestructura.
+
+- repositorios Prisma para `Reservation`, `Guest`, `DiningTable` y `RestaurantSettings`
+- acceso al cliente Prisma compartido conectado a Neon
+- una composición base para ensamblar los repositorios del módulo `reservations`

@@ -3,12 +3,30 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+function getToolingDatabaseUrl(): string {
+  const databaseUrl = process.env["DATABASE_URL"];
+
+  if (databaseUrl === undefined || databaseUrl.trim() === "") {
+    throw new Error("DATABASE_URL is required for Prisma tooling.");
+  }
+
+  const parsedUrl = new URL(databaseUrl);
+
+  if (parsedUrl.hostname.includes("-pooler.")) {
+    parsedUrl.hostname = parsedUrl.hostname.replace("-pooler.", ".");
+  }
+
+  parsedUrl.searchParams.delete("channel_binding");
+
+  return parsedUrl.toString();
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: getToolingDatabaseUrl(),
   },
 });

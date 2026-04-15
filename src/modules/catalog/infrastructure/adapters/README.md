@@ -20,4 +20,4 @@ Son las clases o funciones que traducen entre el mundo de la aplicación y una t
 
 ## Estado actual
 
-La carpeta está preparada para adaptadores futuros.
+Ya existe un acceso del módulo `catalog` al cliente Prisma compartido del proyecto, conectado a Neon desde la capa de servicios.

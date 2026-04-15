@@ -20,4 +20,8 @@ Estas clases implementan los puertos definidos en `application` y hablan con la 
 
 ## Estado actual
 
-La carpeta está preparada para repositorios concretos.
+Ya existen repositorios concretos basados en Prisma para:
+
+- `Restaurant`
+- `DiningTable`
+- `RestaurantSettings`
