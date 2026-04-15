@@ -7,6 +7,7 @@
 import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
+import Link from "next/link";
 
 interface PublicNavigationItem {
   label: string;
@@ -20,9 +21,10 @@ interface PublicHeaderProps {
 }
 
 const defaultNavigationItems: PublicNavigationItem[] = [
-  { label: "Plataforma", href: "#" },
-  { label: "Precios", href: "#" },
-  { label: "Restaurantes", href: "#" },
+  { label: "Plataforma", href: "/" },
+  { label: "Precios", href: "/pricing" },
+  { label: "Demo", href: "/demo" },
+  { label: "Contacto", href: "/contact" },
   { label: "Acceso", href: "#" },
 ];
 
@@ -33,22 +35,22 @@ const defaultNavigationItems: PublicNavigationItem[] = [
 export function PublicHeader({
   navigationItems = defaultNavigationItems,
   actionLabel = "Empezar ahora",
-  actionHref = "#",
+  actionHref = "/demo",
 }: PublicHeaderProps) {
   return (
     <nav className="sticky top-0 z-50 w-full bg-black text-white transition-all duration-150">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
-        <div className="text-2xl font-bold tracking-tighter text-white">Reserva Latina</div>
+        <Link href="/" className="text-2xl font-bold tracking-tighter text-white">Reserva Latina</Link>
 
         <div className="hidden items-center space-x-8 md:flex">
           {navigationItems.map((item) => (
-            <a key={item.label} href={item.href} className="text-sm text-white transition-colors hover:text-white/80">
+            <Link key={item.label} href={item.href} className="text-sm text-white transition-colors hover:text-white/80">
               <T>{item.label}</T>
-            </a>
+            </Link>
           ))}
-          <a href={actionHref} className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-transform duration-150 hover:scale-95">
+          <Link href={actionHref} className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-transform duration-150 hover:scale-95">
             <T>{actionLabel}</T>
-          </a>
+          </Link>
           <div className="pl-2">
             <LanguageToggle />
           </div>

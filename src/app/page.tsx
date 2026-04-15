@@ -7,8 +7,9 @@
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { PublicIcon } from "@/components/public/PublicIcon";
-import Image from "next/image";
 import { T } from "@/components/T";
+import Image from "next/image";
+import Link from "next/link";
 
 //-aqui empieza pagina principal publica-//
 /**
@@ -30,9 +31,9 @@ export default function HomePage() {
                 <T>La plataforma de gestión diseñada para el alma de la hospitalidad latina. Eficiencia brutal, calidez humana.</T>
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <button className="rounded-lg bg-primary px-8 py-4 text-lg font-bold text-on-primary transition-all hover:bg-zinc-800">
+                <Link href="/demo" className="rounded-lg bg-primary px-8 py-4 text-center text-lg font-bold text-on-primary transition-all hover:bg-zinc-800">
                   <T>Solicitar Demo</T>
-                </button>
+                </Link>
                 <button className="rounded-lg bg-surface-container-highest px-8 py-4 text-lg font-bold text-primary transition-all hover:bg-surface-container-high">
                   <T>Registrar Restaurante</T>
                 </button>
@@ -120,7 +121,7 @@ export default function HomePage() {
                 <span className="mb-6 inline-block rounded-full border border-secondary-fixed-dim/30 px-3 py-1 text-xs font-bold text-secondary-fixed-dim">
                   <T>CON RESERVA LATINA</T>
                 </span>
-                <h3 className="mb-8 text-2xl font-bold"><T>Experiencia Impecable</T></h3>
+                <h3 className="mb-8 text-2xl font-bold text-white!"><T>Experiencia Impecable</T></h3>
                 <ul className="space-y-6">
                   <li className="flex items-start gap-4">
                     <PublicIcon name="checkCircle" className="mt-1 h-6 w-6 text-secondary-fixed" />
@@ -186,7 +187,7 @@ export default function HomePage() {
               <div className="flex flex-col justify-between rounded-2xl bg-tertiary-container p-10 text-white md:col-span-4">
                 <div>
                   <PublicIcon name="analytics" className="mb-6 h-10 w-10 text-on-tertiary-container" />
-                  <h3 className="mb-4 text-2xl font-bold text-white"><T>Dashboard en tiempo real</T></h3>
+                  <h3 className="mb-4 text-2xl font-bold text-white!"><T>Dashboard en tiempo real</T></h3>
                   <p className="text-white/60"><T>Monitorea ocupación, ventas y rendimiento del staff desde cualquier lugar.</T></p>
                 </div>
                 <div className="rounded-xl border border-white/5 bg-black/20 p-4">
