@@ -27,6 +27,7 @@ export const T: React.FC<TProps> = ({ children, className }) => {
   useEffect(() => {
     // Si el idioma es español, mostrar el texto original directamente
     if (language === "es") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTranslatedContent(children);
       return;
     }

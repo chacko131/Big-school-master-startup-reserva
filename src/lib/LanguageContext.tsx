@@ -31,6 +31,9 @@ const LANGUAGES: Record<SupportedLanguage, string> = {
 };
 //-aqui termina tipos y constantes-//
 
+const translationCache = new Map<string, string>();
+const pendingTranslations = new Map<string, Promise<string>>();
+
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 /**
@@ -39,8 +42,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
  */
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<SupportedLanguage>("es");
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [cache, setCache] = useState<Record<string, string>>({});
+  const [pendingTranslationCount, setPendingTranslationCount] = useState(0);
 
   //-aqui empieza funcion de inicializacion-//
   // Recuperar idioma guardado al montar el componente
@@ -61,6 +63,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem("preferred-language", lang);
   };
 
+  const isTranslating = pendingTranslationCount > 0;
+
   /**
    * Traduce un texto dinámicamente usando la API de Google Translate.
    * @param text Texto en español original
@@ -69,27 +73,49 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    */
   const t = useCallback(async (text: string): Promise<string> => {
     if (language === "es" || !text) return text;
-    
-    const cacheKey = `${language}:${text}`;
-    if (cache[cacheKey]) return cache[cacheKey];
 
-    setIsTranslating(true);
-    try {
-      const response = await fetch(
-        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=${language}&dt=t&q=${encodeURIComponent(text)}`
-      );
-      const data = await response.json();
-      const translatedText = data[0][0][0];
-      
-      setCache((prev) => ({ ...prev, [cacheKey]: translatedText }));
-      return translatedText;
-    } catch (error) {
-      console.error("Error al traducir:", error);
-      return text; // Fallback al original
-    } finally {
-      setIsTranslating(false);
-    }
-  }, [language, cache]);
+    const cacheKey = `${language}:${text}`;
+    const cachedTranslation = translationCache.get(cacheKey);
+    if (cachedTranslation) return cachedTranslation;
+
+    const pendingTranslation = pendingTranslations.get(cacheKey);
+    if (pendingTranslation) return pendingTranslation;
+
+    const translationPromise = (async () => {
+      setPendingTranslationCount((current) => current + 1);
+
+      try {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, targetLanguage: language }),
+        });
+
+        if (!response.ok) {
+          translationCache.set(cacheKey, text);
+          return text;
+        }
+
+        const data: unknown = await response.json();
+        const translatedText =
+          typeof data === "object" && data !== null && "translatedText" in data && typeof (data as { translatedText?: unknown }).translatedText === "string"
+            ? (data as { translatedText: string }).translatedText
+            : text;
+
+        translationCache.set(cacheKey, translatedText);
+        return translatedText;
+      } catch {
+        translationCache.set(cacheKey, text);
+        return text;
+      } finally {
+        pendingTranslations.delete(cacheKey);
+        setPendingTranslationCount((current) => Math.max(0, current - 1));
+      }
+    })();
+
+    pendingTranslations.set(cacheKey, translationPromise);
+    return translationPromise;
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isTranslating }}>

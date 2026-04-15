@@ -33,12 +33,17 @@ export const LanguageToggle: React.FC = () => {
   //-aqui termina funcion toggle-//
 
   const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const isDarkSurface = true;
 
   return (
     <div className="relative inline-block text-left">
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-3 py-2 rounded-full glass-container hover:bg-white/10 transition-all border border-white/20 text-sm font-medium"
+        className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-all ${
+          isDarkSurface
+            ? "border-white/10 bg-black text-white hover:bg-white/5"
+            : "border-black/6 bg-surface-container-lowest text-foreground hover:bg-surface-container-low"
+        }`}
         aria-label="Seleccionar idioma"
       >
         <span>{currentLang.flag}</span>
@@ -54,7 +59,7 @@ export const LanguageToggle: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-2xl glass-container border border-white/20 overflow-hidden z-50 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_20px_40px_rgba(26,28,28,0.35)] animate-in fade-in zoom-in duration-200">
           <div className="py-1">
             {LANGUAGES.map((lang) => (
               <button
@@ -63,14 +68,14 @@ export const LanguageToggle: React.FC = () => {
                   setLanguage(lang.code);
                   setIsOpen(false);
                 }}
-                className={`flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-white/10 transition-colors ${
-                  language === lang.code ? "bg-white/10 text-primary-light" : "text-white/80"
+                className={`flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-white/5 ${
+                  language === lang.code ? "bg-white/5 text-white" : "text-white"
                 }`}
               >
                 <span className="text-base">{lang.flag}</span>
                 <span>{lang.label}</span>
                 {language === lang.code && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-secondary-fixed shadow-[0_0_8px_rgba(197,235,212,0.55)]" />
                 )}
               </button>
             ))}

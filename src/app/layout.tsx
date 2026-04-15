@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground font-body overflow-x-hidden">
+    <html lang="es" className={`light ${manrope.variable} ${inter.variable} h-full antialiased`}>
+      < body className="min-h-full flex flex-col bg-background text-on-background font-sans overflow-x-hidden selection:bg-secondary-fixed-dim selection:text-on-secondary-fixed">
         <LanguageProvider>
           {children}
         </LanguageProvider>
