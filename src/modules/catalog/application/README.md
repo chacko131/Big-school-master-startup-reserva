@@ -1,10 +1,16 @@
 # `catalog/application`
 
-Capa de aplicación del módulo `catalog`.
+Esta carpeta organiza las acciones del módulo `catalog`.
 
-## Responsabilidad
+## Qué hace esta capa
 
-Orquestar los casos de uso del catálogo y coordinar el flujo entre el dominio y la infraestructura mediante puertos.
+Aquí no se definen reglas puras del negocio, sino el **proceso** para ejecutar una acción.
+
+Por ejemplo:
+
+- crear un restaurante
+- actualizar la configuración de reservas
+- activar o desactivar una mesa
 
 ## Qué vivirá aquí
 
@@ -13,6 +19,17 @@ Orquestar los casos de uso del catálogo y coordinar el flujo entre el dominio y
 - DTOs
 - coordinación de reglas del negocio
 
-## Estado de esta fase
+## Ejemplo mental
 
-Carpeta preparada para la siguiente iteración.
+- la UI o la API envían datos
+- el caso de uso los recibe
+- el dominio valida las reglas
+- la infraestructura persiste la información
+
+## Por qué existe esta capa
+
+Porque permite separar el “qué quiero hacer” del “cómo lo guardo” y del “cómo lo muestro”.
+
+## Estado actual
+
+La carpeta ya está preparada para empezar a construir los primeros flujos del catálogo.

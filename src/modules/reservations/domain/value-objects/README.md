@@ -2,10 +2,24 @@
 
 Contiene los value objects del dominio del módulo `reservations`.
 
-## Responsabilidad
+## Qué son aquí
 
-Encapsular valores del negocio de reservas que deben mantenerse válidos sin identidad propia.
+Son objetos que representan un valor del negocio y se preocupan de mantenerse válidos.
 
-## Estado de esta fase
+No tienen identidad propia como una entidad, pero sí reglas internas.
 
-Carpeta preparada para objetos de valor del flujo de reservas.
+## Ejemplos de uso
+
+- un rango horario válido
+- una cantidad de personas válida
+- un estado pequeño y controlado
+
+## Por qué son útiles
+
+- evitan repetir validaciones
+- encapsulan reglas pequeñas
+- hacen el dominio más claro y expresivo
+
+## Estado actual
+
+La carpeta está preparada para objetos de valor del flujo de reservas cuando haga falta modelarlos.

@@ -2,10 +2,30 @@
 
 Contiene las entidades del dominio del módulo `catalog`.
 
-## Responsabilidad
+## Qué son aquí
 
-Representar los conceptos centrales del catálogo con identidad y reglas de negocio propias.
+Las entidades representan los conceptos centrales del catálogo con identidad propia y comportamiento de negocio.
 
-## Estado de esta fase
+## Para qué sirven
 
-Carpeta lista para agregar entidades cuando se empiece a modelar el dominio.
+Sirven para modelar cosas como:
+
+- restaurante
+- mesa
+- configuración operativa
+
+## Qué deben hacer
+
+- conservar sus reglas básicas
+- validarse a sí mismas
+- ofrecer métodos claros de cambio de estado
+
+## Qué no deben hacer
+
+- hablar con la base de datos
+- depender de Prisma
+- contener lógica de UI
+
+## Estado actual
+
+La carpeta ya contiene las primeras entidades del catálogo y seguirá creciendo con el mismo estilo.

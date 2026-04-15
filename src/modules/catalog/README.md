@@ -1,18 +1,34 @@
 # `catalog`
 
-Módulo encargado de la configuración operativa del restaurante.
+Este módulo contiene la parte operativa del restaurante.
 
-## Responsabilidad
+## Qué resuelve
 
-Concentrar la información base del restaurante, sus mesas y su configuración de reservas.
+Aquí vive todo lo que ayuda a configurar cómo funciona un restaurante por dentro:
 
-## Contenido previsto
+- datos del restaurante
+- mesas
+- ajustes de reservas
 
-- `domain`
-- `application`
-- `infrastructure`
-- `schemas`
+## Cómo fluye el trabajo aquí
 
-## Estado de esta fase
+1. `domain` define las reglas puras del negocio.
+2. `application` organiza los casos de uso.
+3. `infrastructure` conecta esas reglas con Prisma, Neon u otros servicios.
+4. `schemas` valida entradas externas con Zod.
 
-Solo se deja la estructura inicial preparada para empezar a modelar el catálogo del restaurante.
+## Qué tipo de cosas irán aquí
+
+- crear o actualizar restaurantes
+- activar o desactivar mesas
+- cambiar la configuración de reservas
+- consultar datos operativos del restaurante
+
+## Por qué existe como módulo separado
+
+Porque el catálogo tiene reglas propias y merece vivir aislado de la lógica de reservas.
+Así evitamos mezclar conceptos y hacemos más fácil mantener el sistema.
+
+## Estado actual
+
+La base del módulo ya está creada y se está modelando poco a poco con una estructura limpia.

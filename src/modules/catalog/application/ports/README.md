@@ -2,10 +2,32 @@
 
 Contiene los puertos del módulo `catalog`.
 
-## Responsabilidad
+## Qué son los puertos
 
-Definir contratos abstractos para repositorios y servicios externos sin acoplar la aplicación a implementaciones concretas.
+Son contratos o interfaces que dicen qué necesita un caso de uso para trabajar con el exterior.
 
-## Estado de esta fase
+No dicen cómo se implementa eso, solo qué operaciones espera la capa de aplicación.
 
-Carpeta preparada para interfaces del módulo.
+## Qué hacen aquí
+
+Definen la forma en la que `application` habla con:
+
+- repositorios
+- servicios externos
+- adaptadores técnicos
+
+## Ejemplo mental
+
+- `application` pide `findById`
+- `infrastructure` responde usando Prisma
+- `domain` sigue sin enterarse de Prisma
+
+## Por qué son importantes
+
+- desacoplan la lógica del negocio de la tecnología
+- facilitan los tests
+- permiten cambiar de base de datos o adaptador sin reescribir los casos de uso
+
+## Estado actual
+
+La carpeta está lista para las interfaces del módulo.

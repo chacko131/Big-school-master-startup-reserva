@@ -1,10 +1,10 @@
 # `catalog/infrastructure`
 
-Capa de infraestructura del módulo `catalog`.
+Esta carpeta conecta el dominio con la tecnología real.
 
-## Responsabilidad
+## Qué hace esta capa
 
-Conectar el dominio con la base de datos y con cualquier adaptador técnico externo.
+Aquí viven las piezas que hablan con la base de datos, con Prisma o con cualquier servicio externo.
 
 ## Qué vivirá aquí
 
@@ -13,6 +13,16 @@ Conectar el dominio con la base de datos y con cualquier adaptador técnico exte
 - implementaciones Prisma
 - integración con servicios externos si aplica
 
-## Estado de esta fase
+## Ejemplo mental
+
+- `application` pide guardar o consultar algo
+- `infrastructure` usa Prisma o Neon para hacerlo
+- el dominio no se mezcla con ese detalle técnico
+
+## Por qué existe
+
+Porque la aplicación debe poder cambiar de tecnología sin reescribir sus reglas de negocio.
+
+## Estado actual
 
 Solo existe la carpeta base para empezar después con los adaptadores reales.

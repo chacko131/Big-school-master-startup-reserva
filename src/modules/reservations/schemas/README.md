@@ -1,10 +1,10 @@
 # `reservations/schemas`
 
-Capa de esquemas del módulo `reservations`.
+Esta carpeta contiene los esquemas del módulo `reservations`.
 
-## Responsabilidad
+## Qué hace esta capa
 
-Definir las validaciones de entrada y los contratos del flujo de reservas con Zod.
+Define las validaciones de entrada y los contratos del flujo de reservas con Zod.
 
 ## Qué vivirá aquí
 
@@ -12,6 +12,16 @@ Definir las validaciones de entrada y los contratos del flujo de reservas con Zo
 - validaciones de huésped
 - contratos de entrada de la API
 
-## Estado de esta fase
+## Ejemplo mental
 
-Carpeta preparada para empezar a definir los schemas del dominio.
+- llega un formulario
+- `schemas` valida la forma de los datos
+- si todo está bien, la información pasa a `application`
+
+## Por qué existe
+
+Porque no debemos confiar nunca en datos que vienen del cliente.
+
+## Estado actual
+
+La carpeta está preparada para empezar a definir los schemas del dominio.

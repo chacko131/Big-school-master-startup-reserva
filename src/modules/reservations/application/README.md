@@ -1,10 +1,10 @@
 # `reservations/application`
 
-Capa de aplicación del módulo `reservations`.
+Esta carpeta organiza las acciones del flujo de reservas.
 
-## Responsabilidad
+## Qué hace esta capa
 
-Coordinar los casos de uso del flujo de reserva y conectar el dominio con los puertos de persistencia y servicios.
+Aquí no se definen reglas puras del negocio, sino el proceso para ejecutar una acción concreta.
 
 ## Qué vivirá aquí
 
@@ -13,6 +13,25 @@ Coordinar los casos de uso del flujo de reserva y conectar el dominio con los pu
 - DTOs
 - orquestación de flujos críticos
 
-## Estado de esta fase
+## Ejemplos de acciones
 
-Carpeta lista para empezar a construir los casos de uso.
+- crear una reserva
+- cancelar una reserva
+- confirmar una reserva
+- consultar una reserva
+- asignar mesas
+
+## Ejemplo mental
+
+- la UI o la API llaman al caso de uso
+- el caso de uso usa el dominio
+- el caso de uso habla con puertos
+- la infraestructura implementa esos puertos con Prisma
+
+## Por qué existe esta capa
+
+Porque separa el “qué hacer” del “cómo hacerlo técnicamente”.
+
+## Estado actual
+
+La carpeta ya está lista y el módulo comenzó a llenarse con los primeros flujos.

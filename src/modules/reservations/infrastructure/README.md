@@ -1,10 +1,10 @@
 # `reservations/infrastructure`
 
-Capa de infraestructura del módulo `reservations`.
+Esta carpeta conecta el dominio con la tecnología real.
 
-## Responsabilidad
+## Qué hace esta capa
 
-Implementar la persistencia y los adaptadores técnicos que soportan el flujo real de reservas.
+Aquí viven las piezas que hablan con la base de datos, con Prisma o con cualquier servicio externo.
 
 ## Qué vivirá aquí
 
@@ -13,6 +13,16 @@ Implementar la persistencia y los adaptadores técnicos que soportan el flujo re
 - integraciones técnicas
 - persistencia de reservas y huéspedes
 
-## Estado de esta fase
+## Ejemplo mental
 
-Carpeta preparada para conectar el dominio con Neon y Prisma.
+- `application` pide guardar o consultar algo
+- `infrastructure` usa Prisma o Neon para hacerlo
+- el dominio no se mezcla con ese detalle técnico
+
+## Por qué existe
+
+Porque la aplicación debe poder cambiar de tecnología sin reescribir sus reglas de negocio.
+
+## Estado actual
+
+La carpeta está preparada para conectar el dominio con Neon y Prisma.

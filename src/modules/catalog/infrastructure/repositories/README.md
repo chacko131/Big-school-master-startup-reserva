@@ -2,10 +2,22 @@
 
 Contiene las implementaciones concretas de repositorios del módulo `catalog`.
 
-## Responsabilidad
+## Qué hacen aquí
 
-Persistir y recuperar datos del catálogo desde la base de datos o almacenamiento definido.
+Estas clases implementan los puertos definidos en `application` y hablan con la base de datos.
 
-## Estado de esta fase
+## Para qué sirven
 
-Carpeta preparada para repositorios concretos.
+- guardar restaurantes
+- recuperar mesas
+- consultar configuraciones operativas
+
+## Ejemplo mental
+
+- `application` pide `findById`
+- el repositorio ejecuta Prisma
+- devuelve una entidad del dominio o `null`
+
+## Estado actual
+
+La carpeta está preparada para repositorios concretos.
