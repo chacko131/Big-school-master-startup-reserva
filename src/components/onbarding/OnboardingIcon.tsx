@@ -107,6 +107,13 @@ export function OnboardingIcon({ name, className = "" }: OnboardingIconProps) {
           <path d="m13 6 6 6-6 6" />
         </svg>
       );
+    case "contentCopy":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="8" y="8" width="9" height="11" rx="2" />
+          <path d="M6 16V6.5A2.5 2.5 0 0 1 8.5 4H15" />
+        </svg>
+      );
     case "restaurant":
       return (
         <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,6 +129,21 @@ export function OnboardingIcon({ name, className = "" }: OnboardingIconProps) {
         <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7.5V12l3 2" />
+        </svg>
+      );
+    case "person":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8.5" r="3.25" />
+          <path d="M5.5 19a7.5 7.5 0 0 1 13 0" />
+        </svg>
+      );
+    case "rocketLaunch":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 4c2.5 1 4 3.5 4 6-2.5 0-4.5 1.5-6 4-2.5 0-4.5-1-6-3 2.5-4 5.5-6.5 8-7z" />
+          <path d="M9 15l-2 2" />
+          <path d="M7 17l-1 3 3-1" />
         </svg>
       );
     case "checkCircle":

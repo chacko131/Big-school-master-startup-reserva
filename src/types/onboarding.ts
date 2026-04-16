@@ -17,7 +17,10 @@ export type OnboardingChromeIconName =
   | "expandMore"
   | "save"
   | "arrowForward"
+  | "contentCopy"
   | "restaurant"
+  | "person"
+  | "rocketLaunch"
   | "schedule"
   | "checkCircle";
 
