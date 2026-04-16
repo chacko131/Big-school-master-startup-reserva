@@ -26,7 +26,7 @@ const defaultNavigationItems: PublicNavigationItem[] = [
   { label: "Precios", href: "/pricing" },
   { label: "Demo", href: "/demo" },
   { label: "Contacto", href: "/contact" },
-  { label: "Acceso", href: "#" },
+  { label: "Acceso", href: "/sign-in" },
 ];
 
 //-aqui empieza componente PublicHeader y es para reutilizar el header público-//

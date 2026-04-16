@@ -8,4 +8,4 @@ Iniciar el alta del restaurante en la plataforma.
 
 ## Estado
 
-Ruta prevista en la arquitectura; todavía no existe UI real.
+La ruta ya cuenta con una UI pública base y queda preparada para conectar el alta real.

@@ -4,20 +4,18 @@ Carpeta de rutas públicas del producto.
 
 ## Responsabilidad
 
-Contiene la experiencia visible sin autenticación o con acceso público controlado.
+Contiene la experiencia pública de marketing y captación B2B.
 
 ## Qué agrupa
 
-- landing y páginas comerciales
-- perfil público del restaurante
-- flujo público de reserva
-- gestión pública de reserva con acceso firmado
+- landing principal del producto
+- páginas comerciales
+- páginas de confianza y captación
 
 ## Subrutas previstas
 
+- `/` (implementada en `src/app/page.tsx`)
+- `about`
 - `pricing`
 - `demo`
 - `contact`
-- `[restaurantSlug]`
-- `[restaurantSlug]/reservar`
-- `mi-reserva/[reservationId]`

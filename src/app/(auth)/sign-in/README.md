@@ -8,4 +8,4 @@ Permitir el acceso a staff, dueños y administradores del SaaS.
 
 ## Estado
 
-Ruta prevista en la arquitectura; todavía no existe UI real.
+La ruta ya cuenta con una UI pública base y queda preparada para conectar la autenticación real.
