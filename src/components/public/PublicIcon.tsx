@@ -23,7 +23,11 @@ interface PublicIconProps {
     | "questionAnswer"
     | "autoAwesome"
     | "schedule"
-    | "devices";
+    | "devices"
+    | "architecture"
+    | "favorite"
+    | "precisionManufacturing"
+    | "handshake";
   className?: string;
 }
 
@@ -183,6 +187,43 @@ export function PublicIcon({ name, className = "" }: PublicIconProps) {
           <rect x="4" y="4" width="16" height="10" rx="2" />
           <path d="M8 21h8" />
           <path d="M12 17v4" />
+        </svg>
+      );
+    case "architecture":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 20h16" />
+          <path d="M6 20V8l6-4 6 4v12" />
+          <path d="M9 20v-6h6v6" />
+        </svg>
+      );
+    case "favorite":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 21s-6.5-4.2-9-8.5C1 9.2 3.1 5.5 7 5.5c2 0 3.4 1 5 2.7 1.6-1.7 3-2.7 5-2.7 3.9 0 6 3.7 4 7-2.5 4.3-9 8.5-9 8.5Z" />
+        </svg>
+      );
+    case "precisionManufacturing":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 2v3" />
+          <path d="M12 19v3" />
+          <path d="M2 12h3" />
+          <path d="M19 12h3" />
+          <path d="m4.9 4.9 2.1 2.1" />
+          <path d="m17 17 2.1 2.1" />
+          <path d="m4.9 19.1 2.1-2.1" />
+          <path d="m17 7 2.1-2.1" />
+        </svg>
+      );
+    case "handshake":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 12l2.5-2.5a2 2 0 0 1 2.8 0L14 11.2" />
+          <path d="M10 14l1.5 1.5a2 2 0 0 0 2.8 0L18 12.8" />
+          <path d="M4 12h3l2 2h3" />
+          <path d="M20 12h-3l-2 2h-3" />
         </svg>
       );
     default:

@@ -22,6 +22,7 @@ interface PublicHeaderProps {
 
 const defaultNavigationItems: PublicNavigationItem[] = [
   { label: "Plataforma", href: "/" },
+  { label: "Nosotros", href: "/about" },
   { label: "Precios", href: "/pricing" },
   { label: "Demo", href: "/demo" },
   { label: "Contacto", href: "/contact" },

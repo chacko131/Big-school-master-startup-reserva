@@ -6,7 +6,6 @@
 
 import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
-import Image from "next/image";
 import Link from "next/link";
 
 //-aqui empieza seccion ContactInfo con datos de contacto-//
@@ -152,41 +151,8 @@ function FAQCard({ icon, title, description }: FAQCardProps) {
   );
 }
 
-//-aqui empieza seccion LocationHero con imagen y glass overlay-//
-interface LocationHeroProps {
-  imageSrc: string;
-  title: string;
-  address: string;
-  buttonText: string;
-}
 
-function LocationHero({ imageSrc, title, address, buttonText }: LocationHeroProps) {
-  return (
-    <div className="relative mt-40 flex h-[400px] items-center justify-center overflow-hidden rounded-3xl">
-      <Image
-        alt="Restaurant location"
-        className="absolute inset-0 object-cover"
-        fill
-        src={imageSrc}
-      />
-      <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative z-10 mx-auto w-full max-w-2xl px-8">
-        <div className="rounded-2xl border border-white/20 bg-white/70 p-10 text-center shadow-2xl backdrop-blur-xl md:p-16">
-          <h2 className="mb-6 text-3xl font-black tracking-tighter text-black md:text-5xl">
-            <T>{title}</T>
-          </h2>
-          <p className="mb-8 text-lg font-medium text-black/80">
-            <T>{address}</T>
-          </p>
-          <button className="rounded-full bg-black px-10 py-4 text-xs font-bold uppercase tracking-widest text-white transition-transform hover:scale-105">
-            <T>{buttonText}</T>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 //-aqui empieza pagina ContactPage-//
 export default function ContactPage() {
@@ -260,13 +226,7 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/*-aqui empieza seccion LocationHero-*/}
-        <LocationHero
-          imageSrc="https://lh3.googleusercontent.com/aida-public/AB6AXuCxAYZD11EfDOSMdq17QfVNuwaZk9N4Cc6rCVTP7gWZf6GxqwjgRghJSFkrBxqz-OGZJwQpJ8WNqig2JWRgA7qyatkicKlbCaxJN2saCEd82kDz7FaCgM_hYVT5M9F4X_n1e4GkC1J4aEUd5JibAn4DDwGCO6O13ilbjgPmY5k5FVhZAcQSbJeI626XpuekjDE2b-zMCUL2IfvslU4-nxElvvXvw218rsG2LDTFs9hvhoFi1oWmqL56VZOqKLIk_BXy2bdu_bwg-20"
-          title="Sede Global."
-          address="Paseo de la Reforma 296, Juárez, 06600 Ciudad de México, CDMX"
-          buttonText="Explorar Oficinas Locales"
-        />
+     
       </main>
     </div>
   );

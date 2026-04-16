@@ -64,11 +64,11 @@ export default function PricingPage() {
               <T>Más Popular</T>
             </div>
             <div className="mb-8">
-              <h3 className="mb-2 text-lg font-semibold text-secondary-fixed">
+              <h3 className="mb-2 text-lg font-semibold text-white!">
                 <T>Pro</T>
               </h3>
               <div className="flex items-baseline">
-                <span className="text-4xl font-bold tracking-tighter">$129</span>
+                <span className="text-4xl font-bold tracking-tighter">$149</span>
                 <span className="ml-2 opacity-70">/mes</span>
               </div>
               <p className="mt-4 text-sm leading-relaxed opacity-80">

@@ -113,6 +113,7 @@ export default function DemoPage() {
                 alt="Restaurant interior"
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7_KV-kGRLm37u34UdWpn93gNpkMvq-4yCJ3JDQmzE1QQ18P5V-Q-mnEmnf8JT-wnMAInbmj_WW-l4pMgtecYayDsO75ewN_70PH8aconZL7kuyil7ENRILT9qsyDAT4e81w5ZWtOao7VdSeXqmrQoJFgYblXqphLLBIg2rQbRtyf8tKsMHeT9o43MojJCzIJeKa4J38dQ98RyCCQHCp2snZKj7qbLfxDE6E8USP1MTXHO8zRskdXmPsX-zfjmyOO48z-M4ckAbuk"
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
