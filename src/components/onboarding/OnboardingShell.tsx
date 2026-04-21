@@ -8,8 +8,8 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { T } from "@/components/T";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
 import type { OnboardingActionDefinition, OnboardingStepDefinition } from "@/types/onboarding";
+import { OnboardingIcon } from "./OnboardingIcon";
 
 interface OnboardingShellProps {
   title: string;

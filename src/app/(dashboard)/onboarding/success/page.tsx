@@ -7,7 +7,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { T } from "@/components/T";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
+import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 
 const successHeroImageSrc = "https://lh3.googleusercontent.com/aida-public/AB6AXuALGbPHoTE-adhwuJWYmD9KHdCzbC7s7Ox5a-1cXwppJmzYo4vrme8xN0vGs9IUdwuOhx6uaK-4S2l1T6gUdswDYXlJhr-Vtk1Exi1eZBwnmSNoJDg8ERF4VaJHI9wI_8ltpSXAPUGYWiAPgyzbMyquswROQkWgnGnu85iuIehjeesyQU2vfKk93yvVP577MFbTz0WiYGICS4b01JvZGMsYh_FRGMErLhWzchYRcAelYgbAAsG9M0xkqBbfFY1iBELyyuVGHqot9qw";
 const successPreviewUrl = "restoflow.io/el-capitan";

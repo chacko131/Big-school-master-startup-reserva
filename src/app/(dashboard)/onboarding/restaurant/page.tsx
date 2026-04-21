@@ -8,9 +8,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
-import { OnboardingField } from "@/components/onbarding/OnboardingField";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
-import { OnboardingShell } from "@/components/onbarding/OnboardingShell";
+import { OnboardingField } from "@/components/onboarding/OnboardingField";
+import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
 const restaurantInputClassName = "w-full rounded-lg border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface transition-all placeholder:text-outline focus:ring-1 focus:ring-primary";
 const restaurantContentLayoutClassName = "flex w-full max-w-5xl flex-col items-start gap-12 md:flex-row md:gap-16";

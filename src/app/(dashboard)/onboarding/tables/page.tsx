@@ -7,8 +7,9 @@
 import Link from "next/link";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
-import { OnboardingShell } from "@/components/onbarding/OnboardingShell";
+import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+
 
 interface TableMetricDefinition {
   label: string;
@@ -290,7 +291,7 @@ export default function TablesOnboardingPage() {
   const onboardingSteps = getOnboardingSteps(currentStepKey);
 
   return (
-    <OnboardingShell
+    <OnboardingShell 
       currentStepNumber={currentStepNumber}
       mobilePrimaryAction={{ label: "Continuar", href: "/onboarding/plan", icon: "arrowForward" }}
       mobileSecondaryAction={{ label: "Guardar borrador", icon: "save" }}

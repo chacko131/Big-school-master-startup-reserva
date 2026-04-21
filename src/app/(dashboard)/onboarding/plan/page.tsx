@@ -7,8 +7,8 @@
 import Image from "next/image";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
-import { OnboardingShell } from "@/components/onbarding/OnboardingShell";
+import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
 interface PlanDefinition {
   eyebrow: string;

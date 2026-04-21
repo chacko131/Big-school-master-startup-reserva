@@ -7,9 +7,9 @@
 import Link from "next/link";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
-import { OnboardingField } from "@/components/onbarding/OnboardingField";
-import { OnboardingIcon } from "@/components/onbarding/OnboardingIcon";
-import { OnboardingShell } from "@/components/onbarding/OnboardingShell";
+import { OnboardingField } from "@/components/onboarding/OnboardingField";
+import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
 const settingsPageLayoutClassName = "flex w-full max-w-5xl flex-col gap-12";
 const settingsGridClassName = "grid grid-cols-1 gap-8 md:grid-cols-12";
