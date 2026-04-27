@@ -6,6 +6,7 @@
 
 import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
+import Link from "next/link";
 import Image from "next/image";
 
 //-aqui empieza pagina DemoPage y es para captar leads-//
@@ -92,14 +93,14 @@ export default function DemoPage() {
                 </div>
 
                 <div className="pt-4">
-                  <button
-                    className="h-14 w-full rounded-lg bg-primary px-10 font-bold text-on-primary shadow-lg shadow-black/5 transition-all duration-200 hover:scale-95 md:w-auto"
-                    type="submit"
+                  <Link
+                    className="inline-flex h-14 w-full items-center justify-center rounded-lg bg-primary px-10 font-bold text-on-primary shadow-lg shadow-black/5 transition-all duration-200 hover:scale-95 md:w-auto"
+                    href="/onboarding/restaurant"
                   >
-                    <T>Agendar Demo Ahora</T>
-                  </button>
+                    <T>Continuar al onboarding demo</T>
+                  </Link>
                   <p className="mt-4 text-xs text-on-primary-container">
-                    <T>Al enviar este formulario, aceptas nuestra Política de Privacidad.</T>
+                    <T>La demo es el punto de entrada al alta guiada del restaurante.</T>
                   </p>
                 </div>
               </form>

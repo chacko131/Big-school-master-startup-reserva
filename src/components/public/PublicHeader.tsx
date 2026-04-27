@@ -24,7 +24,6 @@ const defaultNavigationItems: PublicNavigationItem[] = [
   { label: "Plataforma", href: "/" },
   { label: "Nosotros", href: "/about" },
   { label: "Precios", href: "/pricing" },
-  { label: "Demo", href: "/demo" },
   { label: "Contacto", href: "/contact" },
   { label: "Acceso", href: "/sign-in" },
 ];
@@ -35,7 +34,7 @@ const defaultNavigationItems: PublicNavigationItem[] = [
  */
 export function PublicHeader({
   navigationItems = defaultNavigationItems,
-  actionLabel = "Empezar ahora",
+  actionLabel = "Solicitar demo",
   actionHref = "/demo",
 }: PublicHeaderProps) {
   return (

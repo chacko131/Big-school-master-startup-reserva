@@ -34,9 +34,9 @@ export default function HomePage() {
                 <Link href="/demo" className="rounded-lg bg-primary px-8 py-4 text-center text-lg font-bold text-on-primary transition-all hover:bg-zinc-800">
                   <T>Solicitar Demo</T>
                 </Link>
-                <button className="rounded-lg bg-surface-container-highest px-8 py-4 text-lg font-bold text-primary transition-all hover:bg-surface-container-high">
-                  <T>Registrar Restaurante</T>
-                </button>
+                <Link href="/sign-in" className="rounded-lg bg-surface-container-highest px-8 py-4 text-center text-lg font-bold text-primary transition-all hover:bg-surface-container-high">
+                  <T>Acceder</T>
+                </Link>
               </div>
             </div>
 
@@ -229,12 +229,12 @@ export default function HomePage() {
               <T>Únete a los restaurantes más exclusivos de Latinoamérica que ya están transformando su operación.</T>
             </p>
             <div className="flex flex-col justify-center gap-6 sm:flex-row">
-              <button className="rounded-lg bg-primary px-10 py-5 text-xl font-bold text-on-primary shadow-2xl transition-transform duration-150 hover:scale-105">
-                <T>Comienza gratis hoy</T>
-              </button>
-              <button className="rounded-lg border-2 border-primary bg-white px-10 py-5 text-xl font-bold text-primary transition-colors duration-150 hover:bg-zinc-50">
-                <T>Hablar con un experto</T>
-              </button>
+              <Link href="/demo" className="rounded-lg bg-primary px-10 py-5 text-xl font-bold text-on-primary shadow-2xl transition-transform duration-150 hover:scale-105">
+                <T>Solicitar demo</T>
+              </Link>
+              <Link href="/sign-in" className="rounded-lg border-2 border-primary bg-white px-10 py-5 text-center text-xl font-bold text-primary transition-colors duration-150 hover:bg-zinc-50">
+                <T>Acceder</T>
+              </Link>
             </div>
             <p className="mt-8 text-sm italic text-zinc-400"><T>Sin tarjeta de crédito. Configuración en 5 minutos.</T></p>
           </div>
