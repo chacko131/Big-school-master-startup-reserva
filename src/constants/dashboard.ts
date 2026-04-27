@@ -6,7 +6,18 @@
 
 import type { OnboardingIconName } from "@/types/onboarding";
 
-export type DashboardSectionKey = "home" | "reservations" | "tables" | "schedule" | "guests" | "billing" | "settings";
+export type DashboardSectionKey =
+  | "home"
+  | "reservations"
+  | "tables"
+  | "schedule"
+  | "guests"
+  | "billing"
+  | "analytics"
+  | "integrations"
+  | "notifications"
+  | "team"
+  | "settings"
 
 export type DashboardMetricTone = "primary" | "secondary" | "surface";
 
@@ -75,7 +86,32 @@ export const dashboardNavigationDefinitions: ReadonlyArray<DashboardNavigationDe
     href: "/dashboard/billing",
     icon: "payments",
   },
+
   {
+    key: "analytics",
+    label: "Analítica",
+    href: "/dashboard/analytics",
+    icon: "gridView",
+  },
+  {
+    key: "integrations",
+    label: "Integraciones",
+    href: "/dashboard/integrations",
+    icon: "rocketLaunch",
+  },
+  {
+    key: "notifications",
+    label: "Notificaciones",
+    href: "/dashboard/notifications",
+    icon: "help",
+  },
+  {
+    key: "team",
+    label: "Equipo",
+    href: "/dashboard/team",
+    icon: "person",
+  },
+    {
     key: "settings",
     label: "Configuración",
     href: "/dashboard/settings",
