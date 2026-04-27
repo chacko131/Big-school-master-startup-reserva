@@ -6,6 +6,7 @@
 
 interface PublicIconProps {
   name:
+    | "arrowBack"
     | "menu"
     | "share"
     | "language"
@@ -27,7 +28,23 @@ interface PublicIconProps {
     | "architecture"
     | "favorite"
     | "precisionManufacturing"
-    | "handshake";
+    | "handshake"
+    | "map"
+    | "chatBubble"
+    | "chevronRight"
+    | "eventAvailable"
+    | "restaurant"
+    | "star"
+    | "distance"
+    | "locationOn"
+    | "contactMail"
+    | "pinDrop"
+    | "calendarMonth"
+    | "calendarAddOn"
+    | "editCalendar"
+    | "checkCircleFilled"
+    | "expandMore"
+    | "openInNew";
   className?: string;
 }
 
@@ -41,6 +58,13 @@ export function PublicIcon({ name, className = "" }: PublicIconProps) {
   const svgClassName = `${baseClassName} ${className}`;
 
   switch (name) {
+    case "arrowBack":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5" />
+          <path d="m11 6-6 6 6 6" />
+        </svg>
+      );
     case "menu":
       return (
         <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -224,6 +248,134 @@ export function PublicIcon({ name, className = "" }: PublicIconProps) {
           <path d="M10 14l1.5 1.5a2 2 0 0 0 2.8 0L18 12.8" />
           <path d="M4 12h3l2 2h3" />
           <path d="M20 12h-3l-2 2h-3" />
+        </svg>
+      );
+    case "map":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9 18 6 3 6-3V6l-6 3-6-3-6 3v12z" />
+          <path d="M9 6v12" />
+          <path d="M15 9v12" />
+        </svg>
+      );
+    case "chatBubble":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 18l-3 3v-4a9 9 0 1 1 3 1z" />
+          <path d="M8 12h8" />
+          <path d="M8 9h5" />
+        </svg>
+      );
+    case "chevronRight":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      );
+    case "eventAvailable":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4" />
+          <path d="M16 3v4" />
+          <path d="m9 13 2 2 4-4" />
+        </svg>
+      );
+    case "restaurant":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 3v18" />
+          <path d="M7 3c-1.7 0-3 1.3-3 3v4c0 1.7 1.3 3 3 3" />
+          <path d="M11 3v7" />
+          <path d="M11 10c0 1.7 1.3 3 3 3V3" />
+          <path d="M17 3v18" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="m12 2 2.9 6 6.6.9-4.8 4.6 1.1 6.5L12 16.8 6.2 20l1.1-6.5L2.5 8.9 9.1 8z" />
+        </svg>
+      );
+    case "distance":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 6h16" />
+          <path d="M4 18h16" />
+          <path d="m9 4 3-2 3 2" />
+          <path d="m9 20 3 2 3-2" />
+          <path d="M12 4v16" />
+        </svg>
+      );
+    case "locationOn":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z" />
+          <circle cx="12" cy="10" r="2" />
+        </svg>
+      );
+    case "contactMail":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <path d="m4 7 8 6 8-6" />
+        </svg>
+      );
+    case "pinDrop":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 21s5-4.6 5-9a5 5 0 1 0-10 0c0 4.4 5 9 5 9Z" />
+          <circle cx="12" cy="12" r="1.8" />
+        </svg>
+      );
+    case "calendarMonth":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4" />
+          <path d="M16 3v4" />
+          <path d="M4 9h16" />
+        </svg>
+      );
+    case "calendarAddOn":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4" />
+          <path d="M16 3v4" />
+          <path d="M4 9h16" />
+          <path d="M12 13v4" />
+          <path d="M10 15h4" />
+        </svg>
+      );
+    case "editCalendar":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4" />
+          <path d="M16 3v4" />
+          <path d="M4 9h16" />
+          <path d="m12.5 14.5 4-4a1.4 1.4 0 0 1 2 2l-4 4-3 1z" />
+        </svg>
+      );
+    case "checkCircleFilled":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm-1.1 14.1-3.6-3.6 1.4-1.4 2.2 2.2 4.9-4.9 1.4 1.4Z" />
+        </svg>
+      );
+    case "expandMore":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      );
+    case "openInNew":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 5h5v5" />
+          <path d="m10 14 9-9" />
+          <path d="M19 13v6H5V5h6" />
         </svg>
       );
     default:
