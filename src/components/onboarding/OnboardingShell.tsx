@@ -53,7 +53,13 @@ function renderShellAction(action: OnboardingActionDefinition, variant: "primary
   }
 
   return (
-    <button className={`${shellActionBaseClassName} ${variantClassName}`} form={action.formId} type={action.formId ? "submit" : "button"}>
+    <button
+      className={`${shellActionBaseClassName} ${variantClassName}`}
+      form={action.formId}
+      name={action.submitName}
+      type={action.formId ? "submit" : "button"}
+      value={action.submitValue}
+    >
       {content}
     </button>
   );
@@ -77,7 +83,7 @@ export function OnboardingShell({
   const progressWidth = `${(currentStepNumber / safeTotalSteps) * 100}%`;
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface md:flex md:overflow-hidden">
+    <div className="min-h-screen bg-surface text-on-surface md:flex md:h-screen md:items-stretch md:overflow-hidden">
       <header className="sticky top-0 z-40 border-b border-outline-variant/30 bg-surface md:hidden">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
@@ -97,10 +103,10 @@ export function OnboardingShell({
         </div>
       </header>
 
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-transparent bg-surface-container-lowest p-6 md:flex">
-          <div className="mb-10">
-            <span className="whitespace-nowrap text-lg font-bold tracking-tight text-primary">Reserva Latina</span>
-          </div>
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-transparent bg-surface-container-lowest p-6 md:flex md:self-start">
+        <div className="mb-10">
+          <span className="whitespace-nowrap text-lg font-bold tracking-tight text-primary">Reserva Latina</span>
+        </div>
 
           <div className="mb-8">
             <h3 className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-on-primary-container">
@@ -176,24 +182,24 @@ export function OnboardingShell({
           </div>
       </aside>
 
-      <main className="flex min-h-screen min-w-0 flex-1 flex-col overflow-y-auto bg-surface-container-low">
+      <main className="flex min-h-screen min-w-0 flex-1 flex-col overflow-y-auto bg-surface-container-low md:h-screen md:min-h-0">
         <header className="sticky top-0 z-30 hidden items-center justify-between bg-surface-container-lowest px-8 py-4 md:flex">
-            <h2 className="whitespace-nowrap text-lg font-black uppercase tracking-[0.14em] text-primary">
-              <T>{title}</T>
-            </h2>
-            <div className="flex items-center gap-5 text-on-surface-variant">
-              <Link aria-label="Ayuda" className="transition-colors hover:text-on-surface" href="/contact">
-                <OnboardingIcon name="help" />
-              </Link>
-              <Link aria-label="Acceso" className="transition-colors hover:text-on-surface" href="/sign-in">
-                <OnboardingIcon name="accountCircle" />
-              </Link>
-            </div>
-          </header>
-
-          <div className="flex flex-1 items-start justify-center p-6 pb-32 md:p-8 lg:p-16 lg:pb-16">
-            {children}
+          <h2 className="whitespace-nowrap text-lg font-black uppercase tracking-[0.14em] text-primary">
+            <T>{title}</T>
+          </h2>
+          <div className="flex items-center gap-5 text-on-surface-variant">
+            <Link aria-label="Ayuda" className="transition-colors hover:text-on-surface" href="/contact">
+              <OnboardingIcon name="help" />
+            </Link>
+            <Link aria-label="Acceso" className="transition-colors hover:text-on-surface" href="/sign-in">
+              <OnboardingIcon name="accountCircle" />
+            </Link>
           </div>
+        </header>
+
+        <div className="flex flex-1 items-start justify-center p-6 pb-32 md:p-8 lg:p-16 lg:pb-16">
+          {children}
+        </div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 border-t border-outline-variant/20 bg-surface-container-lowest/90 px-4 py-4 backdrop-blur-md md:hidden">

@@ -7,6 +7,7 @@
 import { randomUUID } from "node:crypto";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
@@ -19,6 +20,15 @@ import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catal
 const restaurantInputClassName = "w-full rounded-lg border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface transition-all placeholder:text-outline focus:ring-1 focus:ring-primary";
 const restaurantContentLayoutClassName = "flex w-full max-w-5xl flex-col items-start gap-12 md:flex-row md:gap-16";
 const restaurantOnboardingFormId = "restaurant-onboarding-form";
+
+interface RestaurantOnboardingPageProps {
+  searchParams: Promise<{ error?: string | string[] }>;
+}
+
+interface RestaurantProfileFormProps {
+  errorMessage?: string;
+  initialValues: RestaurantOnboardingDraft;
+}
 
 const restaurantTimezoneOptions = [
   "America/Santo_Domingo (GMT-04:00)",
@@ -35,6 +45,40 @@ const restaurantOnboardingSchema = z.object({
   phone: z.string().trim().min(1),
 });
 
+const restaurantOnboardingDraftSchema = z.object({
+  name: z.string().trim(),
+  slug: z.string().trim(),
+  timezone: z.string().trim(),
+  email: z.string().trim(),
+  phone: z.string().trim(),
+});
+
+const restaurantOnboardingDraftCookieName = "onboarding_restaurant_draft";
+const restaurantOnboardingRestaurantIdCookieName = "onboarding_restaurant_id";
+
+const onboardingDraftCookieOptions = {
+  httpOnly: true,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+  sameSite: "lax" as const,
+};
+
+const restaurantFormMockValues: RestaurantOnboardingDraft = {
+  name: "La Terraza Latina",
+  slug: "la-terraza-latina",
+  timezone: restaurantTimezoneOptions[0],
+  email: "hola@laterraza.com",
+  phone: "+34 600 123 456",
+};
+
+interface RestaurantOnboardingDraft {
+  name: string;
+  slug: string;
+  timezone: string;
+  email: string;
+  phone: string;
+}
+
 //-aqui empieza funcion createRestaurantOnboardingAction y es para crear el restaurante desde onboarding-//
 /**
  * Crea el restaurante base del onboarding y avanza al paso operativo.
@@ -43,37 +87,30 @@ const restaurantOnboardingSchema = z.object({
 async function createRestaurantOnboardingAction(formData: FormData) {
   "use server";
 
-  console.info("[onboarding:restaurant] submit received");
+  const cookieStore = await cookies();
 
-  const parsedInput = restaurantOnboardingSchema.safeParse({
-    name: formData.get("name"),
-    slug: formData.get("slug"),
-    timezone: formData.get("timezone"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-  });
+  const draftInput: RestaurantOnboardingDraft = {
+    name: String(formData.get("name") ?? "").trim(),
+    slug: String(formData.get("slug") ?? "").trim(),
+    timezone: String(formData.get("timezone") ?? "").trim(),
+    email: String(formData.get("email") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+  };
+
+  cookieStore.set(restaurantOnboardingDraftCookieName, serializeRestaurantDraft(draftInput), onboardingDraftCookieOptions);
+
+  const parsedInput = restaurantOnboardingSchema.safeParse(draftInput);
 
   if (!parsedInput.success) {
-    console.warn("[onboarding:restaurant] validation failed", parsedInput.error.flatten().fieldErrors);
-    throw new Error("Formulario de restaurante inválido");
+    redirect("/onboarding/restaurant?error=invalidForm");
   }
 
-  console.info("[onboarding:restaurant] validation passed", {
-    name: parsedInput.data.name,
-    slug: parsedInput.data.slug,
-    timezone: parsedInput.data.timezone,
-  });
+  const persistedRestaurantId = cookieStore.get(restaurantOnboardingRestaurantIdCookieName)?.value;
+  const restaurantId = persistedRestaurantId !== undefined && persistedRestaurantId.trim().length > 0 ? persistedRestaurantId : randomUUID();
 
   try {
     const catalogInfrastructure = getCatalogInfrastructure();
     const createRestaurant = new CreateRestaurant(catalogInfrastructure.restaurantRepository);
-
-    const restaurantId = randomUUID();
-
-    console.info("[onboarding:restaurant] creating restaurant", {
-      restaurantId,
-      slug: parsedInput.data.slug,
-    });
 
     await createRestaurant.execute({
       id: restaurantId,
@@ -85,21 +122,105 @@ async function createRestaurantOnboardingAction(formData: FormData) {
       isActive: true,
     });
 
-    console.info("[onboarding:restaurant] restaurant created", {
-      restaurantId,
-    });
+    cookieStore.set(restaurantOnboardingRestaurantIdCookieName, restaurantId, onboardingDraftCookieOptions);
   } catch (error) {
-    console.error("[onboarding:restaurant] unexpected failure", error);
+    if (isDuplicateRestaurantSlugError(error)) {
+      redirect("/onboarding/restaurant?error=duplicateSlug");
+    }
+
     throw error;
   }
 
-  console.info("[onboarding:restaurant] redirecting to settings", {
-    redirectTo: "/onboarding/settings",
-  });
-
-  redirect("/onboarding/settings");
+  redirect(`/onboarding/settings?restaurantId=${restaurantId}`);
 }
 //-aqui termina funcion createRestaurantOnboardingAction y se va autilizar en el submit del onboarding-//
+
+//-aqui empieza funcion isDuplicateRestaurantSlugError y es para detectar slug repetido en Prisma-//
+/**
+ * Detecta si Prisma rechazó la creación por un slug duplicado.
+ * @pure
+ */
+function isDuplicateRestaurantSlugError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  if (!("code" in error) || (error as { code?: string }).code !== "P2002") {
+    return false;
+  }
+
+  return true;
+}
+//-aqui termina funcion isDuplicateRestaurantSlugError y se va autilizar en el catch del onboarding-//
+
+//-aqui empieza funcion serializeRestaurantDraft y es para guardar el draft del restaurante en cookie-//
+/**
+ * Serializa el borrador del restaurante para persistirlo en una cookie.
+ * @pure
+ */
+function serializeRestaurantDraft(draft: RestaurantOnboardingDraft): string {
+  return JSON.stringify(draft);
+}
+//-aqui termina funcion serializeRestaurantDraft y se va autilizar en el server action-//
+
+//-aqui empieza funcion parseRestaurantDraftCookie y es para rehidratar el borrador del restaurante-//
+/**
+ * Convierte el valor de cookie del draft en datos utilizables para el formulario.
+ * @pure
+ */
+function parseRestaurantDraftCookie(cookieValue: string | undefined): RestaurantOnboardingDraft | null {
+  if (cookieValue === undefined || cookieValue.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    const parsedValue = restaurantOnboardingDraftSchema.safeParse(JSON.parse(cookieValue));
+
+    if (!parsedValue.success) {
+      return null;
+    }
+
+    return parsedValue.data;
+  } catch {
+    return null;
+  }
+}
+//-aqui termina funcion parseRestaurantDraftCookie y se va autilizar en el render-//
+
+//-aqui empieza funcion getRestaurantFormInitialValues y es para resolver el origen de los valores iniciales-//
+/**
+ * Resuelve los valores iniciales del formulario usando DB, cookie de draft o valores mock.
+ * @pure
+ */
+function getRestaurantFormInitialValues(
+  persistedRestaurant:
+    | {
+        name: string;
+        slug: string;
+        timezone: string;
+        email: string | null;
+        phone: string | null;
+      }
+    | null,
+  draft: RestaurantOnboardingDraft | null,
+): RestaurantOnboardingDraft {
+  if (persistedRestaurant !== null) {
+    return {
+      name: persistedRestaurant.name,
+      slug: persistedRestaurant.slug,
+      timezone: persistedRestaurant.timezone,
+      email: persistedRestaurant.email ?? restaurantFormMockValues.email,
+      phone: persistedRestaurant.phone ?? restaurantFormMockValues.phone,
+    };
+  }
+
+  if (draft !== null) {
+    return draft;
+  }
+
+  return restaurantFormMockValues;
+}
+//-aqui termina funcion getRestaurantFormInitialValues y se va autilizar en el render-//
 
 //-aqui empieza componente RestaurantHero y es para presentar el contexto visual del paso-//
 function RestaurantHero() {
@@ -143,15 +264,21 @@ function RestaurantHero() {
 //-aqui termina componente RestaurantHero-//
 
 //-aqui empieza componente RestaurantProfileForm y es para mostrar el formulario base del restaurante-//
-function RestaurantProfileForm() {
+function RestaurantProfileForm({ errorMessage, initialValues }: RestaurantProfileFormProps) {
   return (
     <section className="w-full rounded-[28px] bg-surface-container-lowest p-8 shadow-[0_20px_40px_rgba(26,28,28,0.04)] md:w-3/5 md:p-10">
       <form action={createRestaurantOnboardingAction} className="space-y-8" id={restaurantOnboardingFormId}>
+        {errorMessage ? (
+          <div className="rounded-2xl border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error">
+            <T>{errorMessage}</T>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <OnboardingField className="md:col-span-2" htmlFor="restaurant-name" label="Nombre del restaurante">
             <input
               className={restaurantInputClassName}
-              defaultValue="La Terraza Latina"
+              defaultValue={initialValues.name}
               id="restaurant-name"
               name="name"
               placeholder="Ej. La Terraza Latina"
@@ -171,7 +298,7 @@ function RestaurantProfileForm() {
               </span>
               <input
                 className="min-w-0 flex-1 border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface placeholder:text-outline focus:ring-0"
-                defaultValue="la-terraza-latina"
+                defaultValue={initialValues.slug}
                 id="restaurant-slug"
                 name="slug"
                 placeholder="la-terraza-latina"
@@ -184,7 +311,7 @@ function RestaurantProfileForm() {
             <div className="relative">
               <select
                 className={`${restaurantInputClassName} appearance-none pr-12`}
-                defaultValue={restaurantTimezoneOptions[0]}
+                defaultValue={initialValues.timezone}
                 id="restaurant-timezone"
                 name="timezone"
               >
@@ -203,7 +330,7 @@ function RestaurantProfileForm() {
           <OnboardingField htmlFor="restaurant-email" label="Correo del negocio">
             <input
               className={restaurantInputClassName}
-              defaultValue="hola@laterraza.com"
+              defaultValue={initialValues.email}
               id="restaurant-email"
               name="email"
               placeholder="hola@restaurante.com"
@@ -214,7 +341,7 @@ function RestaurantProfileForm() {
           <OnboardingField className="md:col-span-2" htmlFor="restaurant-phone" label="Teléfono">
             <input
               className={restaurantInputClassName}
-              defaultValue="+34 600 123 456"
+              defaultValue={initialValues.phone}
               id="restaurant-phone"
               name="phone"
               placeholder="+34 600 123 456"
@@ -259,7 +386,30 @@ function RestaurantMobileQuote() {
 /**
  * Presenta el paso inicial del onboarding con los datos base del restaurante.
  */
-export default function RestaurantOnboardingPage() {
+export default async function RestaurantOnboardingPage({ searchParams }: RestaurantOnboardingPageProps) {
+  const cookieStore = await cookies();
+  const resolvedSearchParams = await searchParams;
+  const errorValue = resolvedSearchParams.error;
+  const errorKey = Array.isArray(errorValue) ? errorValue[0] ?? "" : errorValue ?? "";
+  const errorMessage =
+    errorKey === "duplicateSlug"
+      ? "Ya existe un restaurante con ese nombre público. Cambia el slug para continuar."
+      : errorKey === "invalidForm"
+        ? "Revisa los campos del formulario. Hay datos que no son válidos."
+        : undefined;
+
+  const persistedRestaurantId = cookieStore.get(restaurantOnboardingRestaurantIdCookieName)?.value;
+  const draftCookieValue = cookieStore.get(restaurantOnboardingDraftCookieName)?.value;
+  const persistedDraft = parseRestaurantDraftCookie(draftCookieValue);
+
+  const catalogInfrastructure = getCatalogInfrastructure();
+  const persistedRestaurant =
+    persistedRestaurantId === undefined
+      ? null
+      : await catalogInfrastructure.restaurantRepository.findById(persistedRestaurantId);
+
+  const initialValues = getRestaurantFormInitialValues(persistedRestaurant === null ? null : persistedRestaurant.toPrimitives(), persistedDraft);
+
   const currentStepKey = "restaurant" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);
   const onboardingSteps = getOnboardingSteps(currentStepKey);
@@ -275,7 +425,7 @@ export default function RestaurantOnboardingPage() {
     >
       <div className={restaurantContentLayoutClassName}>
         <RestaurantHero />
-        <RestaurantProfileForm />
+        <RestaurantProfileForm errorMessage={errorMessage} initialValues={initialValues} />
       </div>
       <RestaurantMobileQuote />
     </OnboardingShell>

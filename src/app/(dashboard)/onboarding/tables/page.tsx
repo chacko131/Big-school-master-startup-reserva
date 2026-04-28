@@ -4,260 +4,308 @@
  * Tipo: UI
  */
 
-import Link from "next/link";
+import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { TablesOnboardingForm, type TablesOnboardingInitialRow, tablesOnboardingFormId } from "@/components/onboarding/TablesOnboardingForm";
+import { AddDiningTable } from "@/modules/catalog/application/use-cases/add-dining-table.use-case";
+import { RestaurantNotFoundError } from "@/modules/catalog/application/errors/restaurant-not-found.error";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 
-
-interface TableMetricDefinition {
-  label: string;
-  value: string;
-  accent?: "default" | "secondary";
+interface TablesOnboardingPageProps {
+  searchParams: Promise<{ restaurantId?: string | string[]; error?: string | string[] }>;
 }
 
-interface TableRowDefinition {
-  order: string;
+interface TablesOnboardingDraftRow {
+  id: string;
   name: string;
   capacity: number;
-  combinable: boolean;
-  highlighted?: boolean;
-  draft?: boolean;
+  isCombinable: boolean;
+  sortOrder: number;
+}
+
+interface TablesOnboardingDraft {
+  restaurantId: string;
+  rows: TablesOnboardingDraftRow[];
 }
 
 const tablesPageLayoutClassName = "flex w-full max-w-6xl flex-col gap-12";
-const tablesMetricDefinitions: ReadonlyArray<TableMetricDefinition> = [
-  { label: "Total de mesas", value: "12" },
-  { label: "Capacidad máxima", value: "48" },
-  { label: "Zonas del comedor", value: "Sala principal y terraza", accent: "secondary" },
-] as const;
-const tableRowDefinitions: ReadonlyArray<TableRowDefinition> = [
-  { order: "01", name: "Mesa 10", capacity: 4, combinable: true },
-  { order: "02", name: "Mesa 11", capacity: 2, combinable: true },
-  { order: "03", name: "Barra del chef", capacity: 6, combinable: false, highlighted: true },
-  { order: "04", name: "", capacity: 0, combinable: false, draft: true },
-] as const;
-const tablesWorkspaceTabs = ["Mesas", "Distribución", "Zonas"] as const;
+const tablesDraftCookieName = "onboarding_tables_draft";
+const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
-//-aqui empieza funcion getTableRowInputClassName y es para resolver el estilo visual de cada fila de la tabla-//
+const onboardingCookieOptions = {
+  httpOnly: true,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/onboarding",
+  sameSite: "lax" as const,
+};
+
+const persistedTableSchema = z.object({
+  id: z.string().trim(),
+  name: z.string().trim().min(1),
+  capacity: z.number().int().min(1),
+  isCombinable: z.boolean(),
+  sortOrder: z.number().int().min(1),
+});
+
+const tablesOnboardingSchema = z.object({
+  restaurantId: z.string().trim().min(1),
+  rows: z.array(persistedTableSchema).min(1),
+});
+
+const tablesDraftSchema = z.object({
+  restaurantId: z.string().trim(),
+  rows: z.array(
+    z.object({
+      id: z.string().trim(),
+      name: z.string().trim(),
+      capacity: z.number().int().min(0),
+      isCombinable: z.boolean(),
+      sortOrder: z.number().int().min(1),
+    }),
+  ),
+});
+
+//-aqui empieza funcion saveTablesOnboardingAction y es para persistir las mesas del onboarding-//
 /**
- * Devuelve las clases base de un input dentro del ledger de mesas.
- *
- * @pure
+ * Guarda y sincroniza las mesas del restaurante dentro del onboarding.
+ * @sideEffect
  */
-function getTableRowInputClassName(highlighted: boolean, draft: boolean): string {
-  if (draft) {
-    return "w-full max-w-xs rounded-none border-0 border-b border-outline-variant/50 bg-transparent px-0 py-2 text-sm font-medium italic text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-0";
+async function saveTablesOnboardingAction(formData: FormData) {
+  "use server";
+
+  const cookieStore = await cookies();
+  const draftInput = buildTablesDraftFromFormData(formData);
+
+  cookieStore.set(tablesDraftCookieName, serializeTablesDraft(draftInput), onboardingCookieOptions);
+
+  const parsedInput = normalizeTablesInput(draftInput);
+
+  if (!parsedInput.success) {
+    redirect(`/onboarding/tables?restaurantId=${draftInput.restaurantId}&error=${parsedInput.error}`);
   }
 
-  if (highlighted) {
-    return "w-full max-w-xs rounded-lg border border-primary bg-surface-container-lowest px-4 py-2 text-sm font-bold text-on-surface focus:ring-0";
+  const duplicateNames = findDuplicateTableNames(parsedInput.data.rows);
+
+  if (duplicateNames.length > 0) {
+    redirect(`/onboarding/tables?restaurantId=${parsedInput.data.restaurantId}&error=duplicateTableName`);
   }
 
-  return "w-full max-w-xs rounded-lg border-0 bg-surface-container-highest px-4 py-2 text-sm font-medium text-on-surface focus:ring-1 focus:ring-primary";
+  try {
+    const catalogInfrastructure = getCatalogInfrastructure();
+    const addDiningTable = new AddDiningTable(catalogInfrastructure.restaurantRepository, catalogInfrastructure.diningTableRepository);
+    const idsToKeep: string[] = [];
+
+    for (const tableRow of parsedInput.data.rows) {
+      const diningTableId = tableRow.id.length > 0 ? tableRow.id : randomUUID();
+
+      idsToKeep.push(diningTableId);
+
+      await addDiningTable.execute({
+        id: diningTableId,
+        restaurantId: parsedInput.data.restaurantId,
+        name: tableRow.name,
+        capacity: tableRow.capacity,
+        isActive: true,
+        isCombinable: tableRow.isCombinable,
+        sortOrder: tableRow.sortOrder,
+      });
+    }
+
+    await catalogInfrastructure.diningTableRepository.deleteMissingByRestaurantId(parsedInput.data.restaurantId, idsToKeep);
+    cookieStore.set(onboardingRestaurantIdCookieName, parsedInput.data.restaurantId, onboardingCookieOptions);
+  } catch (error) {
+    if (error instanceof RestaurantNotFoundError) {
+      redirect("/onboarding/restaurant");
+    }
+
+    if (isDuplicateDiningTableNameError(error)) {
+      redirect(`/onboarding/tables?restaurantId=${parsedInput.data.restaurantId}&error=duplicateTableName`);
+    }
+
+    throw error;
+  }
+
+  redirect(`/onboarding/plan?restaurantId=${parsedInput.data.restaurantId}`);
 }
-//-aqui termina funcion getTableRowInputClassName-//
+//-aqui termina funcion saveTablesOnboardingAction y se va autilizar en el submit del onboarding-//
 
-//-aqui empieza componente TablesWorkspaceTabs y es para presentar la navegacion visual del workspace de mesas-//
-function TablesWorkspaceTabs() {
-  return (
-    <div className="hidden items-center gap-8 border-b border-outline-variant/20 pb-4 md:flex">
-      {tablesWorkspaceTabs.map((workspaceTab, index) => {
-        const tabClassName = index === 0 ? "border-b-2 border-primary pb-1 text-primary" : "text-on-surface-variant";
-
-        return (
-          <button key={workspaceTab} className={`text-sm font-bold tracking-tight transition-colors ${tabClassName}`} type="button">
-            <T>{workspaceTab}</T>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-//-aqui termina componente TablesWorkspaceTabs-//
-
-//-aqui empieza componente TablesHero y es para presentar el contexto editorial y las acciones del paso de mesas-//
-function TablesHero() {
-  return (
-    <section className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-      <div className="max-w-xl space-y-4">
-        <h1 className="text-5xl font-extrabold leading-none tracking-tighter text-primary">
-          <T>Define tu espacio de servicio.</T>
-        </h1>
-        <p className="text-lg leading-relaxed text-on-surface-variant">
-          <T>
-            Configura tus mesas para reflejar el plano real del restaurante. Esto te ayuda a administrar la capacidad y a optimizar los tiempos de rotación.
-          </T>
-        </p>
-      </div>
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <button className="rounded-lg bg-surface-container-highest px-6 py-3 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container-high" type="button">
-          <T>Importar en lote</T>
-        </button>
-        <button className="rounded-lg bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:opacity-90" type="button">
-          <T>Agregar mesa</T>
-        </button>
-      </div>
-    </section>
-  );
-}
-//-aqui termina componente TablesHero-//
-
-//-aqui empieza componente TablesMetricsGrid y es para resumir los indicadores principales del comedor-//
-function TablesMetricsGrid() {
-  return (
-    <section className="flex flex-col gap-4 md:flex-row">
-      {tablesMetricDefinitions.map((metricDefinition, index) => {
-        const isSecondaryCard = metricDefinition.accent === "secondary";
-        const columnClassName = isSecondaryCard ? "md:flex-[2]" : "md:flex-1";
-        const cardClassName = isSecondaryCard
-          ? "relative overflow-hidden rounded-2xl bg-secondary-container p-6"
-          : "rounded-2xl bg-surface-container-low p-6";
-        const valueClassName = isSecondaryCard ? "text-3xl font-black text-secondary md:text-4xl" : "text-4xl font-black text-primary";
-        const labelClassName = isSecondaryCard ? "text-on-secondary-container" : "text-on-surface-variant";
-
-        return (
-          <article key={`${metricDefinition.label}-${index}`} className={`${columnClassName} ${cardClassName}`}>
-            <div className="relative z-10">
-              <p className={`mb-1 text-xs font-bold uppercase tracking-[0.2em] ${labelClassName}`}>
-                <T>{metricDefinition.label}</T>
-              </p>
-              <p className={valueClassName}>
-                <T>{metricDefinition.value}</T>
-              </p>
-            </div>
-            {isSecondaryCard ? <div className="absolute -bottom-6 -right-6 h-28 w-28 rounded-full bg-secondary/10" /> : null}
-          </article>
-        );
-      })}
-    </section>
-  );
-}
-//-aqui termina componente TablesMetricsGrid-//
-
-//-aqui empieza componente TableLedgerRow y es para representar una fila editable del registro de mesas-//
-interface TableLedgerRowProps {
-  tableRowDefinition: TableRowDefinition;
-}
-
+//-aqui empieza funcion buildTablesDraftFromFormData y es para convertir el formData en un draft serializable-//
 /**
- * Renderiza una fila editable del ledger visual de mesas.
- *
+ * Construye el borrador de mesas a partir del `FormData` recibido por el server action.
  * @pure
  */
-function TableLedgerRow({ tableRowDefinition }: TableLedgerRowProps) {
-  const rowClassName = tableRowDefinition.draft
-    ? "bg-surface opacity-60"
-    : tableRowDefinition.highlighted
-      ? "border-l-4 border-primary bg-surface-container-lowest"
-      : "hover:bg-surface-container-lowest";
-  const numberClassName = tableRowDefinition.highlighted ? "text-primary" : tableRowDefinition.draft ? "text-outline-variant" : "text-on-surface-variant";
-  const toggleCopy = tableRowDefinition.combinable ? "Sí" : "No";
+function buildTablesDraftFromFormData(formData: FormData): TablesOnboardingDraft {
+  const restaurantId = String(formData.get("restaurantId") ?? "").trim();
+  const rowCount = Number(String(formData.get("rowCount") ?? "0"));
+  const rows: TablesOnboardingDraftRow[] = [];
 
-  return (
-    <div className={`flex flex-col gap-5 px-6 py-6 transition-colors md:flex-row md:items-center md:gap-6 md:px-8 ${rowClassName}`}>
-      <div className={`w-12 shrink-0 text-sm font-black ${numberClassName}`}>{tableRowDefinition.order}</div>
+  for (let index = 0; index < rowCount; index += 1) {
+    rows.push({
+      id: String(formData.get(`tableId-${index}`) ?? "").trim(),
+      name: String(formData.get(`tableName-${index}`) ?? "").trim(),
+      capacity: Number(String(formData.get(`tableCapacity-${index}`) ?? "0")),
+      isCombinable: formData.get(`tableCombinable-${index}`) === "on",
+      sortOrder: Number(String(formData.get(`tableSortOrder-${index}`) ?? String(index + 1))),
+    });
+  }
 
-      <div className="min-w-0 flex-[2.2]">
-        <input
-          className={getTableRowInputClassName(Boolean(tableRowDefinition.highlighted), Boolean(tableRowDefinition.draft)).replace("max-w-xs", "max-w-none")}
-          defaultValue={tableRowDefinition.draft ? undefined : tableRowDefinition.name}
-          placeholder="Añade el nombre de la mesa..."
-          type="text"
-        />
-      </div>
-
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <input
-            className={getTableRowInputClassName(Boolean(tableRowDefinition.highlighted), Boolean(tableRowDefinition.draft)).replace("max-w-xs", "w-20 max-w-none text-center")}
-            defaultValue={tableRowDefinition.draft ? undefined : String(tableRowDefinition.capacity)}
-            placeholder="0"
-            type="number"
-          />
-          <span className="text-xs font-medium text-on-surface-variant">
-            <T>comensales</T>
-          </span>
-        </div>
-      </div>
-
-      <div className="flex-[1.1]">
-        {tableRowDefinition.draft ? (
-          <span className="text-xs font-medium italic text-on-surface-variant">
-            <T>Autodetectando configuración...</T>
-          </span>
-        ) : (
-          <label className="relative inline-flex items-center gap-3">
-            <input className="peer sr-only" defaultChecked={tableRowDefinition.combinable} type="checkbox" />
-            <span className="h-6 w-11 rounded-full bg-surface-container-highest transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-white after:bg-white after:transition-transform after:content-[''] peer-checked:bg-secondary peer-checked:after:translate-x-full" />
-            <span className="text-xs font-semibold text-on-surface-variant">
-              <T>{toggleCopy}</T>
-            </span>
-          </label>
-        )}
-      </div>
-
-      <div className="flex justify-end md:w-28 md:shrink-0">
-        <button className="rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary" type="button">
-          <T>{tableRowDefinition.draft ? "Añadir" : "Eliminar"}</T>
-        </button>
-      </div>
-    </div>
-  );
+  return {
+    restaurantId,
+    rows,
+  };
 }
-//-aqui termina componente TableLedgerRow-//
+//-aqui termina funcion buildTablesDraftFromFormData y se va autilizar en el server action-//
 
-//-aqui empieza componente TablesLedger y es para agrupar el ledger principal del setup de mesas-//
-function TablesLedger() {
-  return (
-    <section className="overflow-hidden rounded-[28px] bg-surface-container-low shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
-      <div className="hidden items-center gap-6 bg-surface-container-high px-8 py-4 text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant md:flex">
-        <div className="w-12 shrink-0">
-          <T>Orden</T>
-        </div>
-        <div className="flex-[2.2]">
-          <T>Nombre / ID</T>
-        </div>
-        <div className="flex-1">
-          <T>Capacidad</T>
-        </div>
-        <div className="flex-[1.1]">
-          <T>Combinable</T>
-        </div>
-        <div className="w-28 shrink-0 text-right">
-          <T>Acciones</T>
-        </div>
-      </div>
+//-aqui empieza funcion normalizeTablesInput y es para validar las filas utiles del formulario-//
+/**
+ * Normaliza el borrador del formulario y elimina filas vacías antes de validar.
+ * @pure
+ */
+function normalizeTablesInput(
+  draft: TablesOnboardingDraft,
+):
+  | { success: true; data: { restaurantId: string; rows: TablesOnboardingDraftRow[] } }
+  | { success: false; error: "invalidForm" | "emptyTables" } {
+  const relevantRows = draft.rows.filter((row) => row.name.length > 0 || row.capacity > 0 || row.id.length > 0 || row.isCombinable);
 
-      <div className="divide-y divide-outline-variant/20">
-        {tableRowDefinitions.map((tableRowDefinition) => (
-          <TableLedgerRow key={tableRowDefinition.order} tableRowDefinition={tableRowDefinition} />
-        ))}
-      </div>
+  if (relevantRows.length === 0) {
+    return { success: false, error: "emptyTables" };
+  }
 
-      <div className="flex flex-col justify-between gap-6 border-t border-outline-variant/20 bg-surface-container-low px-6 py-6 md:flex-row md:items-center md:px-8">
-        <button className="self-start text-sm font-bold text-primary transition-transform hover:translate-x-1" type="button">
-          <T>Agregar varias filas</T>
-        </button>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-          <div className="text-left sm:text-right">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-              <T>Capacidad estimada</T>
-            </p>
-            <p className="text-sm font-bold text-primary">
-              <T>54 comensales en total</T>
-            </p>
-          </div>
-          <Link className="rounded-lg bg-primary px-8 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-on-primary transition-all hover:opacity-90" href="/onboarding/plan">
-            <T>Guardar y continuar</T>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+  const parsedInput = tablesOnboardingSchema.safeParse({
+    restaurantId: draft.restaurantId,
+    rows: relevantRows,
+  });
+
+  if (!parsedInput.success) {
+    return { success: false, error: "invalidForm" };
+  }
+
+  return {
+    success: true,
+    data: parsedInput.data,
+  };
 }
-//-aqui termina componente TablesLedger-//
+//-aqui termina funcion normalizeTablesInput y se va autilizar en el server action-//
+
+//-aqui empieza funcion findDuplicateTableNames y es para detectar nombres repetidos en el mismo formulario-//
+/**
+ * Devuelve los nombres de mesas repetidos dentro del mismo submit.
+ * @pure
+ */
+function findDuplicateTableNames(rows: TablesOnboardingDraftRow[]): string[] {
+  const seenNames = new Set<string>();
+  const duplicateNames = new Set<string>();
+
+  for (const row of rows) {
+    const normalizedName = row.name.trim().toLowerCase();
+
+    if (seenNames.has(normalizedName)) {
+      duplicateNames.add(normalizedName);
+      continue;
+    }
+
+    seenNames.add(normalizedName);
+  }
+
+  return [...duplicateNames];
+}
+//-aqui termina funcion findDuplicateTableNames y se va autilizar en el server action-//
+
+//-aqui empieza funcion serializeTablesDraft y es para persistir el borrador de mesas en cookie-//
+/**
+ * Serializa el borrador de mesas para persistirlo temporalmente en cookies.
+ * @pure
+ */
+function serializeTablesDraft(draft: TablesOnboardingDraft): string {
+  return JSON.stringify(draft);
+}
+//-aqui termina funcion serializeTablesDraft y se va autilizar en el server action-//
+
+//-aqui empieza funcion parseTablesDraftCookie y es para rehidratar el borrador de mesas-//
+/**
+ * Recupera el borrador de mesas desde cookie si el contenido es válido.
+ * @pure
+ */
+function parseTablesDraftCookie(cookieValue: string | undefined): TablesOnboardingDraft | null {
+  if (cookieValue === undefined || cookieValue.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    const parsedValue = tablesDraftSchema.safeParse(JSON.parse(cookieValue));
+
+    if (!parsedValue.success) {
+      return null;
+    }
+
+    return parsedValue.data;
+  } catch {
+    return null;
+  }
+}
+//-aqui termina funcion parseTablesDraftCookie y se va autilizar en el render-//
+
+//-aqui empieza funcion getInitialTableRows y es para resolver el estado inicial del formulario de mesas-//
+/**
+ * Resuelve las filas iniciales usando DB o draft persistido cuando corresponde.
+ * @pure
+ */
+function getInitialTableRows(
+  persistedRows: TablesOnboardingInitialRow[],
+  persistedDraft: TablesOnboardingDraft | null,
+  restaurantId: string,
+  shouldPreferDraft: boolean,
+): TablesOnboardingInitialRow[] {
+  if (shouldPreferDraft && persistedDraft !== null && persistedDraft.restaurantId === restaurantId) {
+    return persistedDraft.rows.length > 0
+      ? persistedDraft.rows.map((row, index) => ({
+          rowKey: row.id.length > 0 ? row.id : `draft-row-${index + 1}`,
+          id: row.id,
+          name: row.name,
+          capacity: row.capacity,
+          isCombinable: row.isCombinable,
+        }))
+      : [{ rowKey: "blank-row-1", id: "", name: "", capacity: 0, isCombinable: false }];
+  }
+
+  if (persistedRows.length > 0) {
+    return persistedRows;
+  }
+
+  if (persistedDraft !== null && persistedDraft.restaurantId === restaurantId && persistedDraft.rows.length > 0) {
+    return persistedDraft.rows.map((row, index) => ({
+      rowKey: row.id.length > 0 ? row.id : `draft-row-${index + 1}`,
+      id: row.id,
+      name: row.name,
+      capacity: row.capacity,
+      isCombinable: row.isCombinable,
+    }));
+  }
+
+  return [{ rowKey: "blank-row-1", id: "", name: "", capacity: 0, isCombinable: false }];
+}
+//-aqui termina funcion getInitialTableRows y se va autilizar en el render-//
+
+//-aqui empieza funcion isDuplicateDiningTableNameError y es para detectar nombres de mesa repetidos en Prisma-//
+/**
+ * Detecta si Prisma rechazó el guardado por nombre de mesa duplicado dentro del restaurante.
+ * @pure
+ */
+function isDuplicateDiningTableNameError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  return "code" in error && (error as { code?: string }).code === "P2002";
+}
+//-aqui termina funcion isDuplicateDiningTableNameError y se va autilizar en el catch del onboarding-//
 
 //-aqui empieza componente TablesTipCard y es para aportar contexto operativo sobre la combinacion de mesas-//
 function TablesTipCard() {
@@ -285,25 +333,61 @@ function TablesTipCard() {
 /**
  * Presenta la pantalla de configuración inicial de mesas del restaurante.
  */
-export default function TablesOnboardingPage() {
+export default async function TablesOnboardingPage({ searchParams }: TablesOnboardingPageProps) {
+  const cookieStore = await cookies();
+  const resolvedSearchParams = await searchParams;
+  const restaurantIdValue = resolvedSearchParams.restaurantId;
+  const queryRestaurantId = Array.isArray(restaurantIdValue) ? restaurantIdValue[0] ?? "" : restaurantIdValue ?? "";
+  const cookieRestaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value ?? "";
+  const restaurantId = queryRestaurantId.length > 0 ? queryRestaurantId : cookieRestaurantId;
+
+  if (restaurantId.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+
+  const errorValue = resolvedSearchParams.error;
+  const errorKey = Array.isArray(errorValue) ? errorValue[0] ?? "" : errorValue ?? "";
+  const errorMessage =
+    errorKey === "invalidForm"
+      ? "Revisa cada mesa. Hay filas con datos incompletos o capacidades inválidas."
+      : errorKey === "emptyTables"
+        ? "Añade al menos una mesa antes de continuar."
+        : errorKey === "duplicateTableName"
+          ? "No puede haber dos mesas con el mismo nombre dentro del restaurante."
+          : undefined;
+
+  const catalogInfrastructure = getCatalogInfrastructure();
+  const restaurant = await catalogInfrastructure.restaurantRepository.findById(restaurantId);
+
+  if (restaurant === null) {
+    redirect("/onboarding/restaurant");
+  }
+
+  const diningTables = await catalogInfrastructure.diningTableRepository.findByRestaurantId(restaurantId);
+  const persistedDraft = parseTablesDraftCookie(cookieStore.get(tablesDraftCookieName)?.value);
+  const persistedRows = diningTables.map((diningTable) => ({
+    rowKey: diningTable.id,
+    id: diningTable.id,
+    name: diningTable.toPrimitives().name,
+    capacity: diningTable.toPrimitives().capacity,
+    isCombinable: diningTable.toPrimitives().isCombinable,
+  }));
+  const initialRows = getInitialTableRows(persistedRows, persistedDraft, restaurantId, errorMessage !== undefined);
+
   const currentStepKey = "tables" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);
   const onboardingSteps = getOnboardingSteps(currentStepKey);
 
   return (
-    <OnboardingShell 
+    <OnboardingShell
       currentStepNumber={currentStepNumber}
-      mobilePrimaryAction={{ label: "Continuar", href: "/onboarding/plan", icon: "arrowForward" }}
-      mobileSecondaryAction={{ label: "Guardar borrador", icon: "save" }}
+      mobilePrimaryAction={{ label: "Continuar", formId: tablesOnboardingFormId, icon: "arrowForward" }}
       steps={onboardingSteps}
       title="Configuración de mesas"
       totalSteps={ONBOARDING_TOTAL_STEPS}
     >
       <div className={tablesPageLayoutClassName}>
-        <TablesWorkspaceTabs />
-        <TablesHero />
-        <TablesMetricsGrid />
-        <TablesLedger />
+        <TablesOnboardingForm action={saveTablesOnboardingAction} errorMessage={errorMessage} initialRows={initialRows} restaurantId={restaurantId} />
         <TablesTipCard />
       </div>
     </OnboardingShell>

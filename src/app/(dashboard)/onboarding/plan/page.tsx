@@ -5,10 +5,13 @@
  */
 
 import Image from "next/image";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 
 interface PlanDefinition {
   eyebrow: string;
@@ -21,6 +24,14 @@ interface PlanDefinition {
 }
 
 const planPageLayoutClassName = "flex w-full max-w-6xl flex-col gap-16";
+const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
+const planCompletionFormId = "plan-completion-form";
+const onboardingRootCookieOptions = {
+  httpOnly: true,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+  sameSite: "lax" as const,
+};
 const planDefinitions: ReadonlyArray<PlanDefinition> = [
   {
     eyebrow: "Esencial",
@@ -49,6 +60,61 @@ const planDefinitions: ReadonlyArray<PlanDefinition> = [
   },
 ] as const;
 const hospitalityTrustImageSrc = "https://lh3.googleusercontent.com/aida-public/AB6AXuDqCXs8nrcN0xPR0fIReZkGyYNXDtMQAP-QzeHMYugwqBAcJHjzAdaojqcZLAavJ9U4fJFNf-pcyhzXqyAaPRLW1F4iXLdhbg2PxfEu0DeiRcro8fCV97pgqPXo8Y0iSe43SbcLmyf8OusdD5isEhzjW2WxTnECDzzFdixCVpxQc9bLl0CLeb0GmCexP9ZvK4ECqi-fUxykJ74qIVviutOB0dETd04fWf4UDKyZzPduIw-8q8zMd_q9tqXszN_Y3G5LKxtWRH3KrUc";
+
+//-aqui empieza funcion ensurePlanPrerequisites y es para bloquear el paso de plan si faltan pasos previos-//
+/**
+ * Valida que el onboarding mínimo esté completo antes de mostrar el plan.
+ * @sideEffect
+ */
+async function ensurePlanPrerequisites(): Promise<void> {
+  const cookieStore = await cookies();
+  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
+
+  if (restaurantId.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+
+  const catalogInfrastructure = getCatalogInfrastructure();
+  const restaurant = await catalogInfrastructure.restaurantRepository.findById(restaurantId);
+
+  if (restaurant === null) {
+    redirect("/onboarding/restaurant");
+  }
+
+  const restaurantSettings = await catalogInfrastructure.restaurantSettingsRepository.findByRestaurantId(restaurantId);
+
+  if (restaurantSettings === null) {
+    redirect(`/onboarding/settings?restaurantId=${restaurantId}`);
+  }
+
+  const diningTables = await catalogInfrastructure.diningTableRepository.findByRestaurantId(restaurantId);
+
+  if (diningTables.length === 0) {
+    redirect(`/onboarding/tables?restaurantId=${restaurantId}`);
+  }
+}
+//-aqui termina funcion ensurePlanPrerequisites y se va autilizar en la pagina-//
+
+//-aqui empieza funcion completeOnboardingAndGoToDashboardAction y es para promover el restaurantId al dashboard-//
+/**
+ * Copia el restaurantId del onboarding a una cookie válida para el dashboard y termina el flujo.
+ * @sideEffect
+ */
+async function completeOnboardingAndGoToDashboardAction() {
+  "use server";
+
+  const cookieStore = await cookies();
+  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
+
+  if (restaurantId.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+
+  cookieStore.set(onboardingRestaurantIdCookieName, restaurantId, onboardingRootCookieOptions);
+
+  redirect("/dashboard");
+}
+//-aqui termina funcion completeOnboardingAndGoToDashboardAction y se va autilizar en el footer-//
 
 //-aqui empieza componente PlanHero y es para introducir el paso de billing con tono editorial-//
 function PlanHero() {
@@ -174,23 +240,27 @@ function HospitalityTrustSection() {
 //-aqui empieza componente PlanFooter and es para cerrar la experiencia de seleccion de plan con confianza y accion-//
 function PlanFooter() {
   return (
-    <section className="flex flex-col justify-between gap-6 border-t border-outline-variant/20 py-10 md:flex-row md:items-center">
-      <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-outline-variant text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-          SSL
+    <section className="border-t border-outline-variant/20 py-10">
+      <form action={completeOnboardingAndGoToDashboardAction} id={planCompletionFormId}>
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-outline-variant text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+              SSL
+            </div>
+            <p className="max-w-[220px] text-xs leading-6 text-on-surface-variant">
+              <T>Procesamiento seguro con cifrado SSL de 256 bits. El módulo de billing llegará más adelante.</T>
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="text-sm font-bold text-on-surface-variant transition-colors hover:text-primary" type="submit">
+              <T>Omitir por ahora</T>
+            </button>
+            <button className="rounded-lg bg-primary px-8 py-4 text-sm font-bold uppercase tracking-[0.18em] text-on-primary transition-all hover:opacity-90" type="submit">
+              <T>Ir al dashboard</T>
+            </button>
+          </div>
         </div>
-        <p className="max-w-[220px] text-xs leading-6 text-on-surface-variant">
-          <T>Procesamiento seguro con cifrado SSL de 256 bits listo para el futuro checkout.</T>
-        </p>
-      </div>
-      <div className="flex items-center gap-4">
-        <button className="text-sm font-bold text-on-surface-variant transition-colors hover:text-primary" type="button">
-          <T>Omitir por ahora</T>
-        </button>
-        <button className="rounded-lg bg-primary px-8 py-4 text-sm font-bold uppercase tracking-[0.18em] text-on-primary transition-all hover:opacity-90" type="button">
-          <T>Activar plan</T>
-        </button>
-      </div>
+      </form>
     </section>
   );
 }
@@ -200,7 +270,9 @@ function PlanFooter() {
 /**
  * Presenta la pantalla de selección de plan SaaS para el restaurante.
  */
-export default function PlanOnboardingPage() {
+export default async function PlanOnboardingPage() {
+  await ensurePlanPrerequisites();
+
   const currentStepKey = "plan" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);
   const onboardingSteps = getOnboardingSteps(currentStepKey);
@@ -208,8 +280,7 @@ export default function PlanOnboardingPage() {
   return (
     <OnboardingShell
       currentStepNumber={currentStepNumber}
-      mobilePrimaryAction={{ label: "Activar plan", icon: "arrowForward" }}
-      mobileSecondaryAction={{ label: "Guardar borrador", icon: "save" }}
+      mobilePrimaryAction={{ label: "Ir al dashboard", formId: planCompletionFormId, icon: "arrowForward" }}
       steps={onboardingSteps}
       title="Plan de pago"
       totalSteps={ONBOARDING_TOTAL_STEPS}

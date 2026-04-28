@@ -39,6 +39,16 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
 class InMemoryDiningTableRepository implements DiningTableRepository {
   public savedDiningTable: DiningTable | null = null;
 
+  //-aqui empieza funcion findByRestaurantId y es para cumplir el contrato del puerto en pruebas-//
+  /**
+   * Devuelve una colección vacía porque este test no valida listados por restaurante.
+   * @pure
+   */
+  async findByRestaurantId(): Promise<DiningTable[]> {
+    return [];
+  }
+  //-aqui termina funcion findByRestaurantId y se va autilizar solo en tests-//
+
   //-aqui empieza funcion findById y es para cumplir el contrato del puerto en pruebas-//
   /**
    * Devuelve null porque este test solo valida el alta de la mesa.
@@ -48,6 +58,16 @@ class InMemoryDiningTableRepository implements DiningTableRepository {
     return null;
   }
   //-aqui termina funcion findById y se va autilizar solo en tests-//
+
+  //-aqui empieza funcion deleteMissingByRestaurantId y es para cumplir el contrato del puerto en pruebas-//
+  /**
+   * No hace nada porque este test no valida sincronización de eliminaciones.
+   * @pure
+   */
+  async deleteMissingByRestaurantId(): Promise<void> {
+    return;
+  }
+  //-aqui termina funcion deleteMissingByRestaurantId y se va autilizar solo en tests-//
 
   //-aqui empieza funcion save y es para persistir en memoria la mesa creada-//
   /**

@@ -11,6 +11,21 @@ import { type DiningTableRepository } from "../../application/ports/dining-table
 export class PrismaDiningTableRepository implements DiningTableRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
 
+  //-aqui empieza funcion findByRestaurantId y es para listar las mesas persistidas de un restaurante-//
+  /**
+   * Lista las mesas activas e históricas de un restaurante ordenadas por su orden visual.
+   * @sideEffect
+   */
+  async findByRestaurantId(restaurantId: string): Promise<DiningTable[]> {
+    const diningTableRecords = await this.prismaClient.diningTable.findMany({
+      where: { restaurantId },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+
+    return diningTableRecords.map(mapDiningTableRecordToEntity);
+  }
+  //-aqui termina funcion findByRestaurantId y se va autilizar en onboarding y dashboard-//
+
   //-aqui empieza funcion findById y es para buscar una mesa persistida por id-//
   /**
    * Busca una mesa persistida por su identificador.
@@ -28,6 +43,21 @@ export class PrismaDiningTableRepository implements DiningTableRepository {
     return mapDiningTableRecordToEntity(diningTableRecord);
   }
   //-aqui termina funcion findById y se va autilizar en casos de uso de catalogo-//
+
+  //-aqui empieza funcion deleteMissingByRestaurantId y es para sincronizar eliminaciones del onboarding de mesas-//
+  /**
+   * Elimina las mesas de un restaurante que ya no aparecen en el conjunto actual del formulario.
+   * @sideEffect
+   */
+  async deleteMissingByRestaurantId(restaurantId: string, idsToKeep: string[]): Promise<void> {
+    await this.prismaClient.diningTable.deleteMany({
+      where: {
+        restaurantId,
+        ...(idsToKeep.length > 0 ? { id: { notIn: idsToKeep } } : {}),
+      },
+    });
+  }
+  //-aqui termina funcion deleteMissingByRestaurantId y se va autilizar en el onboarding-//
 
   //-aqui empieza funcion save y es para persistir una mesa usando Prisma-//
   /**

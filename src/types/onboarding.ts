@@ -38,5 +38,7 @@ export interface OnboardingActionDefinition {
   label: string;
   href?: string;
   formId?: string;
+  submitName?: string;
+  submitValue?: string;
   icon: Extract<OnboardingChromeIconName, "save" | "arrowForward">;
 }
