@@ -26,6 +26,10 @@ const onboardingShellAvatarSrc = "https://lh3.googleusercontent.com/aida-public/
 
 //-aqui empieza funcion renderShellAction y es para resolver acciones reutilizables del shell-//
 function renderShellAction(action: OnboardingActionDefinition, variant: "primary" | "secondary") {
+  if (action.href === undefined && action.formId === undefined) {
+    return null;
+  }
+
   const variantClassName =
     variant === "primary"
       ? "bg-primary text-on-primary hover:opacity-90"
@@ -49,7 +53,7 @@ function renderShellAction(action: OnboardingActionDefinition, variant: "primary
   }
 
   return (
-    <button className={`${shellActionBaseClassName} ${variantClassName}`} type="button">
+    <button className={`${shellActionBaseClassName} ${variantClassName}`} form={action.formId} type={action.formId ? "submit" : "button"}>
       {content}
     </button>
   );
@@ -69,16 +73,17 @@ export function OnboardingShell({
   mobileSecondaryAction,
   children,
 }: OnboardingShellProps) {
-  const progressWidth = `${(currentStepNumber / totalSteps) * 100}%`;
+  const safeTotalSteps = totalSteps > 0 ? totalSteps : 1;
+  const progressWidth = `${(currentStepNumber / safeTotalSteps) * 100}%`;
 
   return (
     <div className="min-h-screen bg-surface text-on-surface md:flex md:overflow-hidden">
       <header className="sticky top-0 z-40 border-b border-outline-variant/30 bg-surface md:hidden">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
-            <button className="rounded-full p-2 text-on-surface transition-colors hover:bg-surface-container" type="button">
+            <Link aria-label="Cerrar onboarding" className="rounded-full p-2 text-on-surface transition-colors hover:bg-surface-container" href="/">
               <OnboardingIcon name="close" />
-            </button>
+            </Link>
             <h1 className="text-xl font-bold tracking-tight text-primary">
               <T>Onboarding</T>
             </h1>
@@ -177,12 +182,12 @@ export function OnboardingShell({
               <T>{title}</T>
             </h2>
             <div className="flex items-center gap-5 text-on-surface-variant">
-              <button className="transition-colors hover:text-on-surface" type="button">
+              <Link aria-label="Ayuda" className="transition-colors hover:text-on-surface" href="/contact">
                 <OnboardingIcon name="help" />
-              </button>
-              <button className="transition-colors hover:text-on-surface" type="button">
+              </Link>
+              <Link aria-label="Acceso" className="transition-colors hover:text-on-surface" href="/sign-in">
                 <OnboardingIcon name="accountCircle" />
-              </button>
+              </Link>
             </div>
           </header>
 
@@ -192,7 +197,7 @@ export function OnboardingShell({
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 border-t border-outline-variant/20 bg-surface-container-lowest/90 px-4 py-4 backdrop-blur-md md:hidden">
-        {mobileSecondaryAction ? renderShellAction(mobileSecondaryAction, "secondary") : <div />}
+        {mobileSecondaryAction ? renderShellAction(mobileSecondaryAction, "secondary") : null}
         <div className="flex-1">{renderShellAction(mobilePrimaryAction, "primary")}</div>
       </nav>
     </div>

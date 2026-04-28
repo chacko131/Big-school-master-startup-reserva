@@ -4,16 +4,21 @@
  * Tipo: UI
  */
 
+import { randomUUID } from "node:crypto";
 import Image from "next/image";
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
 import { OnboardingField } from "@/components/onboarding/OnboardingField";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { CreateRestaurant } from "@/modules/catalog/application/use-cases/create-restaurant.use-case";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 
 const restaurantInputClassName = "w-full rounded-lg border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface transition-all placeholder:text-outline focus:ring-1 focus:ring-primary";
 const restaurantContentLayoutClassName = "flex w-full max-w-5xl flex-col items-start gap-12 md:flex-row md:gap-16";
+const restaurantOnboardingFormId = "restaurant-onboarding-form";
 
 const restaurantTimezoneOptions = [
   "America/Santo_Domingo (GMT-04:00)",
@@ -21,6 +26,80 @@ const restaurantTimezoneOptions = [
   "America/Mexico_City (GMT-06:00)",
   "Europe/Madrid (GMT+01:00)",
 ] as const;
+
+const restaurantOnboardingSchema = z.object({
+  name: z.string().trim().min(2),
+  slug: z.string().trim().min(2).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  timezone: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  phone: z.string().trim().min(1),
+});
+
+//-aqui empieza funcion createRestaurantOnboardingAction y es para crear el restaurante desde onboarding-//
+/**
+ * Crea el restaurante base del onboarding y avanza al paso operativo.
+ * @sideEffect
+ */
+async function createRestaurantOnboardingAction(formData: FormData) {
+  "use server";
+
+  console.info("[onboarding:restaurant] submit received");
+
+  const parsedInput = restaurantOnboardingSchema.safeParse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    timezone: formData.get("timezone"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+  });
+
+  if (!parsedInput.success) {
+    console.warn("[onboarding:restaurant] validation failed", parsedInput.error.flatten().fieldErrors);
+    throw new Error("Formulario de restaurante inválido");
+  }
+
+  console.info("[onboarding:restaurant] validation passed", {
+    name: parsedInput.data.name,
+    slug: parsedInput.data.slug,
+    timezone: parsedInput.data.timezone,
+  });
+
+  try {
+    const catalogInfrastructure = getCatalogInfrastructure();
+    const createRestaurant = new CreateRestaurant(catalogInfrastructure.restaurantRepository);
+
+    const restaurantId = randomUUID();
+
+    console.info("[onboarding:restaurant] creating restaurant", {
+      restaurantId,
+      slug: parsedInput.data.slug,
+    });
+
+    await createRestaurant.execute({
+      id: restaurantId,
+      name: parsedInput.data.name,
+      slug: parsedInput.data.slug,
+      timezone: parsedInput.data.timezone,
+      email: parsedInput.data.email,
+      phone: parsedInput.data.phone,
+      isActive: true,
+    });
+
+    console.info("[onboarding:restaurant] restaurant created", {
+      restaurantId,
+    });
+  } catch (error) {
+    console.error("[onboarding:restaurant] unexpected failure", error);
+    throw error;
+  }
+
+  console.info("[onboarding:restaurant] redirecting to settings", {
+    redirectTo: "/onboarding/settings",
+  });
+
+  redirect("/onboarding/settings");
+}
+//-aqui termina funcion createRestaurantOnboardingAction y se va autilizar en el submit del onboarding-//
 
 //-aqui empieza componente RestaurantHero y es para presentar el contexto visual del paso-//
 function RestaurantHero() {
@@ -67,13 +146,14 @@ function RestaurantHero() {
 function RestaurantProfileForm() {
   return (
     <section className="w-full rounded-[28px] bg-surface-container-lowest p-8 shadow-[0_20px_40px_rgba(26,28,28,0.04)] md:w-3/5 md:p-10">
-      <form className="space-y-8">
+      <form action={createRestaurantOnboardingAction} className="space-y-8" id={restaurantOnboardingFormId}>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <OnboardingField className="md:col-span-2" htmlFor="restaurant-name" label="Nombre del restaurante">
             <input
               className={restaurantInputClassName}
               defaultValue="La Terraza Latina"
               id="restaurant-name"
+              name="name"
               placeholder="Ej. La Terraza Latina"
               type="text"
             />
@@ -93,6 +173,7 @@ function RestaurantProfileForm() {
                 className="min-w-0 flex-1 border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface placeholder:text-outline focus:ring-0"
                 defaultValue="la-terraza-latina"
                 id="restaurant-slug"
+                name="slug"
                 placeholder="la-terraza-latina"
                 type="text"
               />
@@ -101,7 +182,12 @@ function RestaurantProfileForm() {
 
           <OnboardingField htmlFor="restaurant-timezone" label="Zona horaria">
             <div className="relative">
-              <select className={`${restaurantInputClassName} appearance-none pr-12`} defaultValue={restaurantTimezoneOptions[0]} id="restaurant-timezone">
+              <select
+                className={`${restaurantInputClassName} appearance-none pr-12`}
+                defaultValue={restaurantTimezoneOptions[0]}
+                id="restaurant-timezone"
+                name="timezone"
+              >
                 {restaurantTimezoneOptions.map((timezoneOption) => (
                   <option key={timezoneOption} value={timezoneOption}>
                     {timezoneOption}
@@ -119,6 +205,7 @@ function RestaurantProfileForm() {
               className={restaurantInputClassName}
               defaultValue="hola@laterraza.com"
               id="restaurant-email"
+              name="email"
               placeholder="hola@restaurante.com"
               type="email"
             />
@@ -129,6 +216,7 @@ function RestaurantProfileForm() {
               className={restaurantInputClassName}
               defaultValue="+34 600 123 456"
               id="restaurant-phone"
+              name="phone"
               placeholder="+34 600 123 456"
               type="tel"
             />
@@ -139,10 +227,10 @@ function RestaurantProfileForm() {
           <button className="text-sm font-bold uppercase tracking-[0.22em] text-on-primary-container transition-colors hover:text-on-surface" type="button">
             <T>Guardar borrador</T>
           </button>
-          <Link className="flex items-center gap-3 rounded-lg bg-primary px-10 py-4 text-sm font-bold uppercase tracking-[0.22em] text-on-primary transition-all hover:opacity-90" href="/onboarding/settings">
+          <button className="flex items-center gap-3 rounded-lg bg-primary px-10 py-4 text-sm font-bold uppercase tracking-[0.22em] text-on-primary transition-all hover:opacity-90" type="submit">
             <T>Continuar</T>
             <OnboardingIcon name="arrowForward" className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
       </form>
     </section>
@@ -179,7 +267,7 @@ export default function RestaurantOnboardingPage() {
   return (
     <OnboardingShell
       currentStepNumber={currentStepNumber}
-      mobilePrimaryAction={{ label: "Continuar", href: "/onboarding/settings", icon: "arrowForward" }}
+      mobilePrimaryAction={{ label: "Continuar", formId: restaurantOnboardingFormId, icon: "arrowForward" }}
       mobileSecondaryAction={{ label: "Guardar borrador", icon: "save" }}
       steps={onboardingSteps}
       title="Perfil del restaurante"
