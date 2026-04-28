@@ -6,6 +6,7 @@
 
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,6 +28,22 @@ interface DashboardSidebarLinkProps {
   label: string;
   icon: OnboardingIconName;
   active: boolean;
+  onNavigate?: () => void;
+}
+
+interface DashboardSidebarProps {
+  activePathname: string;
+  sectionLabel: string;
+}
+
+interface DashboardSidebarContentProps extends DashboardSidebarProps {
+  className?: string;
+  onNavigate?: () => void;
+}
+
+interface DashboardMobileSidebarProps extends DashboardSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 //-aqui empieza componente DashboardSidebarLink y es para pintar cada enlace de navegación del panel-//
@@ -35,13 +52,18 @@ interface DashboardSidebarLinkProps {
  *
  * @pure
  */
-function DashboardSidebarLink({ href, label, icon, active }: DashboardSidebarLinkProps) {
+function DashboardSidebarLink({ href, label, icon, active, onNavigate }: DashboardSidebarLinkProps) {
   const linkClassName = active
     ? "bg-primary text-on-primary shadow-sm"
     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
 
   return (
-    <Link className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${linkClassName}`} href={href} aria-current={active ? "page" : undefined}>
+    <Link
+      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${linkClassName}`}
+      href={href}
+      aria-current={active ? "page" : undefined}
+      onClick={onNavigate}
+    >
       <OnboardingIcon name={icon} className="h-5 w-5 shrink-0" />
       <span>
         <T>{label}</T>
@@ -51,22 +73,34 @@ function DashboardSidebarLink({ href, label, icon, active }: DashboardSidebarLin
 }
 //-aqui termina componente DashboardSidebarLink-//
 
-//-aqui empieza componente DashboardSidebar y es para mostrar la navegación lateral del dashboard-//
-interface DashboardSidebarProps {
-  activePathname: string;
-  sectionLabel: string;
-}
+const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-container-lowest p-6";
 
+//-aqui empieza componente DashboardSidebar y es para mostrar la navegación lateral del dashboard-//
 /**
  * Renderiza el sidebar principal del dashboard.
  *
  * @pure
  */
 function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProps) {
+  return (
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block">
+      <DashboardSidebarContent activePathname={activePathname} className="w-72 border-r border-outline-variant/20" sectionLabel={sectionLabel} />
+    </aside>
+  );
+}
+//-aqui termina componente DashboardSidebar-//
+
+//-aqui empieza componente DashboardSidebarContent y es para compartir el layout entre desktop y móvil-//
+/**
+ * Dibuja el contenido interno del sidebar, reutilizable en desktop y móvil.
+ *
+ * @pure
+ */
+function DashboardSidebarContent({ activePathname, sectionLabel, className = "", onNavigate }: DashboardSidebarContentProps) {
   const activeNavigationKey = getDashboardActiveNavigationDefinition(activePathname).key;
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-r border-outline-variant/20 bg-surface-container-lowest p-6 lg:flex">
+    <div className={`${sidebarBaseClassName} ${className}`}>
       <div className="mb-10">
         <p className="text-lg font-black tracking-tight text-primary">
           <T>Reserva Latina</T>
@@ -99,6 +133,7 @@ function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProp
               href={navigationDefinition.href}
               icon={navigationDefinition.icon}
               label={navigationDefinition.label}
+              onNavigate={onNavigate}
             />
           );
         })}
@@ -117,14 +152,42 @@ function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProp
           </p>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }
-//-aqui termina componente DashboardSidebar-//
+//-aqui termina componente DashboardSidebarContent-//
+
+//-aqui empieza componente DashboardMobileSidebar y es para pintar la navegación en móviles-//
+/**
+ * Muestra el sidebar dentro de un overlay deslizable para pantallas móviles.
+ *
+ * @pure
+ */
+function DashboardMobileSidebar({ activePathname, sectionLabel, isOpen, onClose }: DashboardMobileSidebarProps) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex lg:hidden">
+      <button className="absolute inset-0 bg-surface/60 backdrop-blur-sm" type="button" aria-label="Cerrar navegación" onClick={onClose} />
+      <aside className="relative ml-auto flex h-full w-full max-w-sm flex-col bg-surface-container-lowest shadow-[0_20px_50px_rgba(15,23,42,0.35)]">
+        <button className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-container text-on-surface shadow" type="button" aria-label="Ocultar navegación" onClick={onClose}>
+          <OnboardingIcon name="close" className="h-4 w-4" />
+        </button>
+
+        <DashboardSidebarContent activePathname={activePathname} className="w-full border-none pt-10" onNavigate={onClose} sectionLabel={sectionLabel} />
+      </aside>
+    </div>
+  );
+}
+//-aqui termina componente DashboardMobileSidebar-//
 
 //-aqui empieza componente DashboardHeader y es para mostrar el encabezado superior del dashboard-//
 interface DashboardHeaderProps {
   sectionLabel: string;
+  onOpenMobileSidebar?: () => void;
+  isMobileSidebarOpen?: boolean;
 }
 
 /**
@@ -132,11 +195,24 @@ interface DashboardHeaderProps {
  *
  * @pure
  */
-function DashboardHeader({ sectionLabel }: DashboardHeaderProps) {
+function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpen }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-outline-variant/20 bg-surface/95 backdrop-blur-md">
       <div className="flex items-center justify-between gap-4 px-6 py-4 md:px-8 lg:px-10">
         <div className="flex min-w-0 items-center gap-4">
+          <button
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface-variant transition-colors hover:text-on-surface lg:hidden"
+            type="button"
+            aria-label="Abrir navegación"
+            aria-expanded={isMobileSidebarOpen}
+            onClick={onOpenMobileSidebar}
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 7h16" />
+              <path d="M4 12h12" />
+              <path d="M4 17h16" />
+            </svg>
+          </button>
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary-container text-secondary">
             <OnboardingIcon name="restaurant" className="h-5 w-5" />
           </div>
@@ -172,12 +248,36 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
   const activeNavigationDefinition = getDashboardActiveNavigationDefinition(pathname);
   const sectionLabel = getDashboardSectionLabel(pathname);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen) {
+      document.body.style.removeProperty("overflow");
+      return undefined;
+    }
+
+    document.body.style.setProperty("overflow", "hidden");
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.removeProperty("overflow");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileSidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface lg:flex">
+    <div className="min-h-screen bg-surface text-on-surface">
       <DashboardSidebar activePathname={pathname} sectionLabel={sectionLabel} />
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <DashboardHeader sectionLabel={sectionLabel} />
+      <DashboardMobileSidebar activePathname={pathname} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
+      <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
+        <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
         <main className="flex-1 bg-surface-container-low px-6 py-8 md:px-8 lg:px-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
             <div className="rounded-[20px] border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-xs font-semibold text-on-surface-variant lg:hidden">

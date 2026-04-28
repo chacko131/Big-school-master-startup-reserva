@@ -90,6 +90,14 @@ export class Restaurant {
     return this.props.timezone;
   }
 
+  get email(): string | null {
+    return this.props.email;
+  }
+
+  get phone(): string | null {
+    return this.props.phone;
+  }
+
   get isActive(): boolean {
     return this.props.isActive;
   }

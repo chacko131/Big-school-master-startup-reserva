@@ -15,7 +15,7 @@ export class UpdateRestaurantSettings {
   //-aqui empieza funcion execute y es para actualizar y guardar la configuracion operativa-//
   /**
    * Ejecuta el caso de uso de actualización de configuración operativa.
-   * @pure
+   * @sideEffect
    */
   async execute(input: UpdateRestaurantSettingsDto): Promise<RestaurantSettings> {
     const restaurantSettings = await this.restaurantSettingsRepository.findByRestaurantId(input.restaurantId);

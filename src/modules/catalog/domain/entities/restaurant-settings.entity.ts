@@ -106,6 +106,26 @@ export class RestaurantSettings {
     return this.props.waitlistMode;
   }
 
+  get defaultReservationDurationMinutes(): number {
+    return this.props.defaultReservationDurationMinutes;
+  }
+
+  get reservationBufferMinutes(): number {
+    return this.props.reservationBufferMinutes;
+  }
+
+  get cancellationWindowHours(): number {
+    return this.props.cancellationWindowHours;
+  }
+
+  get allowTableCombination(): boolean {
+    return this.props.allowTableCombination;
+  }
+
+  get enableAutoTableAssignment(): boolean {
+    return this.props.enableAutoTableAssignment;
+  }
+
   //-aqui empieza funcion useManualApproval y es para cambiar la aprobacion de reservas a manual-//
   /**
    * Devuelve una nueva entidad con aprobación manual.
