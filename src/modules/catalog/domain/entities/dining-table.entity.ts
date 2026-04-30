@@ -9,11 +9,17 @@ import { DiningTableValidationError } from "../errors/dining-table-validation.er
 export interface DiningTablePrimitives {
   id: string;
   restaurantId: string;
+  zoneId: string | null;
   name: string;
   capacity: number;
   isActive: boolean;
   isCombinable: boolean;
   sortOrder: number;
+  shape: "SQUARE" | "ROUND" | "BAR";
+  x: number | null;
+  y: number | null;
+  width: number | null;
+  height: number | null;
   version: number;
   createdAt: Date;
   updatedAt: Date;
@@ -22,11 +28,17 @@ export interface DiningTablePrimitives {
 export interface CreateDiningTableProps {
   id: string;
   restaurantId: string;
+  zoneId?: string | null;
   name: string;
   capacity?: number;
   isActive?: boolean;
   isCombinable?: boolean;
   sortOrder?: number;
+  shape?: "SQUARE" | "ROUND" | "BAR";
+  x?: number | null;
+  y?: number | null;
+  width?: number | null;
+  height?: number | null;
   version?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -56,11 +68,17 @@ export class DiningTable {
     return new DiningTable({
       id: props.id.trim(),
       restaurantId: props.restaurantId.trim(),
+      zoneId: props.zoneId ?? null,
       name: props.name.trim(),
       capacity,
       isActive: props.isActive ?? true,
       isCombinable: props.isCombinable ?? false,
       sortOrder: props.sortOrder ?? 0,
+      shape: props.shape ?? "SQUARE",
+      x: props.x ?? null,
+      y: props.y ?? null,
+      width: props.width ?? null,
+      height: props.height ?? null,
       version: props.version ?? 1,
       createdAt: props.createdAt ?? now,
       updatedAt: props.updatedAt ?? now,

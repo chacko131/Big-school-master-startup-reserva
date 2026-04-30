@@ -11,4 +11,6 @@ export interface DiningTableRepository {
   findById(id: string): Promise<DiningTable | null>;
   deleteMissingByRestaurantId(restaurantId: string, idsToKeep: string[]): Promise<void>;
   save(diningTable: DiningTable): Promise<DiningTable>;
+  /** Asigna una zona a todas las mesas sin zona (zoneId = null) de un restaurante. */
+  assignZoneToOrphanTables(restaurantId: string, zoneId: string): Promise<void>;
 }

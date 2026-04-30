@@ -72,11 +72,17 @@ export class PrismaDiningTableRepository implements DiningTableRepository {
       create: diningTablePrimitives,
       update: {
         restaurantId: diningTablePrimitives.restaurantId,
+        zoneId: diningTablePrimitives.zoneId,
         name: diningTablePrimitives.name,
         capacity: diningTablePrimitives.capacity,
         isActive: diningTablePrimitives.isActive,
         isCombinable: diningTablePrimitives.isCombinable,
         sortOrder: diningTablePrimitives.sortOrder,
+        shape: diningTablePrimitives.shape,
+        x: diningTablePrimitives.x,
+        y: diningTablePrimitives.y,
+        width: diningTablePrimitives.width,
+        height: diningTablePrimitives.height,
         version: diningTablePrimitives.version,
         createdAt: diningTablePrimitives.createdAt,
         updatedAt: diningTablePrimitives.updatedAt,
@@ -86,6 +92,25 @@ export class PrismaDiningTableRepository implements DiningTableRepository {
     return mapDiningTableRecordToEntity(persistedDiningTable);
   }
   //-aqui termina funcion save y se va autilizar en application-//
+
+  //-aqui empieza funcion assignZoneToOrphanTables y es para migrar mesas sin zona a una zona destino-//
+  /**
+   * Actualiza en batch todas las mesas sin zona asignada de un restaurante.
+   * @sideEffect
+   */
+  async assignZoneToOrphanTables(restaurantId: string, zoneId: string): Promise<void> {
+    await this.prismaClient.diningTable.updateMany({
+      where: {
+        restaurantId,
+        zoneId: null,
+      },
+      data: {
+        zoneId,
+        updatedAt: new Date(),
+      },
+    });
+  }
+  //-aqui termina funcion assignZoneToOrphanTables-//
 }
 
 //-aqui empieza funcion mapDiningTableRecordToEntity y es para rehidratar la entidad DiningTable-//
@@ -97,11 +122,17 @@ function mapDiningTableRecordToEntity(diningTableRecord: PrismaDiningTableRecord
   const diningTablePrimitives: DiningTablePrimitives = {
     id: diningTableRecord.id,
     restaurantId: diningTableRecord.restaurantId,
+    zoneId: diningTableRecord.zoneId,
     name: diningTableRecord.name,
     capacity: diningTableRecord.capacity,
     isActive: diningTableRecord.isActive,
     isCombinable: diningTableRecord.isCombinable,
     sortOrder: diningTableRecord.sortOrder,
+    shape: diningTableRecord.shape,
+    x: diningTableRecord.x,
+    y: diningTableRecord.y,
+    width: diningTableRecord.width,
+    height: diningTableRecord.height,
     version: diningTableRecord.version,
     createdAt: diningTableRecord.createdAt,
     updatedAt: diningTableRecord.updatedAt,

@@ -69,6 +69,16 @@ class InMemoryDiningTableRepository implements DiningTableRepository {
   }
   //-aqui termina funcion deleteMissingByRestaurantId y se va autilizar solo en tests-//
 
+  //-aqui empieza funcion assignZoneToOrphanTables y es para cumplir el contrato del puerto en pruebas-//
+  /**
+   * No hace nada porque este test no valida asignación de zonas.
+   * @pure
+   */
+  async assignZoneToOrphanTables(): Promise<void> {
+    return;
+  }
+  //-aqui termina funcion assignZoneToOrphanTables y se va autilizar solo en tests-//
+
   //-aqui empieza funcion save y es para persistir en memoria la mesa creada-//
   /**
    * Guarda en memoria la mesa creada durante la prueba.

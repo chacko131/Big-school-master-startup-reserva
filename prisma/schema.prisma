@@ -36,6 +36,17 @@ enum WaitlistMode {
   AUTO
 }
 
+enum TableShape {
+  SQUARE
+  ROUND
+  BAR
+}
+
+enum FloorPlanElementType {
+  WALL
+  PLANT
+}
+
 model Restaurant {
   id           String              @id @default(cuid())
   name         String
@@ -49,6 +60,8 @@ model Restaurant {
   updatedAt    DateTime            @updatedAt
   settings     RestaurantSettings?
   tables       DiningTable[]
+  zones        RestaurantZone[]
+  floorElements FloorPlanElement[]
   guests       Guest[]
   reservations Reservation[]
 
@@ -71,22 +84,47 @@ model RestaurantSettings {
   restaurant                        Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
 
+model RestaurantZone {
+  id           String       @id @default(cuid())
+  restaurantId String
+  name         String
+  color        String       @default("#6366f1")
+  sortOrder    Int          @default(0)
+  version      Int          @default(1)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tables       DiningTable[]
+  floorElements FloorPlanElement[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
+}
+
 model DiningTable {
   id               String             @id @default(cuid())
   restaurantId     String
+  zoneId           String?
   name             String
   capacity         Int                @default(4)
   isActive         Boolean            @default(true)
   isCombinable     Boolean            @default(false)
   sortOrder        Int                @default(0)
+  shape            TableShape         @default(SQUARE)
+  x                Int?
+  y                Int?
+  width            Int?
+  height           Int?
   version          Int                @default(1)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   restaurant       Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  zone             RestaurantZone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   reservationLinks ReservationTable[]
 
   @@unique([restaurantId, name])
   @@index([restaurantId, isActive])
+  @@index([restaurantId, zoneId])
 }
 
 model Guest {
@@ -149,4 +187,23 @@ model ReservationTable {
 
   @@unique([reservationId, tableId])
   @@index([tableId, assignedAt])
+}
+
+model FloorPlanElement {
+  id           String               @id @default(cuid())
+  restaurantId String
+  zoneId       String?
+  type         FloorPlanElementType
+  x            Int
+  y            Int
+  width        Int
+  height       Int
+  rotation     Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  restaurant   Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  zone         RestaurantZone?      @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId])
+  @@index([restaurantId, zoneId])
 }
