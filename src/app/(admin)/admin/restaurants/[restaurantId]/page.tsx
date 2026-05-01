@@ -7,8 +7,10 @@
 import Link from "next/link";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
-import { RestaurantDetailMetricCard, RestaurantDetailMetricDefinition } from "@/components/admin/restaurants/id/RestaurantDetailMetricCard";
 import { RestaurantActivityRail } from "@/components/admin/restaurants/id/RestaurantActivityRail";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { GetRestaurantAdminDetailsUseCase } from "@/modules/catalog/application/use-cases/get-restaurant-admin-details.use-case";
+import { notFound } from "next/navigation";
 
 interface AdminRestaurantDetailPageProps {
   params:
@@ -26,56 +28,60 @@ interface RestaurantDetailSectionDefinition {
   value: string;
 }
 
-const restaurantDetailMetricDefinitions: ReadonlyArray<RestaurantDetailMetricDefinition> = [
-  {
-    label: "Estado",
-    value: "Activo",
-    caption: "tenant en operación normal",
-    tone: "primary",
-  },
-  {
-    label: "Plan",
-    value: "Growth",
-    caption: "suscripción actual",
-    tone: "secondary",
-  },
-  {
-    label: "Cobertura",
-    value: "92%",
-    caption: "uso estimado de las funciones clave",
-    tone: "surface",
-  },
-  {
-    label: "Riesgo",
-    value: "Bajo",
-    caption: "sin alertas críticas en el período",
-    tone: "warning",
-  },
-] as const;
 
-const restaurantDetailSectionDefinitions: ReadonlyArray<RestaurantDetailSectionDefinition> = [
-  {
-    title: "Timezone",
-    value: "Europe/Madrid",
-    description: "Alinea los horarios de reservas y avisos operativos.",
-  },
-  {
-    title: "Líder del tenant",
-    value: "Julian Rossi",
-    description: "Usuario principal con acceso de administración.",
-  },
-  {
-    title: "Último sync",
-    value: "Hace 4 minutos",
-    description: "Sincronización correcta de reservas y estados.",
-  },
-] as const;
 
 /**
  * Renderiza el detalle de un restaurante del panel admin.
  */
 export default async function AdminRestaurantDetailPage({ params }: AdminRestaurantDetailPageProps) {
   const { restaurantId } = await params;
+  
+  const infrastructure = getCatalogInfrastructure();
+  const useCase = new GetRestaurantAdminDetailsUseCase(
+    infrastructure.restaurantRepository,
+    infrastructure.restaurantSettingsRepository,
+    infrastructure.diningTableRepository
+  );
+
+  let details;
+  try {
+    details = await useCase.execute(restaurantId);
+  } catch (error) {
+    notFound();
+  }
+
+  const sections: RestaurantDetailSectionDefinition[] = [
+    {
+      title: "Timezone",
+      value: details.timezone,
+      description: "Alinea los horarios de reservas y avisos operativos.",
+    },
+    {
+      title: "Ventana de Cancelación",
+      value: details.cancellationWindowHours ? `${details.cancellationWindowHours}h` : "No definida",
+      description: "Tiempo límite antes de la reserva para cancelar sin penalización.",
+    },
+    {
+      title: "Tipos de Servicio",
+      value: details.services.length > 0 ? details.services.join(", ") : "Sin servicios",
+      description: "Momentos del día en que el restaurante opera.",
+    },
+    {
+      title: "Aprobación",
+      value: details.reservationApprovalMode === "AUTO" ? "Automática" : "Manual",
+      description: "Cómo se aceptan las nuevas solicitudes de reserva.",
+    },
+    {
+      title: "Lista de Espera",
+      value: details.waitlistMode === "AUTO" ? "Automática" : "Manual",
+      description: "Permite a los comensales apuntarse cuando no hay mesas.",
+    },
+    {
+      title: "Mesas Operativas",
+      value: String(details.activeTablesCount),
+      description: "Cantidad de mesas configuradas en sala.",
+    },
+  ];
 
   return (
     <>
@@ -104,17 +110,7 @@ export default async function AdminRestaurantDetailPage({ params }: AdminRestaur
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {restaurantDetailMetricDefinitions.map((metricDefinition) => (
-          <RestaurantDetailMetricCard
-            caption={metricDefinition.caption}
-            key={metricDefinition.label}
-            label={metricDefinition.label}
-            tone={metricDefinition.tone}
-            value={metricDefinition.value}
-          />
-        ))}
-      </section>
+
 
       <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.95fr]">
         <div className="rounded-[28px] border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
@@ -126,7 +122,7 @@ export default async function AdminRestaurantDetailPage({ params }: AdminRestaur
           </h2>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            {restaurantDetailSectionDefinitions.map((sectionDefinition) => (
+            {sections.map((sectionDefinition) => (
               <article className="rounded-2xl bg-surface-container-low p-4" key={sectionDefinition.title}>
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
                   <T>{sectionDefinition.title}</T>

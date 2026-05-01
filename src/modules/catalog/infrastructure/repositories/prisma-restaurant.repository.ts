@@ -29,6 +29,24 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
   }
   //-aqui termina funcion findById y se va autilizar en casos de uso de catalogo-//
 
+  //-aqui empieza funcion findBySlug y es para buscar un restaurante por su slug-//
+  /**
+   * Busca un restaurante persistido por su slug.
+   * @sideEffect
+   */
+  async findBySlug(slug: string): Promise<Restaurant | null> {
+    const restaurantRecord = await this.prismaClient.restaurant.findUnique({
+      where: { slug },
+    });
+
+    if (restaurantRecord === null) {
+      return null;
+    }
+
+    return mapRestaurantRecordToEntity(restaurantRecord);
+  }
+  //-aqui termina funcion findBySlug y se va autilizar en resolucion de rutas-//
+
   //-aqui empieza funcion findAll y es para listar todos los restaurantes-//
   /**
    * Obtiene todos los restaurantes.

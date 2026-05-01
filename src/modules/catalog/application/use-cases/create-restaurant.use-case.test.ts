@@ -22,6 +22,10 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
   }
   //-aqui termina funcion findById y se va autilizar solo en tests-//
 
+  async findBySlug(): Promise<Restaurant | null> {
+    return null;
+  }
+
   async findAll(): Promise<Restaurant[]> {
     return [];
   }
