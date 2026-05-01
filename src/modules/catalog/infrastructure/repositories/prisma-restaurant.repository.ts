@@ -29,6 +29,20 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
   }
   //-aqui termina funcion findById y se va autilizar en casos de uso de catalogo-//
 
+  //-aqui empieza funcion findAll y es para listar todos los restaurantes-//
+  /**
+   * Obtiene todos los restaurantes.
+   * @sideEffect
+   */
+  async findAll(): Promise<Restaurant[]> {
+    const records = await this.prismaClient.restaurant.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return records.map(mapRestaurantRecordToEntity);
+  }
+  //-aqui termina funcion findAll y se va autilizar en el admin-//
+
   //-aqui empieza funcion save y es para persistir un restaurante usando Prisma-//
   /**
    * Guarda un restaurante en la base de datos mediante upsert.

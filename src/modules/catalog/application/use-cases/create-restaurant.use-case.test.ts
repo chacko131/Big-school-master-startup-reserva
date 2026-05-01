@@ -22,6 +22,10 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
   }
   //-aqui termina funcion findById y se va autilizar solo en tests-//
 
+  async findAll(): Promise<Restaurant[]> {
+    return [];
+  }
+
   //-aqui empieza funcion save y es para persistir en memoria durante la prueba-//
   /**
    * Guarda en memoria el restaurante creado durante la prueba.

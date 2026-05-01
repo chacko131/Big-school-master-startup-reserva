@@ -25,6 +25,10 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
   }
   //-aqui termina funcion findById y se va autilizar solo en tests-//
 
+  async findAll(): Promise<Restaurant[]> {
+    return this.restaurant ? [this.restaurant] : [];
+  }
+
   //-aqui empieza funcion save y es para cumplir el contrato del puerto en pruebas-//
   /**
    * Devuelve la entidad recibida porque este test no valida la persistencia del restaurante.
