@@ -16,6 +16,7 @@ import { DeleteZone } from "@/modules/catalog/application/use-cases/delete-zone.
 import { EnsureDefaultZone } from "@/modules/catalog/application/use-cases/ensure-default-zone.use-case";
 import { type FloorPlanTable } from "@/components/dashboard/tables/floorPlanMocks";
 import { type RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
+import { type FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 
 const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
@@ -102,14 +103,16 @@ export async function deleteZoneAction(zoneId: string): Promise<void> {
 }
 //-aqui termina funcion deleteZoneAction-//
 
-//-aqui empieza funcion saveFloorPlanAction y es para persistir las mesas del plano con su zona-//
+//-aqui empieza funcion saveFloorPlanAction y es para persistir las mesas y elementos del plano-//
 /**
- * Guarda el estado actual del editor de mesas incluyendo la zona asignada.
- * Incluye validación defensiva: si el zoneId de la UI no existe en BD, se guarda como null
- * para evitar el error de Foreign Key constraint.
+ * Guarda el estado actual del editor de mesas y elementos decorativos.
+ * Incluye validación defensiva: si el zoneId de la UI no existe en BD, se guarda como null.
  * @sideEffect
  */
-export async function saveFloorPlanAction(tables: FloorPlanTable[]) {
+export async function saveFloorPlanAction(
+  tables: FloorPlanTable[],
+  elements: FloorPlanElementPrimitives[] = [],
+) {
   const restaurantId = await getRestaurantIdFromCookie();
   const catalogInfrastructure = getCatalogInfrastructure();
 
@@ -161,10 +164,16 @@ export async function saveFloorPlanAction(tables: FloorPlanTable[]) {
     };
   });
 
+  // Mapear elementos decorativos asegurando restaurantId correcto
+  const elementsPrimitives: FloorPlanElementPrimitives[] = elements.map((el) => ({
+    ...el,
+    restaurantId,
+  }));
+
   await updateUseCase.execute({
     restaurantId,
     tables: tablesPrimitives as any,
-    elements: [], // Próximamente se enviarán desde la UI
+    elements: elementsPrimitives,
   });
 
   revalidatePath("/dashboard/tables");

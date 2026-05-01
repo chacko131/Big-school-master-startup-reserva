@@ -8,13 +8,20 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type Konva from "konva";
-import { selectedTableIdMock, type FloorPlanTable } from "./floorPlanMocks";
+import { type FloorPlanTable } from "./floorPlanMocks";
 import { FloorPlanCanvas, type GuideLine } from "./FloorPlanCanvas";
 import { FloorPlanPropertiesPanel } from "./FloorPlanPropertiesPanel";
 import { FloorPlanTabs } from "./FloorPlanTabs";
 import { FloorPlanToolRail } from "./FloorPlanToolRail";
-import { saveFloorPlanAction, createZoneAction, deleteZoneAction } from "@/app/(dashboard)/dashboard/tables/actions";
+import { FloorPlanHero } from "./FloorPlanHero";
+import { NotificationBanner, type NotificationBannerTone } from "@/components/ui/NotificationBanner";
+import {
+  saveFloorPlanAction,
+  createZoneAction,
+  deleteZoneAction,
+} from "@/app/(dashboard)/dashboard/tables/actions";
 import type { RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
+import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 
 interface LineGuideStops {
   vertical: number[];
@@ -45,7 +52,10 @@ const CANVAS_HEIGHT = 760;
  * Calcula las guías a las que puede snapear el objeto arrastrado.
  * @pure
  */
-function getLineGuideStops(stage: Konva.Stage, skipShape: Konva.Node): LineGuideStops {
+function getLineGuideStops(
+  stage: Konva.Stage,
+  skipShape: Konva.Node,
+): LineGuideStops {
   const vertical: number[] = [0, stage.width() / 2, stage.width()];
   const horizontal: number[] = [0, stage.height() / 2, stage.height()];
 
@@ -75,13 +85,25 @@ function getObjectSnappingEdges(node: Konva.Node): SnappingEdges {
   return {
     vertical: [
       { guide: Math.round(box.x), offset: Math.round(absPos.x - box.x) },
-      { guide: Math.round(box.x + box.width / 2), offset: Math.round(absPos.x - box.x - box.width / 2) },
-      { guide: Math.round(box.x + box.width), offset: Math.round(absPos.x - box.x - box.width) },
+      {
+        guide: Math.round(box.x + box.width / 2),
+        offset: Math.round(absPos.x - box.x - box.width / 2),
+      },
+      {
+        guide: Math.round(box.x + box.width),
+        offset: Math.round(absPos.x - box.x - box.width),
+      },
     ],
     horizontal: [
       { guide: Math.round(box.y), offset: Math.round(absPos.y - box.y) },
-      { guide: Math.round(box.y + box.height / 2), offset: Math.round(absPos.y - box.y - box.height / 2) },
-      { guide: Math.round(box.y + box.height), offset: Math.round(absPos.y - box.y - box.height) },
+      {
+        guide: Math.round(box.y + box.height / 2),
+        offset: Math.round(absPos.y - box.y - box.height / 2),
+      },
+      {
+        guide: Math.round(box.y + box.height),
+        offset: Math.round(absPos.y - box.y - box.height),
+      },
     ],
   };
 }
@@ -92,7 +114,10 @@ function getObjectSnappingEdges(node: Konva.Node): SnappingEdges {
  * Calcula las guías más cercanas para aplicar snapping.
  * @pure
  */
-function getGuides(lineGuideStops: LineGuideStops, itemBounds: SnappingEdges): GuideLine[] {
+function getGuides(
+  lineGuideStops: LineGuideStops,
+  itemBounds: SnappingEdges,
+): GuideLine[] {
   const resultV: SnappingCandidate[] = [];
   const resultH: SnappingCandidate[] = [];
 
@@ -119,10 +144,18 @@ function getGuides(lineGuideStops: LineGuideStops, itemBounds: SnappingEdges): G
   const minH = resultH.sort((a, b) => a.diff - b.diff)[0];
 
   if (minV) {
-    guides.push({ lineGuide: minV.lineGuide, offset: minV.offset, orientation: "V" });
+    guides.push({
+      lineGuide: minV.lineGuide,
+      offset: minV.offset,
+      orientation: "V",
+    });
   }
   if (minH) {
-    guides.push({ lineGuide: minH.lineGuide, offset: minH.offset, orientation: "H" });
+    guides.push({
+      lineGuide: minH.lineGuide,
+      offset: minH.offset,
+      orientation: "H",
+    });
   }
 
   return guides;
@@ -144,6 +177,7 @@ const ZONE_COLOR_PALETTE = [
 interface FloorPlanEditorProps {
   initialTables: FloorPlanTable[];
   initialZones: RestaurantZonePrimitives[];
+  initialElements?: FloorPlanElementPrimitives[];
 }
 
 //-aqui empieza componente FloorPlanEditor y es para mostrar el editor interactivo de mesas con zonas-//
@@ -151,12 +185,18 @@ interface FloorPlanEditorProps {
  * Renderiza el editor visual de mesas con snapping, panel de propiedades y paginación por zonas.
  * @sideEffect
  */
-export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditorProps) {
+export function FloorPlanEditor({
+  initialTables,
+  initialZones,
+  initialElements = [],
+}: FloorPlanEditorProps) {
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const [isPending, startTransition] = useTransition();
   const [canvasWidth, setCanvasWidth] = useState(1200);
   const [tables, setTables] = useState<FloorPlanTable[]>(initialTables);
-  const [selectedTableId, setSelectedTableId] = useState(selectedTableIdMock);
+  // Estado de selección — ninguna mesa seleccionada por defecto
+  const [selectedTableId, setSelectedTableId] = useState("");
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [guides, setGuides] = useState<GuideLine[]>([]);
 
   // Estado de zonas
@@ -165,6 +205,19 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
   const [activeZoneId, setActiveZoneId] = useState<string | null>(
     initialZones.length > 0 ? initialZones[0].id : null,
   );
+
+  // Estado de elementos decorativos
+  const [elements, setElements] = useState<FloorPlanElementPrimitives[]>(
+    initialElements ?? [],
+  );
+
+  // Estado de notificación (banner de feedback al usuario)
+  const [notification, setNotification] = useState<{
+    tone: NotificationBannerTone;
+    title: string;
+    description?: string;
+    key: number;
+  } | null>(null);
 
   //-aqui empieza efecto de resize y es para adaptar el ancho del canvas al contenedor-//
   useEffect(() => {
@@ -177,7 +230,10 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
 
     updateSize();
 
-    if (typeof ResizeObserver === "undefined" || workspaceRef.current === null) {
+    if (
+      typeof ResizeObserver === "undefined" ||
+      workspaceRef.current === null
+    ) {
       return;
     }
 
@@ -201,8 +257,23 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
     return tables.filter((t) => t.zoneId === activeZoneId);
   }, [tables, activeZoneId]);
 
+  const elementsInActiveZone = useMemo(() => {
+    if (activeZoneId === null) {
+      return elements.filter((e) => e.zoneId === null);
+    }
+    return elements.filter((e) => e.zoneId === activeZoneId);
+  }, [elements, activeZoneId]);
+
+  const selectedElement = useMemo(() => {
+    if (!selectedElementId) return undefined;
+    return elements.find(e => e.id === selectedElementId);
+  }, [elements, selectedElementId]);
+
   const selectedTable = useMemo(() => {
-    return tables.find((table) => table.id === selectedTableId) ?? tablesInActiveZone[0];
+    return (
+      tables.find((table) => table.id === selectedTableId) ??
+      tablesInActiveZone[0]
+    );
   }, [selectedTableId, tables, tablesInActiveZone]);
 
   const updateSelectedTable = (patch: Partial<FloorPlanTable>) => {
@@ -232,7 +303,10 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
    * Ajusta la posición de la mesa arrastrada y muestra las guías visuales.
    * @sideEffect
    */
-  const handleDragMove = (event: Konva.KonvaEventObject<unknown>, tableId: string) => {
+  const handleDragMove = (
+    event: Konva.KonvaEventObject<unknown>,
+    tableId: string,
+  ) => {
     const stage = event.target.getStage();
 
     if (stage === null) {
@@ -263,6 +337,7 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
 
     draggedNode.absolutePosition(absPos);
     setSelectedTableId(tableId);
+    setSelectedElementId(null);
   };
   //-aqui termina funcion handleDragMove-//
 
@@ -271,7 +346,10 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
    * Sincroniza la posición final de la mesa arrastrada con el estado local.
    * @sideEffect
    */
-  const handleDragEnd = (event: Konva.KonvaEventObject<unknown>, tableId: string) => {
+  const handleDragEnd = (
+    event: Konva.KonvaEventObject<unknown>,
+    tableId: string,
+  ) => {
     const node = event.target;
     const newX = node.x();
     const newY = node.y();
@@ -286,14 +364,19 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
       if ("clientX" in nativeEvent) {
         clientX = nativeEvent.clientX;
         clientY = nativeEvent.clientY;
-      } else if ("changedTouches" in nativeEvent && nativeEvent.changedTouches.length > 0) {
+      } else if (
+        "changedTouches" in nativeEvent &&
+        nativeEvent.changedTouches.length > 0
+      ) {
         clientX = nativeEvent.changedTouches[0].clientX;
         clientY = nativeEvent.changedTouches[0].clientY;
       }
 
       if (clientX > 0 || clientY > 0) {
         const elements = document.elementsFromPoint(clientX, clientY);
-        isDroppedOnSidebar = elements.some((el) => el.getAttribute("data-drop-zone") === "sidebar");
+        isDroppedOnSidebar = elements.some(
+          (el) => el.getAttribute("data-drop-zone") === "sidebar",
+        );
       }
     }
 
@@ -306,13 +389,16 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
     } else {
       setTables((currentTables) =>
         currentTables.map((table) =>
-          table.id === tableId ? { ...table, x: Math.round(newX), y: Math.round(newY) } : table,
+          table.id === tableId
+            ? { ...table, x: Math.round(newX), y: Math.round(newY) }
+            : table,
         ),
       );
     }
 
     setGuides([]);
     setSelectedTableId(tableId);
+    setSelectedElementId(null);
   };
   //-aqui termina funcion handleDragEnd-//
 
@@ -330,6 +416,7 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
       ),
     );
     setSelectedTableId(tableId);
+    setSelectedElementId(null);
   };
   //-aqui termina funcion handleTableDrop-//
 
@@ -364,12 +451,157 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
       sortOrder: tables.length,
       statusLabel: "",
       statusTone: "active",
+      restaurantId: "",
     };
 
     setTables((currentTables) => [...currentTables, newTable]);
     setSelectedTableId(newId);
   };
   //-aqui termina funcion handleAddTable-//
+
+  //-aqui empieza funcion handleAddElement y es para añadir elementos decorativos-//
+  /**
+   * Crea un nuevo elemento decorativo localmente y lo asocia a la zona activa.
+   * WALL_V es un alias de UI para muro vertical: se guarda como WALL con width/height invertidos.
+   * @sideEffect
+   */
+  const handleAddElement = (type: "WALL" | "WALL_V" | "PLANT") => {
+    const newId = crypto.randomUUID();
+    // WALL_V = muro vertical → dominio lo almacena como WALL con dimensiones transpuestas
+    const domainType: "WALL" | "PLANT" = type === "PLANT" ? "PLANT" : "WALL";
+    const defaultWidth = type === "WALL" ? 200 : type === "WALL_V" ? 20 : 80;
+    const defaultHeight = type === "WALL" ? 20 : type === "WALL_V" ? 200 : 80;
+    const defaultX = Math.round((canvasWidth - defaultWidth) / 2);
+    const defaultY = Math.round((CANVAS_HEIGHT - defaultHeight) / 2);
+
+    const newElement: FloorPlanElementPrimitives = {
+      id: newId,
+      restaurantId: tables.length > 0 ? (tables[0].restaurantId ?? "") : "",
+      zoneId: activeZoneId,
+      type: domainType,
+      x: defaultX,
+      y: defaultY,
+      width: defaultWidth,
+      height: defaultHeight,
+      rotation: 0,
+    };
+
+    setElements((current) => [...current, newElement]);
+    setSelectedElementId(newId);
+    setSelectedTableId("");
+  };
+  //-aqui termina funcion handleAddElement-//
+
+  //-aqui empieza funcion handleElementDragMove y es para aplicar snapping a elementos decorativos-//
+  /**
+   * Ajusta la posición del elemento arrastrado y muestra guías visuales.
+   * @sideEffect
+   */
+  const handleElementDragMove = (event: Konva.KonvaEventObject<unknown>, elementId: string) => {
+    const stage = event.target.getStage();
+    if (stage === null) return;
+
+    const draggedNode = event.target;
+    const lineGuideStops = getLineGuideStops(stage, draggedNode);
+    const itemBounds = getObjectSnappingEdges(draggedNode);
+    const nextGuides = getGuides(lineGuideStops, itemBounds);
+
+    setGuides(nextGuides);
+
+    if (nextGuides.length > 0) {
+      const absPos = draggedNode.absolutePosition();
+      nextGuides.forEach((guide) => {
+        if (guide.orientation === "V") absPos.x = guide.lineGuide + guide.offset;
+        if (guide.orientation === "H") absPos.y = guide.lineGuide + guide.offset;
+      });
+      draggedNode.absolutePosition(absPos);
+    }
+    
+    setSelectedElementId(elementId);
+    setSelectedTableId(""); // Deseleccionar mesa
+  };
+  //-aqui termina funcion handleElementDragMove-//
+
+  //-aqui empieza funcion handleElementDragEnd y es para guardar la posición local del elemento-//
+  /**
+   * Sincroniza la posición final del elemento arrastrado.
+   * @sideEffect
+   */
+  const handleElementDragEnd = (event: Konva.KonvaEventObject<unknown>, elementId: string) => {
+    const node = event.target;
+    const newX = Math.round(node.x());
+    const newY = Math.round(node.y());
+
+    const nativeEvent = event.evt as MouseEvent | TouchEvent;
+    let isDroppedOnSidebar = false;
+
+    if (nativeEvent) {
+      let clientX = 0;
+      let clientY = 0;
+
+      if ("clientX" in nativeEvent) {
+        clientX = nativeEvent.clientX;
+        clientY = nativeEvent.clientY;
+      } else if (
+        "changedTouches" in nativeEvent &&
+        nativeEvent.changedTouches.length > 0
+      ) {
+        clientX = nativeEvent.changedTouches[0].clientX;
+        clientY = nativeEvent.changedTouches[0].clientY;
+      }
+
+      if (clientX > 0 || clientY > 0) {
+        const elementsAtPoint = document.elementsFromPoint(clientX, clientY);
+        isDroppedOnSidebar = elementsAtPoint.some(
+          (el) => el.getAttribute("data-drop-zone") === "sidebar",
+        );
+      }
+    }
+
+    if (isDroppedOnSidebar) {
+      setElements((current) => current.filter((el) => el.id !== elementId));
+      setSelectedElementId(null);
+    } else {
+      setElements((current) =>
+        current.map((el) => (el.id === elementId ? { ...el, x: newX, y: newY } : el))
+      );
+      setSelectedElementId(elementId);
+    }
+
+    setGuides([]);
+    setSelectedTableId("");
+  };
+  //-aqui termina funcion handleElementDragEnd-//
+
+  //-aqui empieza funcion handleNewElementDrop y es para colocar un nuevo elemento-//
+  /**
+   * Actualiza las coordenadas de un elemento recién arrastrado desde el panel lateral.
+   * WALL_V = muro vertical → se guarda como WALL con width/height transpuestos.
+   * @sideEffect
+   */
+  const handleNewElementDrop = (type: "WALL" | "WALL_V" | "PLANT", x: number, y: number) => {
+    const newId = crypto.randomUUID();
+    const domainType: "WALL" | "PLANT" = type === "PLANT" ? "PLANT" : "WALL";
+    const defaultWidth = type === "WALL" ? 200 : type === "WALL_V" ? 20 : 80;
+    const defaultHeight = type === "WALL" ? 20 : type === "WALL_V" ? 200 : 80;
+
+    const newElement: FloorPlanElementPrimitives = {
+      id: newId,
+      restaurantId: tables.length > 0 ? tables[0].restaurantId ?? "" : "",
+      zoneId: activeZoneId,
+      type: domainType,
+      x: Math.round(x),
+      y: Math.round(y),
+      width: defaultWidth,
+      height: defaultHeight,
+      rotation: 0,
+    };
+
+    setElements((current) => [...current, newElement]);
+    setSelectedElementId(newId);
+    setSelectedTableId("");
+  };
+  //-aqui termina funcion handleNewElementDrop-//
 
   //-aqui empieza funcion handleCreateZone y es para crear una nueva zona en BD y actualizar estado local-//
   /**
@@ -421,8 +653,48 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
   };
   //-aqui termina funcion handleDeleteZone-//
 
+  //-aqui empieza funcion handleSave y es para persistir el plano y mostrar notificación-//
+  /**
+   * Guarda el estado actual del canvas y muestra feedback al usuario.
+   * @sideEffect
+   */
+  const handleSave = () => {
+    startTransition(async () => {
+      try {
+        await saveFloorPlanAction(tables, elements);
+        setNotification({
+          tone: "success",
+          title: "Plano guardado",
+          description: "Mesas y decoración guardadas correctamente.",
+          key: Date.now(),
+        });
+      } catch {
+        setNotification({
+          tone: "error",
+          title: "Error al guardar",
+          description: "No se pudo guardar el plano. Inténtalo de nuevo.",
+          key: Date.now(),
+        });
+      }
+    });
+  };
+  //-aqui termina funcion handleSave-//
+
   return (
     <section className="space-y-4">
+      {/* Banner de feedback — aparece tras guardar o eliminar */}
+      {notification !== null && (
+        <NotificationBanner
+          key={notification.key}
+          tone={notification.tone}
+          title={notification.title}
+          description={notification.description}
+          autoDismissMs={4000}
+        />
+      )}
+
+      {/* Hero del editor con botón guardar conectado */}
+      <FloorPlanHero onSave={handleSave} isSaving={isPending} />
       <FloorPlanTabs
         zones={zones}
         activeZoneId={activeZoneId}
@@ -434,8 +706,11 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[210px_minmax(0,1fr)_320px]">
         <FloorPlanToolRail
-          unplacedTables={tablesInActiveZone.filter((t) => t.x === null || t.y === null)}
+          unplacedTables={tablesInActiveZone.filter(
+            (t) => t.x === null || t.y === null,
+          )}
           onAddTable={handleAddTable}
+          onAddElement={handleAddElement}
         />
 
         <FloorPlanCanvas
@@ -443,23 +718,40 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
           canvasHeight={CANVAS_HEIGHT}
           workspaceRef={workspaceRef}
           tables={tablesInActiveZone}
+          elements={elementsInActiveZone}
           selectedTableId={selectedTableId}
+          selectedElementId={selectedElementId}
           guides={guides}
-          setSelectedTableId={setSelectedTableId}
+          setSelectedTableId={(id) => {
+            setSelectedTableId(id);
+            setSelectedElementId(null);
+          }}
+          setSelectedElementId={(id) => {
+            setSelectedElementId(id);
+            setSelectedTableId("");
+          }}
           onTableDragMove={handleDragMove}
           onTableDragEnd={handleDragEnd}
           onTableDrop={handleTableDrop}
+          onElementDragMove={handleElementDragMove}
+          onElementDragEnd={handleElementDragEnd}
+          onNewElementDrop={handleNewElementDrop}
         />
 
         <FloorPlanPropertiesPanel
           selectedTable={selectedTable}
+          selectedElement={selectedElement}
           activeZone={zones.find((z) => z.id === activeZoneId)}
           onNameChange={handleSelectedTableNameChange}
           onCapacityDecrease={() =>
-            updateSelectedTable({ capacity: Math.max(1, (selectedTable?.capacity ?? 1) - 1) })
+            updateSelectedTable({
+              capacity: Math.max(1, (selectedTable?.capacity ?? 1) - 1),
+            })
           }
           onCapacityIncrease={() =>
-            updateSelectedTable({ capacity: (selectedTable?.capacity ?? 1) + 1 })
+            updateSelectedTable({
+              capacity: (selectedTable?.capacity ?? 1) + 1,
+            })
           }
           onToggleCombinable={() =>
             updateSelectedTable({ isCombinable: !selectedTable?.isCombinable })
@@ -468,7 +760,9 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
             updateSelectedTable({
               isActive: true,
               status:
-                selectedTable?.status === "inactive" ? "active" : selectedTable?.status,
+                selectedTable?.status === "inactive"
+                  ? "active"
+                  : selectedTable?.status,
             })
           }
           onSetInactive={() =>
@@ -482,14 +776,30 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
             const remaining = tables.filter((t) => t.id !== selectedTable.id);
             setTables(remaining);
 
-            const remainingInZone = remaining.filter((t) => t.zoneId === activeZoneId);
-            setSelectedTableId(remainingInZone.length > 0 ? remainingInZone[0].id : "");
+            const remainingInZone = remaining.filter(
+              (t) => t.zoneId === activeZoneId,
+            );
+            setSelectedTableId(
+              remainingInZone.length > 0 ? remainingInZone[0].id : "",
+            );
 
             startTransition(async () => {
               try {
                 await saveFloorPlanAction(remaining);
+                setNotification({
+                  tone: "success",
+                  title: "Mesa eliminada",
+                  description: `"${selectedTable.name}" ha sido eliminada del plano.`,
+                  key: Date.now(),
+                });
               } catch (error) {
                 console.error("Error al eliminar la mesa:", error);
+                setNotification({
+                  tone: "error",
+                  title: "Error al eliminar",
+                  description: "No se pudo eliminar la mesa. Inténtalo de nuevo.",
+                  key: Date.now(),
+                });
               }
             });
           }}
@@ -497,12 +807,30 @@ export function FloorPlanEditor({ initialTables, initialZones }: FloorPlanEditor
           onWidthChange={(width) => updateSelectedTable({ width })}
           onHeightChange={(height) => updateSelectedTable({ height })}
           onShapeChange={(shape) => updateSelectedTable({ shape })}
-          isSaving={isPending}
-          onSave={() => {
-            startTransition(async () => {
-              await saveFloorPlanAction(tables);
-            });
+          onDeleteElement={() => {
+            if (selectedElement) {
+              setElements(elements.filter((e) => e.id !== selectedElement.id));
+              setSelectedElementId(null);
+              setNotification({
+                tone: "success",
+                title: "Elemento eliminado",
+                description: "El elemento decorativo ha sido eliminado del plano.",
+                key: Date.now(),
+              });
+            }
           }}
+          onElementWidthChange={(width) => {
+            if (selectedElement) {
+              setElements(elements.map((e) => e.id === selectedElement.id ? { ...e, width } : e));
+            }
+          }}
+          onElementHeightChange={(height) => {
+            if (selectedElement) {
+              setElements(elements.map((e) => e.id === selectedElement.id ? { ...e, height } : e));
+            }
+          }}
+          isSaving={isPending}
+          onSave={handleSave}
         />
       </div>
     </section>

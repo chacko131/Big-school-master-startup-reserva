@@ -6,14 +6,14 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { FloorPlanHero } from "@/components/dashboard/tables/FloorPlanHero";
-import { FloorPlanInsights } from "@/components/dashboard/tables/FloorPlanInsights";
 import { FloorPlanEditor } from "@/components/dashboard/tables/FloorPlanEditor";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { GetZonesByRestaurant } from "@/modules/catalog/application/use-cases/get-zones-by-restaurant.use-case";
 import { ensureDefaultZoneAction } from "./actions";
 import type { FloorPlanTable } from "@/components/dashboard/tables/floorPlanMocks";
 import type { RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
+import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
+import { FloorPlanAuditLogPlaceholder } from "@/components/dashboard/tables/FloorPlanAuditLogPlaceholder";
 
 const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
@@ -24,7 +24,8 @@ const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
  */
 export default async function TablesPage() {
   const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
+  const restaurantId =
+    cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
 
   if (restaurantId.length === 0) {
     redirect("/onboarding/restaurant");
@@ -35,10 +36,17 @@ export default async function TablesPage() {
 
   const catalogInfrastructure = getCatalogInfrastructure();
 
-  // Obtenemos mesas y zonas en paralelo para minimizar tiempo de carga
-  const [diningTables, zones] = await Promise.all([
-    catalogInfrastructure.diningTableRepository.findByRestaurantId(restaurantId),
-    new GetZonesByRestaurant(catalogInfrastructure.zoneRepository).execute({ restaurantId }),
+  // Obtenemos mesas, zonas y elementos decorativos en paralelo para minimizar tiempo de carga
+  const [diningTables, zones, floorPlanElements] = await Promise.all([
+    catalogInfrastructure.diningTableRepository.findByRestaurantId(
+      restaurantId,
+    ),
+    new GetZonesByRestaurant(catalogInfrastructure.zoneRepository).execute({
+      restaurantId,
+    }),
+    catalogInfrastructure.floorPlanElementRepository.findByRestaurantId(
+      restaurantId,
+    ),
   ]);
 
   // Mapeamos a FloorPlanTable (el formato que espera la UI)
@@ -50,12 +58,15 @@ export default async function TablesPage() {
 
     return {
       id: primitives.id,
+      restaurantId,
       name: primitives.name,
       capacity: primitives.capacity,
       isActive: primitives.isActive,
       isCombinable: primitives.isCombinable,
       sortOrder: primitives.sortOrder,
-      shape: (primitives.shape?.toLowerCase() as "square" | "round" | "bar") ?? "square",
+      shape:
+        (primitives.shape?.toLowerCase() as "square" | "round" | "bar") ??
+        "square",
       x: primitives.x,
       y: primitives.y,
       width: primitives.width ?? (primitives.shape === "ROUND" ? 80 : 100),
@@ -70,11 +81,19 @@ export default async function TablesPage() {
 
   const initialZones: RestaurantZonePrimitives[] = zones;
 
+  // Convertir entidades de dominio a primitivos para la UI
+  const initialElements: FloorPlanElementPrimitives[] = floorPlanElements.map(
+    (el) => el.toPrimitives(),
+  );
+
   return (
     <>
-      <FloorPlanHero />
-      <FloorPlanEditor initialTables={initialTables} initialZones={initialZones} />
-      <FloorPlanInsights />
+      <FloorPlanEditor
+        initialTables={initialTables}
+        initialZones={initialZones}
+        initialElements={initialElements}
+      />
+      <FloorPlanAuditLogPlaceholder />
     </>
   );
 }
