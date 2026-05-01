@@ -18,3 +18,11 @@ La responsabilidad de estos componentes es puramente presentacional. Reciben dat
 - `RestaurantTasksRail.tsx`: Carril lateral para mostrar recordatorios o acciones operativas del día para el administrador de la plataforma.
 - `RestaurantTenantRow.tsx`: Fila individual para renderizar el resumen de un restaurante en la tabla/lista principal.
 - `id/`: Subcarpeta que contiene componentes específicos para la vista de detalle de un restaurante en particular.
+
+## Actualización 2026-05-01 (Tarde)
+
+- **StatusToggle.tsx**: Implementación de un switch visual premium para gestionar el estado `isActive`.
+- **RestaurantTenantRow.tsx**: Refactorizado para usar datos reales, layout de contacto mejorado (email/teléfono en líneas separadas) y soporte de toggles.
+- **RestaurantTasksRail.tsx**: Evolucionado a un panel de Roadmap (TODO) para visibilizar futuras implementaciones de alertas de onboarding y salud del tenant.
+- **RestaurantMetricCard.tsx**: Conectado a la lógica real de conteo dinámico de tenants.
+
