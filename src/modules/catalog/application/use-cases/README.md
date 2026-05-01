@@ -33,3 +33,7 @@ Así el negocio queda más fácil de mantener y de testear.
 ## Estado actual
 
 La carpeta está preparada para los primeros casos de uso iniciales del catálogo.
+
+## Log de cambios (2026-05-01)
+
+- **GetRestaurantAdminDetailsUseCase**: Implementado para orquestar la obtención de datos completos de un tenant (Restaurante, Settings, Mesas) usando el `slug` del restaurante. Se diseñó específicamente para servir de lectura agregada (CQRS Read Model simplificado) para la vista de detalle del panel de Admin.

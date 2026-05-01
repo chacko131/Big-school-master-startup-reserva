@@ -25,4 +25,6 @@ La responsabilidad de estos componentes es puramente presentacional. Reciben dat
 - **RestaurantTenantRow.tsx**: Refactorizado para usar datos reales, layout de contacto mejorado (email/teléfono en líneas separadas) y soporte de toggles.
 - **RestaurantTasksRail.tsx**: Evolucionado a un panel de Roadmap (TODO) para visibilizar futuras implementaciones de alertas de onboarding y salud del tenant.
 - **RestaurantMetricCard.tsx**: Conectado a la lógica real de conteo dinámico de tenants.
+- **RestaurantActivityRail.tsx**: Refactorizado para funcionar como un TODO placeholder visual donde en el futuro se implementará la gestión del equipo (Auth, Usuarios, Permisos).
+- **RestaurantDetailMetricCard.tsx** (y mocks relacionados): Componente obsoleto eliminado por completo de la UI, en pro de conectar la ficha a datos operativos reales (`GetRestaurantAdminDetailsUseCase`).
 
