@@ -37,3 +37,10 @@ La carpeta está preparada para los primeros casos de uso iniciales del catálog
 ## Log de cambios (2026-05-01)
 
 - **GetRestaurantAdminDetailsUseCase**: Implementado para orquestar la obtención de datos completos de un tenant (Restaurante, Settings, Mesas) usando el `slug` del restaurante. Se diseñó específicamente para servir de lectura agregada (CQRS Read Model simplificado) para la vista de detalle del panel de Admin.
+
+---
+**Fecha y hora:** 02/05/2026 13:55:13
+**Cambios:**
+- Creación de `get-restaurant-public-profile.use-case.ts`: Caso de uso agregado que recupera restaurante, horarios y carta completa para la vista de cliente.
+- Añadido test unitario: `get-restaurant-public-profile.use-case.test.ts`.
+

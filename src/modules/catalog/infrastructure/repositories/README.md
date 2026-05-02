@@ -25,3 +25,11 @@ Ya existen repositorios concretos basados en Prisma para:
 - `Restaurant`
 - `DiningTable`
 - `RestaurantSettings`
+
+---
+**Fecha y hora:** 02/05/2026 13:55:13
+**Cambios:**
+- Actualización de `prisma-restaurant.repository.ts` para soportar nuevos campos de catálogo.
+- Creación de `prisma-business-hours.repository.ts` para persistencia de horarios.
+- Creación de `prisma-menu.repository.ts` para persistencia de categorías y platos de la carta.
+

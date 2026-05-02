@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 /// Archivo: schema.prisma
-/// Responsabilidad: Definir el modelo de datos inicial de Reserva Latina para restaurantes, configuración operativa, mesas, huéspedes y reservas.
+/// Responsabilidad: Definir el modelo de datos de Reserva Latina para restaurantes, configuración operativa, mesas, huéspedes, reservas y catálogo público (horarios, fotos y carta).
 /// Tipo: esquema de datos
 
 generator client {
@@ -47,25 +47,61 @@ enum FloorPlanElementType {
   PLANT
 }
 
+/// Rango de precio orientativo que verá el cliente en el perfil público del restaurante.
+enum PriceRange {
+  BUDGET      // $
+  MODERATE    // $$
+  UPSCALE     // $$$
+  FINE_DINING // $$$$
+}
+
+/// Días de la semana para los horarios de apertura.
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 model Restaurant {
   id           String              @id @default(cuid())
   name         String
   slug         String              @unique
   timezone     String              @default("Europe/Madrid")
-  phone        String?
-  email        String?
   isActive     Boolean             @default(true)
   version      Int                 @default(1)
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
-  settings     RestaurantSettings?
-  tables       DiningTable[]
-  zones        RestaurantZone[]
+
+  /// --- Datos de contacto ---
+  phone        String?
+  email        String?
+
+  /// --- Perfil público (catálogo) — todos opcionales para no romper registros existentes ---
+  description     String?   /// Descripción corta que verá el cliente en el perfil.
+  address         String?   /// Calle y número (ej: "Calle Aristóteles 124").
+  city            String?   /// Ciudad (ej: "Ciudad de México").
+  countryCode     String?   /// ISO 3166-1 alpha-2 (ej: "MX", "ES").
+  cuisine         String?   /// Tipo de cocina (ej: "Mexicana", "Italiana").
+  priceRange      PriceRange?
+  heroImageUrl    String?   /// URL de Cloudinary para la foto principal.
+  galleryImageUrls String[] /// URLs de Cloudinary para la galería. Array vacío por defecto.
+
+  /// --- Relaciones ---
+  settings      RestaurantSettings?
+  tables        DiningTable[]
+  zones         RestaurantZone[]
   floorElements FloorPlanElement[]
-  guests       Guest[]
-  reservations Reservation[]
+  guests        Guest[]
+  reservations  Reservation[]
+  businessHours BusinessHours[]
+  menuCategories MenuCategory[]
 
   @@index([isActive])
+  @@index([slug])
 }
 
 model RestaurantSettings {
@@ -206,4 +242,58 @@ model FloorPlanElement {
 
   @@index([restaurantId])
   @@index([restaurantId, zoneId])
+}
+
+/// Horarios de apertura del restaurante por día de la semana.
+/// Un restaurante puede tener múltiples franjas por día (ej: comida y cena).
+model BusinessHours {
+  id           String     @id @default(cuid())
+  restaurantId String
+  day          DayOfWeek
+  opensAt      String     /// Formato HH:mm (ej: "13:00")
+  closesAt     String     /// Formato HH:mm (ej: "23:00")
+  isClosed     Boolean    @default(false) /// true = el restaurante cierra ese día.
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, day])
+}
+
+/// Categoría de la carta (ej: Entrantes, Principales, Postres, Bebidas).
+/// Permite ordenar los platos en el perfil público.
+model MenuCategory {
+  id           String       @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  sortOrder    Int          @default(0)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items        MenuItem[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId, sortOrder])
+}
+
+/// Plato individual de la carta.
+/// La carta es un módulo premium, pero el modelo se define ahora para no tener que migrar después.
+model MenuItem {
+  id             String       @id @default(cuid())
+  categoryId     String
+  name           String
+  description    String?      /// Ingredientes, preparación o nota del chef.
+  price          Decimal?     @db.Decimal(10, 2) /// null = precio a consultar (ej: mercado).
+  imageUrl       String?      /// URL de Cloudinary. Opcional por plato.
+  allergens      String[]     /// Lista de alérgenos (ej: ["gluten", "lactosa"]). Array vacío por defecto.
+  isAvailable    Boolean      @default(true)  /// false = plato de temporada o agotado.
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  category       MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, isAvailable])
+  @@index([categoryId, sortOrder])
 }

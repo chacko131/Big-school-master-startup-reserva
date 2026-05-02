@@ -71,8 +71,8 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
 
     const persistedRestaurant = await this.prismaClient.restaurant.upsert({
       where: { id: restaurantPrimitives.id },
-      create: restaurantPrimitives,
-      update: {
+      create: {
+        id: restaurantPrimitives.id,
         name: restaurantPrimitives.name,
         slug: restaurantPrimitives.slug,
         timezone: restaurantPrimitives.timezone,
@@ -82,6 +82,32 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
         version: restaurantPrimitives.version,
         createdAt: restaurantPrimitives.createdAt,
         updatedAt: restaurantPrimitives.updatedAt,
+        description: restaurantPrimitives.description,
+        address: restaurantPrimitives.address,
+        city: restaurantPrimitives.city,
+        countryCode: restaurantPrimitives.countryCode,
+        cuisine: restaurantPrimitives.cuisine,
+        priceRange: restaurantPrimitives.priceRange ?? undefined,
+        heroImageUrl: restaurantPrimitives.heroImageUrl,
+        galleryImageUrls: restaurantPrimitives.galleryImageUrls,
+      },
+      update: {
+        name: restaurantPrimitives.name,
+        slug: restaurantPrimitives.slug,
+        timezone: restaurantPrimitives.timezone,
+        phone: restaurantPrimitives.phone,
+        email: restaurantPrimitives.email,
+        isActive: restaurantPrimitives.isActive,
+        version: restaurantPrimitives.version,
+        updatedAt: restaurantPrimitives.updatedAt,
+        description: restaurantPrimitives.description,
+        address: restaurantPrimitives.address,
+        city: restaurantPrimitives.city,
+        countryCode: restaurantPrimitives.countryCode,
+        cuisine: restaurantPrimitives.cuisine,
+        priceRange: restaurantPrimitives.priceRange ?? undefined,
+        heroImageUrl: restaurantPrimitives.heroImageUrl,
+        galleryImageUrls: restaurantPrimitives.galleryImageUrls,
       },
     });
 
@@ -107,6 +133,15 @@ function mapRestaurantRecordToEntity(restaurantRecord: PrismaRestaurantRecord): 
     version: restaurantRecord.version,
     createdAt: restaurantRecord.createdAt,
     updatedAt: restaurantRecord.updatedAt,
+    // --- Catálogo público ---
+    description: restaurantRecord.description,
+    address: restaurantRecord.address,
+    city: restaurantRecord.city,
+    countryCode: restaurantRecord.countryCode,
+    cuisine: restaurantRecord.cuisine,
+    priceRange: (restaurantRecord.priceRange as RestaurantPrimitives["priceRange"]) ?? null,
+    heroImageUrl: restaurantRecord.heroImageUrl,
+    galleryImageUrls: restaurantRecord.galleryImageUrls,
   };
 
   return Restaurant.fromPrimitives(restaurantPrimitives);

@@ -30,3 +30,9 @@ Ya existe un primer bloque real de infraestructura.
 - repositorios Prisma para `Restaurant`, `DiningTable` y `RestaurantSettings`
 - acceso al cliente Prisma compartido conectado a Neon
 - una composición base para ensamblar los repositorios del módulo `catalog`
+
+---
+**Fecha y hora:** 02/05/2026 13:55:13
+**Cambios:**
+- Actualización de `catalog-infrastructure.ts` para ensamblar e inyectar `BusinessHoursRepository` y `MenuRepository`.
+

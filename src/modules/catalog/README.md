@@ -32,3 +32,11 @@ Así evitamos mezclar conceptos y hacemos más fácil mantener el sistema.
 ## Estado actual
 
 La base del módulo ya está creada y se está modelando poco a poco con una estructura limpia.
+
+---
+**Fecha y hora:** 02/05/2026 13:55:13
+**Cambios:**
+- Implementación completa de la infraestructura para el perfil público del restaurante.
+- Añadido soporte para Horarios de Apertura y Carta del Menú (Categorías y Platos).
+- Preparado para servir datos dinámicos a la vista pública del cliente.
+

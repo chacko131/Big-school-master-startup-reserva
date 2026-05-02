@@ -31,3 +31,10 @@ Definen la forma en la que `application` habla con:
 ## Estado actual
 
 La carpeta está lista para las interfaces del módulo.
+
+---
+**Fecha y hora:** 02/05/2026 13:55:13
+**Cambios:**
+- Creación de `business-hours-repository.port.ts`: Contrato para la persistencia de horarios de apertura.
+- Creación de `menu-repository.port.ts`: Contrato para la persistencia de la carta (categorías y platos).
+

@@ -6,6 +6,9 @@
 
 import { RestaurantValidationError } from "../errors/restaurant-validation.error";
 
+/// Rangos de precio que se muestran al cliente en el perfil público.
+export type PriceRange = "BUDGET" | "MODERATE" | "UPSCALE" | "FINE_DINING";
+
 export interface RestaurantPrimitives {
   id: string;
   name: string;
@@ -17,6 +20,15 @@ export interface RestaurantPrimitives {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+  // --- Campos del catálogo público (opcionales para no romper registros existentes) ---
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  countryCode: string | null;
+  cuisine: string | null;
+  priceRange: PriceRange | null;
+  heroImageUrl: string | null;
+  galleryImageUrls: string[];
 }
 
 export interface CreateRestaurantProps {
@@ -30,6 +42,26 @@ export interface CreateRestaurantProps {
   version?: number;
   createdAt?: Date;
   updatedAt?: Date;
+  // --- Campos del catálogo público ---
+  description?: string | null;
+  address?: string | null;
+  city?: string | null;
+  countryCode?: string | null;
+  cuisine?: string | null;
+  priceRange?: PriceRange | null;
+  heroImageUrl?: string | null;
+  galleryImageUrls?: string[];
+}
+
+export interface UpdateCatalogProfileProps {
+  description?: string | null;
+  address?: string | null;
+  city?: string | null;
+  countryCode?: string | null;
+  cuisine?: string | null;
+  priceRange?: PriceRange | null;
+  heroImageUrl?: string | null;
+  galleryImageUrls?: string[];
 }
 
 const DEFAULT_TIMEZONE = "Europe/Madrid";
@@ -60,6 +92,15 @@ export class Restaurant {
       version: props.version ?? 1,
       createdAt: props.createdAt ?? now,
       updatedAt: props.updatedAt ?? now,
+      // --- Catálogo público ---
+      description: normalizeOptionalText(props.description),
+      address: normalizeOptionalText(props.address),
+      city: normalizeOptionalText(props.city),
+      countryCode: normalizeOptionalText(props.countryCode),
+      cuisine: normalizeOptionalText(props.cuisine),
+      priceRange: props.priceRange ?? null,
+      heroImageUrl: normalizeOptionalText(props.heroImageUrl),
+      galleryImageUrls: props.galleryImageUrls ?? [],
     });
   }
   //-aqui termina funcion create y se va autilizar en application e infrastructure-//
@@ -102,6 +143,38 @@ export class Restaurant {
     return this.props.isActive;
   }
 
+  get description(): string | null {
+    return this.props.description;
+  }
+
+  get address(): string | null {
+    return this.props.address;
+  }
+
+  get city(): string | null {
+    return this.props.city;
+  }
+
+  get countryCode(): string | null {
+    return this.props.countryCode;
+  }
+
+  get cuisine(): string | null {
+    return this.props.cuisine;
+  }
+
+  get priceRange(): PriceRange | null {
+    return this.props.priceRange;
+  }
+
+  get heroImageUrl(): string | null {
+    return this.props.heroImageUrl;
+  }
+
+  get galleryImageUrls(): string[] {
+    return this.props.galleryImageUrls;
+  }
+
   //-aqui empieza funcion activate y es para activar el restaurante dentro del dominio-//
   /**
    * Devuelve una nueva entidad con el restaurante activo.
@@ -131,6 +204,28 @@ export class Restaurant {
     });
   }
   //-aqui termina funcion deactivate y se va autilizar en casos de uso de catalogo-//
+
+  //-aqui empieza funcion updateCatalogProfile y es para actualizar los datos del perfil publico del restaurante-//
+  /**
+   * Devuelve una nueva entidad con los datos del catálogo actualizados.
+   * @pure
+   */
+  updateCatalogProfile(props: UpdateCatalogProfileProps): Restaurant {
+    return new Restaurant({
+      ...this.props,
+      description: "description" in props ? normalizeOptionalText(props.description) : this.props.description,
+      address: "address" in props ? normalizeOptionalText(props.address) : this.props.address,
+      city: "city" in props ? normalizeOptionalText(props.city) : this.props.city,
+      countryCode: "countryCode" in props ? normalizeOptionalText(props.countryCode) : this.props.countryCode,
+      cuisine: "cuisine" in props ? normalizeOptionalText(props.cuisine) : this.props.cuisine,
+      priceRange: "priceRange" in props ? (props.priceRange ?? null) : this.props.priceRange,
+      heroImageUrl: "heroImageUrl" in props ? normalizeOptionalText(props.heroImageUrl) : this.props.heroImageUrl,
+      galleryImageUrls: props.galleryImageUrls ?? this.props.galleryImageUrls,
+      version: this.props.version + 1,
+      updatedAt: new Date(),
+    });
+  }
+  //-aqui termina funcion updateCatalogProfile y se va autilizar en casos de uso de catalogo-//
 
   //-aqui empieza funcion toPrimitives y es para exponer la entidad en formato serializable-//
   /**
