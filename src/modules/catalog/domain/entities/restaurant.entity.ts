@@ -9,6 +9,11 @@ import { RestaurantValidationError } from "../errors/restaurant-validation.error
 /// Rangos de precio que se muestran al cliente en el perfil público.
 export type PriceRange = "BUDGET" | "MODERATE" | "UPSCALE" | "FINE_DINING";
 
+export interface RestaurantImage {
+  url: string;
+  publicId: string;
+}
+
 export interface RestaurantPrimitives {
   id: string;
   name: string;
@@ -27,8 +32,8 @@ export interface RestaurantPrimitives {
   countryCode: string | null;
   cuisine: string | null;
   priceRange: PriceRange | null;
-  heroImageUrl: string | null;
-  galleryImageUrls: string[];
+  heroImage: RestaurantImage | null;
+  galleryImages: RestaurantImage[];
 }
 
 export interface CreateRestaurantProps {
@@ -49,8 +54,8 @@ export interface CreateRestaurantProps {
   countryCode?: string | null;
   cuisine?: string | null;
   priceRange?: PriceRange | null;
-  heroImageUrl?: string | null;
-  galleryImageUrls?: string[];
+  heroImage?: RestaurantImage | null;
+  galleryImages?: RestaurantImage[];
 }
 
 export interface UpdateCatalogProfileProps {
@@ -60,8 +65,8 @@ export interface UpdateCatalogProfileProps {
   countryCode?: string | null;
   cuisine?: string | null;
   priceRange?: PriceRange | null;
-  heroImageUrl?: string | null;
-  galleryImageUrls?: string[];
+  heroImage?: RestaurantImage | null;
+  galleryImages?: RestaurantImage[];
 }
 
 const DEFAULT_TIMEZONE = "Europe/Madrid";
@@ -99,8 +104,8 @@ export class Restaurant {
       countryCode: normalizeOptionalText(props.countryCode),
       cuisine: normalizeOptionalText(props.cuisine),
       priceRange: props.priceRange ?? null,
-      heroImageUrl: normalizeOptionalText(props.heroImageUrl),
-      galleryImageUrls: props.galleryImageUrls ?? [],
+      heroImage: props.heroImage ?? null,
+      galleryImages: props.galleryImages ?? [],
     });
   }
   //-aqui termina funcion create y se va autilizar en application e infrastructure-//
@@ -167,12 +172,12 @@ export class Restaurant {
     return this.props.priceRange;
   }
 
-  get heroImageUrl(): string | null {
-    return this.props.heroImageUrl;
+  get heroImage(): RestaurantImage | null {
+    return this.props.heroImage;
   }
 
-  get galleryImageUrls(): string[] {
-    return this.props.galleryImageUrls;
+  get galleryImages(): RestaurantImage[] {
+    return this.props.galleryImages;
   }
 
   //-aqui empieza funcion activate y es para activar el restaurante dentro del dominio-//
@@ -219,8 +224,8 @@ export class Restaurant {
       countryCode: "countryCode" in props ? normalizeOptionalText(props.countryCode) : this.props.countryCode,
       cuisine: "cuisine" in props ? normalizeOptionalText(props.cuisine) : this.props.cuisine,
       priceRange: "priceRange" in props ? (props.priceRange ?? null) : this.props.priceRange,
-      heroImageUrl: "heroImageUrl" in props ? normalizeOptionalText(props.heroImageUrl) : this.props.heroImageUrl,
-      galleryImageUrls: props.galleryImageUrls ?? this.props.galleryImageUrls,
+      heroImage: "heroImage" in props ? (props.heroImage ?? null) : this.props.heroImage,
+      galleryImages: props.galleryImages ?? this.props.galleryImages,
       version: this.props.version + 1,
       updatedAt: new Date(),
     });

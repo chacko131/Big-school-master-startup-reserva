@@ -17,6 +17,7 @@ import { EnsureDefaultZone } from "@/modules/catalog/application/use-cases/ensur
 import { type FloorPlanTable } from "@/components/dashboard/tables/floorPlanMocks";
 import { type RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
 import { type FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
+import { type DiningTablePrimitives } from "@/modules/catalog/domain/entities/dining-table.entity";
 
 const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
@@ -172,7 +173,7 @@ export async function saveFloorPlanAction(
 
   await updateUseCase.execute({
     restaurantId,
-    tables: tablesPrimitives as any,
+    tables: tablesPrimitives as DiningTablePrimitives[],
     elements: elementsPrimitives,
   });
 

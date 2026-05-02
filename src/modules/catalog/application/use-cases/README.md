@@ -44,3 +44,7 @@ La carpeta está preparada para los primeros casos de uso iniciales del catálog
 - Creación de `get-restaurant-public-profile.use-case.ts`: Caso de uso agregado que recupera restaurante, horarios y carta completa para la vista de cliente.
 - Añadido test unitario: `get-restaurant-public-profile.use-case.test.ts`.
 
+---
+**Fecha y hora:** 02/05/2026 15:50
+**Cambios:**
+- Refactorización de `update-restaurant-profile.use-case.ts` para manejar los nuevos tipos de datos Json (`heroImage` y `galleryImages`) y sus tests.

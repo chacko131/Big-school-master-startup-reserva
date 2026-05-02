@@ -33,3 +33,7 @@ Ya existen repositorios concretos basados en Prisma para:
 - Creación de `prisma-business-hours.repository.ts` para persistencia de horarios.
 - Creación de `prisma-menu.repository.ts` para persistencia de categorías y platos de la carta.
 
+---
+**Fecha y hora:** 02/05/2026 15:50
+**Cambios:**
+- Actualización del mapeo en `prisma-restaurant.repository.ts` para guardar y rehidratar correctamente los campos `heroImage` y `galleryImages` como objetos JSON.

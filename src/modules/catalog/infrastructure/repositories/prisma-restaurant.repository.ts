@@ -4,8 +4,16 @@
  * Tipo: servicio
  */
 
-import { type Restaurant as PrismaRestaurantRecord, PrismaClient } from "@/generated/prisma/client";
-import { Restaurant, type RestaurantPrimitives } from "../../domain/entities/restaurant.entity";
+import {
+  type Restaurant as PrismaRestaurantRecord,
+  PrismaClient,
+  Prisma,
+} from "@/generated/prisma/client";
+import {
+  Restaurant,
+  type RestaurantPrimitives,
+  type RestaurantImage,
+} from "../../domain/entities/restaurant.entity";
 import { type RestaurantRepository } from "../../application/ports/restaurant-repository.port";
 
 export class PrismaRestaurantRepository implements RestaurantRepository {
@@ -88,8 +96,12 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
         countryCode: restaurantPrimitives.countryCode,
         cuisine: restaurantPrimitives.cuisine,
         priceRange: restaurantPrimitives.priceRange ?? undefined,
-        heroImageUrl: restaurantPrimitives.heroImageUrl,
-        galleryImageUrls: restaurantPrimitives.galleryImageUrls,
+        heroImage: restaurantPrimitives.heroImage
+          ? (restaurantPrimitives.heroImage as unknown as Prisma.InputJsonValue)
+          : undefined,
+        galleryImages: restaurantPrimitives.galleryImages
+          ? (restaurantPrimitives.galleryImages as unknown as Prisma.InputJsonValue)
+          : undefined,
       },
       update: {
         name: restaurantPrimitives.name,
@@ -106,8 +118,12 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
         countryCode: restaurantPrimitives.countryCode,
         cuisine: restaurantPrimitives.cuisine,
         priceRange: restaurantPrimitives.priceRange ?? undefined,
-        heroImageUrl: restaurantPrimitives.heroImageUrl,
-        galleryImageUrls: restaurantPrimitives.galleryImageUrls,
+        heroImage: restaurantPrimitives.heroImage
+          ? (restaurantPrimitives.heroImage as unknown as Prisma.InputJsonValue)
+          : undefined,
+        galleryImages: restaurantPrimitives.galleryImages
+          ? (restaurantPrimitives.galleryImages as unknown as Prisma.InputJsonValue)
+          : undefined,
       },
     });
 
@@ -121,7 +137,9 @@ export class PrismaRestaurantRepository implements RestaurantRepository {
  * Convierte un registro Prisma en una entidad de dominio Restaurant.
  * @pure
  */
-function mapRestaurantRecordToEntity(restaurantRecord: PrismaRestaurantRecord): Restaurant {
+function mapRestaurantRecordToEntity(
+  restaurantRecord: PrismaRestaurantRecord,
+): Restaurant {
   const restaurantPrimitives: RestaurantPrimitives = {
     id: restaurantRecord.id,
     name: restaurantRecord.name,
@@ -139,9 +157,13 @@ function mapRestaurantRecordToEntity(restaurantRecord: PrismaRestaurantRecord): 
     city: restaurantRecord.city,
     countryCode: restaurantRecord.countryCode,
     cuisine: restaurantRecord.cuisine,
-    priceRange: (restaurantRecord.priceRange as RestaurantPrimitives["priceRange"]) ?? null,
-    heroImageUrl: restaurantRecord.heroImageUrl,
-    galleryImageUrls: restaurantRecord.galleryImageUrls,
+    priceRange:
+      (restaurantRecord.priceRange as RestaurantPrimitives["priceRange"]) ??
+      null,
+    heroImage:
+      (restaurantRecord.heroImage as unknown as RestaurantImage) ?? null,
+    galleryImages:
+      (restaurantRecord.galleryImages as unknown as RestaurantImage[]) ?? [],
   };
 
   return Restaurant.fromPrimitives(restaurantPrimitives);

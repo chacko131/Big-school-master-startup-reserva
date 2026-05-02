@@ -114,8 +114,8 @@ export class GetRestaurantPublicProfileUseCase {
       priceRange: restaurant.priceRange,
       phone: restaurant.phone,
       email: restaurant.email,
-      heroImageUrl: restaurant.heroImageUrl,
-      galleryImageUrls: restaurant.galleryImageUrls,
+      heroImageUrl: restaurant.heroImage?.url ?? null,
+      galleryImageUrls: restaurant.galleryImages.map((img) => img.url),
       businessHours: businessHours.map((h) => ({
         day: h.day,
         opensAt: h.opensAt,

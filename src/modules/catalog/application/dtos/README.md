@@ -27,3 +27,8 @@ No contienen lógica de negocio; solo ayudan a que los contratos sean claros y t
 ## Estado actual
 
 La carpeta está lista para definir los contratos de datos del catálogo.
+
+---
+**Fecha y hora:** 02/05/2026 15:50
+**Cambios:**
+- Actualización de `update-restaurant-profile.dto.ts` para recibir objetos `RestaurantImage` (con `url` y `publicId`) en lugar de strings planos para las fotos hero y de la galería.

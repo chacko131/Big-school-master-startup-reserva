@@ -1,6 +1,6 @@
 import { FloorPlanElement } from "../../domain/entities/floor-plan-element.entity";
 import { FloorPlanElementRepository } from "../../application/ports/floor-plan-element-repository.port";
-import { PrismaClient } from "@prisma/client/extension";
+import { type FloorPlanElement as PrismaFloorPlanElementRecord, type PrismaClient } from "@/generated/prisma/client";
 
 /**
  * Archivo: prisma-floor-plan-element.repository.ts
@@ -22,22 +22,12 @@ export class PrismaFloorPlanElementRepository implements FloorPlanElementReposit
     });
 
     return records.map(
-      (record: {
-        id: any;
-        restaurantId: any;
-        zoneId: any;
-        type: any;
-        x: any;
-        y: any;
-        width: any;
-        height: any;
-        rotation: any;
-      }) =>
+      (record: PrismaFloorPlanElementRecord) =>
         FloorPlanElement.create({
           id: record.id,
           restaurantId: record.restaurantId,
           zoneId: record.zoneId,
-          type: record.type,
+          type: record.type as "WALL" | "PLANT",
           x: record.x,
           y: record.y,
           width: record.width,
@@ -56,7 +46,7 @@ export class PrismaFloorPlanElementRepository implements FloorPlanElementReposit
   async save(element: FloorPlanElement): Promise<FloorPlanElement> {
     const primitives = element.toPrimitives();
 
-    const record = await this.prismaClient.floorPlanElement.upsert({
+    const record: PrismaFloorPlanElementRecord = await this.prismaClient.floorPlanElement.upsert({
       where: { id: primitives.id },
       create: {
         id: primitives.id,
@@ -84,7 +74,7 @@ export class PrismaFloorPlanElementRepository implements FloorPlanElementReposit
       id: record.id,
       restaurantId: record.restaurantId,
       zoneId: record.zoneId,
-      type: record.type,
+      type: record.type as "WALL" | "PLANT",
       x: record.x,
       y: record.y,
       width: record.width,

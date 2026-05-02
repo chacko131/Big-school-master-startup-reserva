@@ -13,6 +13,7 @@ import {
   getPropertyIndicatorClassName,
   getTableSizeLabel,
 } from "./floorPlanStyles";
+import Link from "next/link";
 import type { RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
 import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 
@@ -381,13 +382,13 @@ export function FloorPlanPropertiesPanel({
             <OnboardingIcon name="save" className="h-4 w-4" />
             <T>{isSaving ? "Guardando..." : "Guardar cambios"}</T>
           </button>
-          <a
+          <Link
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:bg-slate-200 active:scale-[0.98]"
             href="/dashboard/reservations"
           >
             <OnboardingIcon name="schedule" className="h-4 w-4" />
             <T>Ver reservas</T>
-          </a>
+          </Link>
         </div>
 
         <div className="flex flex-col gap-2">

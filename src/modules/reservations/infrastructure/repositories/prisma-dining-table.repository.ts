@@ -48,7 +48,7 @@ function mapDiningTableRecordToEntity(diningTableRecord: PrismaDiningTableRecord
     isActive: diningTableRecord.isActive,
     isCombinable: diningTableRecord.isCombinable,
     sortOrder: diningTableRecord.sortOrder,
-    shape: diningTableRecord.shape as any,
+    shape: diningTableRecord.shape as DiningTablePrimitives["shape"],
     x: diningTableRecord.x,
     y: diningTableRecord.y,
     width: diningTableRecord.width,

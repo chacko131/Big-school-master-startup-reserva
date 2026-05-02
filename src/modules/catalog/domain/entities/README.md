@@ -38,3 +38,8 @@ La carpeta ya contiene las primeras entidades del catálogo y seguirá creciendo
 - Creación de `menu-category.entity.ts` y `menu-item.entity.ts` para modelar la carta del restaurante.
 - Añadidos tests unitarios: `business-hours.entity.test.ts` y `menu-item.entity.test.ts`.
 
+---
+**Fecha y hora:** 02/05/2026 15:50
+**Cambios:**
+- Refactorización de las propiedades `heroImageUrl` y `galleryImageUrls` hacia `heroImage` y `galleryImages` (tipo Json) en el esquema de Prisma y en la entidad `Restaurant`.
+- Inclusión de la interfaz `RestaurantImage` con soporte para `{ url, publicId }`.

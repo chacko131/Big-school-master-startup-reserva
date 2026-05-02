@@ -52,7 +52,7 @@ export class UpdateFloorPlanUseCase {
     ]);
 
     // Persistimos en paralelo
-    const savePromises: Promise<any>[] = [
+    const savePromises: Promise<unknown>[] = [
       ...tableEntities.map((entity) => this.diningTableRepository.save(entity)),
       ...elementEntities.map((entity) => this.floorPlanElementRepository.save(entity)),
     ];

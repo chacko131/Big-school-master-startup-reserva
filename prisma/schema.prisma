@@ -87,8 +87,8 @@ model Restaurant {
   countryCode     String?   /// ISO 3166-1 alpha-2 (ej: "MX", "ES").
   cuisine         String?   /// Tipo de cocina (ej: "Mexicana", "Italiana").
   priceRange      PriceRange?
-  heroImageUrl    String?   /// URL de Cloudinary para la foto principal.
-  galleryImageUrls String[] /// URLs de Cloudinary para la galería. Array vacío por defecto.
+  heroImage       Json?     /// Guardará un objeto { url, publicId }
+  galleryImages   Json?     /// Guardará un array de objetos [{ url, publicId }, ...]
 
   /// --- Relaciones ---
   settings      RestaurantSettings?

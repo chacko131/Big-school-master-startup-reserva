@@ -29,8 +29,8 @@ function buildRestaurant(overrides: Partial<Parameters<typeof Restaurant.create>
     countryCode: "MX",
     cuisine: "Mexicana",
     priceRange: "UPSCALE",
-    heroImageUrl: "https://cloudinary.com/hero.jpg",
-    galleryImageUrls: ["https://cloudinary.com/img1.jpg"],
+    heroImage: { url: "https://cloudinary.com/hero.jpg", publicId: "hero" },
+    galleryImages: [{ url: "https://cloudinary.com/img1.jpg", publicId: "img1" }],
     phone: "+52 55 1234 5678",
     email: "hola@lahacienda.mx",
     ...overrides,
@@ -185,8 +185,8 @@ describe("GetRestaurantPublicProfileUseCase", () => {
         description: undefined,
         address: undefined,
         city: undefined,
-        heroImageUrl: undefined,
-        galleryImageUrls: [],
+        heroImage: undefined,
+        galleryImages: [],
         priceRange: undefined,
       });
 
