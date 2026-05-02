@@ -14,12 +14,16 @@ import { T } from "@/components/T";
 import { OnboardingField } from "@/components/onboarding/OnboardingField";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { RestaurantHeroImagePicker } from "@/components/onboarding/RestaurantHeroImagePicker";
 import { CreateRestaurant } from "@/modules/catalog/application/use-cases/create-restaurant.use-case";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { cloudinaryService } from "@/services/cloudinary.service";
 
 const restaurantInputClassName = "w-full rounded-lg border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface transition-all placeholder:text-outline focus:ring-1 focus:ring-primary";
 const restaurantContentLayoutClassName = "flex w-full max-w-5xl flex-col items-start gap-12 md:flex-row md:gap-16";
 const restaurantOnboardingFormId = "restaurant-onboarding-form";
+/// ID compartido entre el picker (label) y el input (form) para vincularlos sin prop drilling
+const restaurantHeroFileInputId = "restaurant-hero-image";
 
 interface RestaurantOnboardingPageProps {
   searchParams: Promise<{ error?: string | string[] }>;
@@ -79,6 +83,11 @@ interface RestaurantOnboardingDraft {
   phone: string;
 }
 
+const DEFAULT_HERO_IMAGE = {
+  url: "https://res.cloudinary.com/dvfptzqig/image/upload/v1740941916/reserva-latina/mock-restaurant.jpg",
+  publicId: "reserva-latina/mock-restaurant",
+};
+
 //-aqui empieza funcion createRestaurantOnboardingAction y es para crear el restaurante desde onboarding-//
 /**
  * Crea el restaurante base del onboarding y avanza al paso operativo.
@@ -108,6 +117,33 @@ async function createRestaurantOnboardingAction(formData: FormData) {
   const persistedRestaurantId = cookieStore.get(restaurantOnboardingRestaurantIdCookieName)?.value;
   const restaurantId = persistedRestaurantId !== undefined && persistedRestaurantId.trim().length > 0 ? persistedRestaurantId : randomUUID();
 
+  let heroImage = DEFAULT_HERO_IMAGE;
+  const imageFile = formData.get("heroImage") as File | null;
+
+  console.log("[Onboarding] Procesando imagen de portada...");
+
+  if (imageFile && imageFile.size > 0) {
+    console.log("[Onboarding] Imagen recibida:", {
+      name: imageFile.name,
+      type: imageFile.type,
+      sizeKB: (imageFile.size / 1024).toFixed(2),
+    });
+    try {
+      console.log("[Onboarding] Subiendo imagen a Cloudinary → carpeta: reserva-latina/restaurants");
+      heroImage = await cloudinaryService.uploadImage(imageFile, "reserva-latina/restaurants");
+      console.log("[Onboarding] ✅ Imagen subida con éxito:", {
+        url: heroImage.url,
+        publicId: heroImage.publicId,
+      });
+    } catch (error) {
+      console.error("[Onboarding] ❌ Error al subir imagen a Cloudinary, usando imagen por defecto:", error);
+    }
+  } else {
+    console.log("[Onboarding] No se seleccionó imagen — usando imagen por defecto:", DEFAULT_HERO_IMAGE.publicId);
+  }
+
+  console.log("[Onboarding] Creando restaurante en BD:", { id: restaurantId, slug: parsedInput.data.slug });
+
   try {
     const catalogInfrastructure = getCatalogInfrastructure();
     const createRestaurant = new CreateRestaurant(catalogInfrastructure.restaurantRepository);
@@ -120,7 +156,10 @@ async function createRestaurantOnboardingAction(formData: FormData) {
       email: parsedInput.data.email,
       phone: parsedInput.data.phone,
       isActive: true,
+      heroImage,
     });
+
+    console.log("[Onboarding] ✅ Restaurante guardado correctamente:", restaurantId);
 
     cookieStore.set(restaurantOnboardingRestaurantIdCookieName, restaurantId, onboardingDraftCookieOptions);
   } catch (error) {
@@ -223,7 +262,11 @@ function getRestaurantFormInitialValues(
 //-aqui termina funcion getRestaurantFormInitialValues y se va autilizar en el render-//
 
 //-aqui empieza componente RestaurantHero y es para presentar el contexto visual del paso-//
-function RestaurantHero() {
+/**
+ * Renderiza el encabezado y delega el picker de imagen al Client Component.
+ * La imagen actúa directamente como selector; el input real vive en el form.
+ */
+function RestaurantHero({ heroImageUrl }: { heroImageUrl?: string | null }) {
   return (
     <section className="flex w-full flex-col gap-8 md:w-2/5">
       <div className="space-y-4">
@@ -235,28 +278,12 @@ function RestaurantHero() {
         </p>
       </div>
 
-      <div className="relative hidden overflow-hidden rounded-2xl bg-surface-container-high shadow-[0_20px_40px_rgba(26,28,28,0.08)] md:block">
-        <Image
-          alt="Interior elegante de un restaurante con iluminación cálida y mesas preparadas"
-          className="h-auto w-full object-cover"
-          height={720}
-          loading="eager"
-          priority
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEvBWiEo9SMYt3pMijHVngt4jLuAeL8bjtsPYz05vIgvKEFAGiRxSVsvp8WaCslUrmCvdbi9TV1BLLx5X-frrP-AxwiH4pLkgu-8zt30jFxuukuo8lGRZA3Ul0kBSD-eg9qc_BrXg7_eYmVhAku1QICwJEKQBUExIuQowY3vzvdTvzpJ40vWapud419pHNTGxhKnCYIemxv_Lj3_hwzpfnKFa8GcpLoRtwkhPsTJggwWgcm6oZ6SE-tN725UUrCvgudKpDDgO4yiw"
-          width={960}
+      <div className="hidden md:block">
+        <RestaurantHeroImagePicker
+          fileInputId={restaurantHeroFileInputId}
+          formId={restaurantOnboardingFormId}
+          initialImageUrl={heroImageUrl}
         />
-        <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-transparent" />
-        <div className="absolute bottom-6 left-6 text-white">
-          <div>
-            <div className="mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em]">
-              <OnboardingIcon name="restaurant" className="h-4 w-4" />
-              <T>Experiencia premium</T>
-            </div>
-            <p className="text-sm font-medium text-white/90">
-              <T>Reserva Latina Pro Suite</T>
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -348,6 +375,7 @@ function RestaurantProfileForm({ errorMessage, initialValues }: RestaurantProfil
               type="tel"
             />
           </OnboardingField>
+
         </div>
 
         <div className="hidden items-center justify-between border-t border-outline-variant/20 pt-8 md:flex">
@@ -410,6 +438,9 @@ export default async function RestaurantOnboardingPage({ searchParams }: Restaur
 
   const initialValues = getRestaurantFormInitialValues(persistedRestaurant === null ? null : persistedRestaurant.toPrimitives(), persistedDraft);
 
+  // URL de la imagen ya guardada en BD — null si el restaurante no existe aún o no tiene foto
+  const persistedHeroImageUrl = persistedRestaurant?.toPrimitives().heroImage?.url ?? null;
+
   const currentStepKey = "restaurant" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);
   const onboardingSteps = getOnboardingSteps(currentStepKey);
@@ -424,7 +455,7 @@ export default async function RestaurantOnboardingPage({ searchParams }: Restaur
       totalSteps={ONBOARDING_TOTAL_STEPS}
     >
       <div className={restaurantContentLayoutClassName}>
-        <RestaurantHero />
+        <RestaurantHero heroImageUrl={persistedHeroImageUrl} />
         <RestaurantProfileForm errorMessage={errorMessage} initialValues={initialValues} />
       </div>
       <RestaurantMobileQuote />

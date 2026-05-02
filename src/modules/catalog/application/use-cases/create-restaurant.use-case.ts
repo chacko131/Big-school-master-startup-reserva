@@ -25,6 +25,7 @@ export class CreateRestaurant {
       phone: input.phone ?? null,
       email: input.email ?? null,
       isActive: input.isActive,
+      heroImage: input.heroImage ?? null,
     });
 
     return this.restaurantRepository.save(restaurant);

@@ -4,6 +4,8 @@
  * Tipo: lógica
  */
 
+import { RestaurantImage } from "../../domain/entities/restaurant.entity";
+
 export interface CreateRestaurantDto {
   id: string;
   name: string;
@@ -12,4 +14,5 @@ export interface CreateRestaurantDto {
   phone?: string | null;
   email?: string | null;
   isActive?: boolean;
+  heroImage?: RestaurantImage | null;
 }
