@@ -28,6 +28,9 @@ import {
   SettingsPhotosPanel,
   type PhotoUrlsPayload,
 } from "@/components/dashboard/settings/SettingsPhotosPanel";
+import { SettingsBusinessHoursPanel, type BusinessHourRow } from "@/components/dashboard/settings/SettingsBusinessHoursPanel";
+import { SaveBusinessHours } from "@/modules/catalog/application/use-cases/save-business-hours.use-case";
+import { type DayOfWeek } from "@/modules/catalog/domain/entities/business-hours.entity";
 import { type CloudinaryUploadSignature } from "@/lib/cloudinary-client-upload.lib";
 import { cloudinaryService } from "@/services/cloudinary.service";
 
@@ -41,6 +44,8 @@ interface SettingsPageProps {
     photosSaved?: string | string[];
     rulesError?: string | string[];
     rulesSaved?: string | string[];
+    hoursError?: string | string[];
+    hoursSaved?: string | string[];
   }>;
 }
 
@@ -389,6 +394,43 @@ async function saveRestaurantSettingsAction(formData: FormData) {
 }
 //-aqui termina funcion saveRestaurantSettingsAction y se va autilizar en el formulario de reglas-//
 
+//-aqui empieza funcion saveBusinessHoursAction y es para guardar los horarios de apertura del restaurante-//
+/**
+ * Persiste los horarios de apertura a partir del formulario.
+ * @sideEffect
+ */
+async function saveBusinessHoursAction(formData: FormData) {
+  "use server";
+
+  const cookieStore = await cookies();
+  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
+
+  if (restaurantId.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+
+  const validDays: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+
+  const hours = validDays.map((day) => ({
+    day,
+    opensAt: (formData.get(`opens-${day}`) as string) ?? "12:00",
+    closesAt: (formData.get(`closes-${day}`) as string) ?? "23:00",
+    isClosed: formData.get(`closed-${day}`) === "on",
+  }));
+
+  try {
+    const infra = getCatalogInfrastructure();
+    const useCase = new SaveBusinessHours(infra.businessHoursRepository);
+    await useCase.execute({ restaurantId, hours });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;
+    redirect("/dashboard/settings?hoursError=invalidHours");
+  }
+
+  redirect("/dashboard/settings?hoursSaved=hours");
+}
+//-aqui termina funcion saveBusinessHoursAction y se va autilizar en el formulario de horarios-//
+
 //-aqui empieza funcion isDuplicateRestaurantSlugError y es para detectar slug repetido en Prisma-//
 /**
  * Detecta si Prisma rechazó la actualización por un slug duplicado.
@@ -434,6 +476,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   }
 
   const persistedRestaurantSettingsPrimitives = persistedRestaurantSettings.toPrimitives();
+
+  const persistedBusinessHours = await catalogInfrastructure.businessHoursRepository.findByRestaurantId(restaurantId);
 
   const persistedPrimitives = persistedRestaurant.toPrimitives();
 
@@ -507,6 +551,24 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     galleryImages: persistedPrimitives.galleryImages,
   };
 
+  const businessHoursInitialValues: BusinessHourRow[] = persistedBusinessHours.map((h) => ({
+    day: h.day,
+    opensAt: h.opensAt,
+    closesAt: h.closesAt,
+    isClosed: h.isClosed,
+  }));
+
+  const hoursErrorValue = resolvedSearchParams.hoursError;
+  const hoursErrorKey = Array.isArray(hoursErrorValue) ? hoursErrorValue[0] ?? "" : hoursErrorValue ?? "";
+  const hoursSavedValue = resolvedSearchParams.hoursSaved;
+  const hoursSavedKey = Array.isArray(hoursSavedValue) ? hoursSavedValue[0] ?? "" : hoursSavedValue ?? "";
+
+  const hoursErrorMessage =
+    hoursErrorKey === "invalidHours"
+      ? "Revisa los horarios. Hay datos que no son válidos."
+      : undefined;
+  const hoursSuccessMessage = hoursSavedKey === "hours" ? "Horarios actualizados correctamente." : undefined;
+
   const restaurantSettingsInitialValues: RestaurantSettingsFormValues = {
     reservationApprovalMode: persistedRestaurantSettingsPrimitives.reservationApprovalMode,
     waitlistMode: persistedRestaurantSettingsPrimitives.waitlistMode,
@@ -538,6 +600,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             successMessage={photosSuccessMessage}
           />
           <SettingsMenuPanel generateSignatureAction={generateCloudinarySignatureAction} />
+          <SettingsBusinessHoursPanel
+            errorMessage={hoursErrorMessage}
+            initialValues={businessHoursInitialValues}
+            saveAction={saveBusinessHoursAction}
+            successMessage={hoursSuccessMessage}
+          />
           <SettingsRulesPanel errorMessage={rulesErrorMessage} initialValues={restaurantSettingsInitialValues} saveAction={saveRestaurantSettingsAction} successMessage={rulesSuccessMessage} />
           
         </div>

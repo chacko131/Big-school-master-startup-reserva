@@ -56,7 +56,8 @@ export default function ReservationConfirmationPage() {
   return (
     <div className="min-h-screen bg-surface text-on-surface antialiased">
       <PublicNavbar 
-        restaurantSlug={reservationData.restaurantSlug} 
+        restaurantSlug={reservationData.restaurantSlug}
+        restaurantName={reservationData.restaurantName}
         buttonText="Volver al Inicio"
         buttonHref="/"
       />

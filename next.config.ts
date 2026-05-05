@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        // Unsplash — fallback para hero cuando no hay foto de portada asignada
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
 };

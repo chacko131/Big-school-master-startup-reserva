@@ -4,11 +4,14 @@
  * Tipo: UI
  */
 
-import { getRestaurantProfile } from "@/lib/public/siteContent";
+import { notFound } from "next/navigation";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { GetRestaurantPublicProfileUseCase } from "@/modules/catalog/application/use-cases/get-restaurant-public-profile.use-case";
+import { RestaurantNotFoundError } from "@/modules/catalog/application/errors/restaurant-not-found.error";
 import { PublicNavbar } from "@/components/guest/PublicNavbar";
 import { PublicFooter } from "@/components/guest/PublicFooter";
 import { ProfileHero } from "@/components/guest/profile/ProfileHero";
-import { RestaurantMetrics } from "@/components/guest/profile/RestaurantMetrics";
+import { RestaurantMenuSection } from "@/components/guest/profile/RestaurantMenuSection";
 import { RestaurantGallery } from "@/components/guest/profile/RestaurantGallery";
 import { LocationAndHours } from "@/components/guest/profile/LocationAndHours";
 import { QuickReservationCard } from "@/components/guest/profile/QuickReservationCard";
@@ -25,8 +28,6 @@ interface RestaurantProfilePageProps {
       }>;
 }
 
-const heroImageUrl =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuB0CJ71HNFb73k8Pz8kZkTS1qpFZYBC-dIjXhLbcW6cTJ7mF0Wy3AhKO4FvhhOK5Gu78s33Jg6XPgLj3EVNQP2mWLRNKFkUBneRlwlN6_GTuXemman3qzP7qguBs-8Bu0C8MIoeeZEhTQ1F8c0EKhN3OVHL8YJG1EpwnHgk3xxQedNcEpjjq-Y7eZRbdVKKglhVT2Z3FhS6ZlEv5AqSJNXHAz71FjuPyWkrjycU_AXXKerMegHx54w07NqWIw-gRkEWkct0z9jnFYs";
 
 const galleryImageDefinitions = [
   {
@@ -46,57 +47,7 @@ const galleryImageDefinitions = [
   },
 ] as const;
 
-const locationDetailDefinitions = [
-  {
-    icon: "locationOn",
-    title: "Calle Aristóteles 124",
-    lines: ["Polanco IV Secc, 11550 Ciudad de México, CDMX"],
-  },
-  {
-    icon: "schedule",
-    title: "Horarios de Servicio",
-    lines: ["Lun - Jue: 13:00 - 23:00", "Vie - Sáb: 13:00 - 01:00", "Dom: 12:00 - 18:00"],
-  },
-  {
-    icon: "contactMail",
-    title: "Contacto",
-    lines: ["+52 55 1234 5678", "hola@lahacienda.mx"],
-  },
-] as const;
 
-//-aqui empieza funcion getRestaurantMetricDefinitions y es para convertir datos del perfil en cards visuales-//
-/**
- * @pure
- */
-function getRestaurantMetricDefinitions() {
-  return [
-    {
-      label: "Reseñas",
-      value: "4.9",
-      hint: "Valoración alta para reforzar confianza.",
-      icon: "star",
-    },
-    {
-      label: "Precio",
-      value: "$$$",
-      hint: "Posicionamiento premium para el cliente final.",
-      icon: "payments",
-    },
-    {
-      label: "Especialidad",
-      value: "Cava",
-      hint: "El restaurante se presenta con identidad clara.",
-      icon: "restaurant",
-    },
-    {
-      label: "Ubicación",
-      value: "Polanco",
-      hint: "Referencia geográfica inmediata para el usuario.",
-      icon: "distance",
-    },
-  ] as const;
-}
-//-aqui termina funcion getRestaurantMetricDefinitions-//
 
 //-aqui empieza funcion RestaurantProfilePage y es para renderizar el perfil publico del restaurante-//
 /**
@@ -105,37 +56,61 @@ function getRestaurantMetricDefinitions() {
  */
 export default async function RestaurantProfilePage({ params }: RestaurantProfilePageProps) {
   const { restaurantSlug } = await params;
-  const restaurantProfile = getRestaurantProfile(restaurantSlug);
-  const restaurantMetricDefinitions = getRestaurantMetricDefinitions();
+
+  // ─── Datos reales desde BD ─────────────────────────────────────
+  const infra = getCatalogInfrastructure();
+  const useCase = new GetRestaurantPublicProfileUseCase(
+    infra.restaurantRepository,
+    infra.businessHoursRepository,
+    infra.menuRepository
+  );
+
+  let publicProfile;
+  try {
+    publicProfile = await useCase.execute(restaurantSlug);
+  } catch (error) {
+    if (error instanceof RestaurantNotFoundError) {
+      notFound();
+    }
+    throw error;
+  }
 
   return (
     <main className="bg-surface text-on-surface selection:bg-secondary-container">
-      <PublicNavbar restaurantSlug={restaurantSlug} buttonText="Reservar Mesa" />
+      <PublicNavbar restaurantSlug={restaurantSlug} restaurantName={publicProfile.name} buttonText="Reservar Mesa" />
 
       <div className="relative">
         <ProfileHero 
-          displayName={restaurantProfile.displayName}
-          subtitle={restaurantProfile.subtitle}
-          heroImageUrl={heroImageUrl}
+          displayName={publicProfile.name}
+          subtitle={publicProfile.description || "Experiencia gastronómica única"}
+          heroImageUrl={publicProfile.heroImageUrl}
         />
 
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
             <div className="space-y-16 lg:col-span-8">
-              <RestaurantMetrics 
-                description={restaurantProfile.description}
-                metrics={restaurantMetricDefinitions}
+              <RestaurantMenuSection categories={publicProfile.menu} />
+
+              <RestaurantGallery
+                imageUrls={publicProfile.galleryImageUrls.length > 0
+                  ? publicProfile.galleryImageUrls
+                  : galleryImageDefinitions.map((img) => img.src)}
+                restaurantName={publicProfile.name}
               />
 
-              <RestaurantGallery images={galleryImageDefinitions} />
-
-              <LocationAndHours details={locationDetailDefinitions} />
+              <LocationAndHours
+                address={publicProfile.address}
+                city={publicProfile.city}
+                phone={publicProfile.phone}
+                email={publicProfile.email}
+                businessHours={publicProfile.businessHours}
+              />
             </div>
 
             <aside className="lg:col-span-4">
               <div className="space-y-8 lg:sticky lg:top-32">
-                <QuickReservationCard />
-                <PrivateEventsCard />
+                <QuickReservationCard restaurantSlug={restaurantSlug} />
+                <PrivateEventsCard phone={publicProfile.phone} />
               </div>
             </aside>
           </div>

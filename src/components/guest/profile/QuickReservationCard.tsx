@@ -4,14 +4,19 @@
  * Tipo: UI
  */
 
+import Link from "next/link";
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+
+interface QuickReservationCardProps {
+  restaurantSlug: string;
+}
 
 //-aqui empieza funcion QuickReservationCard y es para el formulario rápido de reserva-//
 /**
  * @pure
  */
-export function QuickReservationCard() {
+export function QuickReservationCard({ restaurantSlug }: QuickReservationCardProps) {
   return (
     <div className="rounded-3xl border border-outline-variant/10 bg-white p-6 shadow-[0px_20px_40px_rgba(26,28,28,0.06)] sm:p-8">
       <h3 className="mb-6 text-2xl font-bold">
@@ -64,12 +69,12 @@ export function QuickReservationCard() {
           </div>
         </div>
 
-        <button 
-          className="w-full rounded-2xl bg-primary py-5 text-lg font-bold text-on-primary shadow-lg shadow-black/10 transition-all hover:opacity-90 active:scale-[0.98]" 
-          type="submit"
+        <Link
+          href={`/${restaurantSlug}/reservar`}
+          className="block w-full rounded-2xl bg-primary py-5 text-center text-lg font-bold text-on-primary shadow-lg shadow-black/10 transition-all hover:opacity-90 active:scale-[0.98]"
         >
           <T>Confirmar Reserva</T>
-        </button>
+        </Link>
 
         <p className="px-4 text-center text-xs text-on-surface-variant/70">
           <T>Al reservar, aceptas nuestras políticas de cancelación y términos de servicio.</T>

@@ -7,11 +7,20 @@
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
 
+interface PrivateEventsCardProps {
+  phone: string | null;
+}
+
 //-aqui empieza funcion PrivateEventsCard y es para la sección de eventos privados-//
 /**
  * @pure
  */
-export function PrivateEventsCard() {
+export function PrivateEventsCard({ phone }: PrivateEventsCardProps) {
+  const whatsappNumber = phone ? phone.replace(/[^0-9]/g, "") : "";
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Hola, me gustaría solicitar información sobre eventos privados.")}`
+    : "#";
+
   return (
     <div className="rounded-3xl bg-secondary-container/30 p-6 space-y-4 sm:p-8">
       <h4 className="font-bold text-on-secondary-container">
@@ -20,7 +29,12 @@ export function PrivateEventsCard() {
       <p className="text-sm leading-relaxed text-on-secondary-container/80">
         <T>Contamos con salones exclusivos para celebraciones y cenas corporativas de hasta 40 personas.</T>
       </p>
-      <a className="inline-flex items-center gap-1 text-sm font-bold text-secondary transition-opacity hover:underline" href="#">
+      <a
+        className="inline-flex items-center gap-1 text-sm font-bold text-secondary transition-opacity hover:underline"
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <T>Solicitar información</T>
         <PublicIcon name="openInNew" className="h-4 w-4" />
       </a>

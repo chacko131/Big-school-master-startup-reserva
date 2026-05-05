@@ -34,7 +34,7 @@ export default async function ReservationFlowPage({ params }: ReservationFlowPag
 
   return (
     <main className="bg-surface text-on-surface selection:bg-secondary-container min-h-screen flex flex-col">
-      <PublicNavbar restaurantSlug={restaurantSlug} />
+      <PublicNavbar restaurantSlug={restaurantSlug} restaurantName={restaurantName} />
 
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-20 grow">
         <div className="flex flex-col gap-16 lg:flex-row">

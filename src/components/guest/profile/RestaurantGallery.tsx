@@ -5,45 +5,52 @@
  */
 
 import { T } from "@/components/T";
-import { PublicIcon } from "@/components/public/PublicIcon";
 import Image from "next/image";
 
-interface GalleryImage {
-  src: string;
-  alt: string;
-  className: string;
+interface RestaurantGalleryProps {
+  imageUrls: string[];
+  restaurantName: string;
 }
 
-interface RestaurantGalleryProps {
-  images: ReadonlyArray<GalleryImage>;
+//-aqui empieza funcion getGridClassName y es para asignar el layout CSS de cada celda de la galería-//
+/**
+ * Devuelve la clase CSS de grid para cada posición de la galería.
+ * La primera imagen ocupa 2×2 (destacada), las demás 1×1.
+ * @pure
+ */
+function getGridClassName(index: number): string {
+  if (index === 0) {
+    return "col-span-2 row-span-2 overflow-hidden rounded-2xl aspect-square lg:aspect-auto";
+  }
+  return "overflow-hidden rounded-2xl aspect-square";
 }
+//-aqui termina funcion getGridClassName-//
 
 //-aqui empieza funcion RestaurantGallery y es para mostrar la galería-//
 /**
  * @pure
  */
-export function RestaurantGallery({ images }: RestaurantGalleryProps) {
+export function RestaurantGallery({ imageUrls, restaurantName }: RestaurantGalleryProps) {
+  if (imageUrls.length === 0) return null;
+
   return (
     <div className="space-y-8">
       <div className="flex items-end justify-between gap-4">
         <h3 className="text-2xl font-bold sm:text-3xl">
           <T>Galería</T>
         </h3>
-        <button className="flex items-center gap-2 font-semibold text-secondary transition-opacity hover:opacity-70" type="button">
-          <T>Ver todas</T>
-          <PublicIcon name="arrowForward" className="h-5 w-5" />
-        </button>
+        
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {images.map((image) => (
-          <div className={image.className} key={image.alt}>
+        {imageUrls.map((url, index) => (
+          <div className={getGridClassName(index)} key={url}>
             <Image
               width={800}
               height={600}
-              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" 
-              alt={image.alt} 
-              src={image.src} 
+              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+              alt={`${restaurantName} — foto ${index + 1}`}
+              src={url}
             />
           </div>
         ))}

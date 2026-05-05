@@ -2,15 +2,17 @@
 
 /**
  * Archivo: PublicNavbar.tsx
- * Responsabilidad: Renderizar la barra de navegación pública superior.
+ * Responsabilidad: Renderizar la barra de navegación pública superior del perfil del restaurante.
  * Tipo: UI
  */
 
 import Link from "next/link";
 import { T } from "@/components/T";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
 
 interface PublicNavbarProps {
   restaurantSlug: string;
+  restaurantName?: string;
   buttonText?: string;
   buttonHref?: string;
 }
@@ -21,10 +23,12 @@ interface PublicNavbarProps {
  */
 export function PublicNavbar({ 
   restaurantSlug, 
+  restaurantName,
   buttonText = "Get Started", 
   buttonHref 
 }: PublicNavbarProps) {
   const finalButtonHref = buttonHref || `/${restaurantSlug}/reservar`;
+  const displayTitle = restaurantName || "Reserva Latina";
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-black border-b border-slate-100 dark:border-zinc-800">
@@ -33,24 +37,25 @@ export function PublicNavbar({
           className="text-2xl font-bold tracking-tighter text-black dark:text-white font-headline" 
           href={`/${restaurantSlug}`}
         >
-          <T>Reserva Latina</T>
+          {displayTitle}
         </Link>
-        <nav className="hidden items-center space-x-8 md:flex">
-          <a className="text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white" href="#">
-            <T>Platform</T>
-          </a>
-          <a className="text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white" href="#">
-            <T>Pricing</T>
-          </a>
-          <a className="border-b-2 border-black pb-1 font-semibold text-black dark:border-white dark:text-white" href="#">
-            <T>Restaurants</T>
-          </a>
-          <a className="text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white" href="#">
+
+        <nav className="hidden items-center space-x-6 md:flex">
+          <Link className="text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white" href="/sign-in">
             <T>Login</T>
-          </a>
+          </Link>
+          <LanguageToggle />
         </nav>
+
+        <div className="flex items-center gap-3 md:hidden">
+          <Link className="text-zinc-500 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white" href="/sign-in">
+            <T>Login</T>
+          </Link>
+          <LanguageToggle />
+        </div>
+
         <Link 
-          className="rounded-lg bg-primary px-6 py-2.5 font-semibold text-on-primary transition-transform duration-150 hover:scale-95 shadow-lg shadow-primary/20" 
+          className="hidden rounded-lg bg-primary px-6 py-2.5 font-semibold text-on-primary transition-transform duration-150 hover:scale-95 shadow-lg shadow-primary/20 sm:inline-flex" 
           href={finalButtonHref}
         >
           <T>{buttonText}</T>

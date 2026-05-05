@@ -182,9 +182,6 @@ function GalleryManager({
         )}
       </div>
       <input accept="image/*" className="sr-only" multiple onChange={handleAddFiles} ref={inputRef} type="file" />
-      <p className="text-xs text-on-surface-variant">
-        Máximo {MAX_GALLERY_IMAGES} fotos. Las imágenes se suben directamente a Cloudinary sin pasar por el servidor.
-      </p>
     </div>
   );
 }
