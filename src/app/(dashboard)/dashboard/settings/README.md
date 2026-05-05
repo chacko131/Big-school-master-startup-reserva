@@ -18,3 +18,13 @@ Editar el perfil del restaurante y sus reglas de reserva.
 - buffer
 - ventana de cancelación
 - autoasignación
+
+---
+
+## Log de cambios — 05/05/2026 16:10
+
+- **menu-actions.ts**: Creación de server actions completas para CRUD de categorías y platos del menú.
+- **Integración Cloudinary**: Eliminación de imágenes huérfanas al actualizar/borrar platos o categorías completas.
+- **page.tsx**: Integración de `SettingsMenuPanel` con prop `generateSignatureAction` para subida de fotos.
+- **imagePublicId**: Propagación del campo a través de DTOs y use cases para tracking de imágenes.
+- **Eliminación de console.log/console.error**: Limpieza total de logs en server actions.

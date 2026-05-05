@@ -6,6 +6,7 @@
 
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+import Image from "next/image";
 
 interface GalleryImage {
   src: string;
@@ -37,7 +38,9 @@ export function RestaurantGallery({ images }: RestaurantGalleryProps) {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         {images.map((image) => (
           <div className={image.className} key={image.alt}>
-            <img 
+            <Image
+              width={800}
+              height={600}
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" 
               alt={image.alt} 
               src={image.src} 

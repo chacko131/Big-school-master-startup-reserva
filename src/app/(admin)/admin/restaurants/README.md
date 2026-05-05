@@ -21,3 +21,9 @@ Listar, auditar y supervisar los restaurantes de la plataforma.
 - **Planificación de Onboarding**: Documentación visual de la lógica diferida para Auth/Billing (los restaurantes nacerán inactivos hasta completar el pago/registro).
 - **Ficha de Restaurante (Vista Detalle)**: Se eliminaron los componentes visuales obsoletos (`RestaurantDetailMetricCard`) y se conectó el panel de "Contexto Operativo" con la BD mediante `GetRestaurantAdminDetailsUseCase`. Ahora muestra reglas de negocio reales (Aprobación, Ventana de Cancelación, Mesas).
 
+---
+
+## Log de cambios — 05/05/2026 16:10
+
+- **page.tsx**: Limpieza de imports no utilizados (`RestaurantMetricDefinition`, `RestaurantTenantDefinition`).
+- **[restaurantId]/page.tsx**: Supresión de lint warning `@typescript-eslint/no-unused-vars` en catch.

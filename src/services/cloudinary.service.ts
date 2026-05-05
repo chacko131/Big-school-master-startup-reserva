@@ -108,6 +108,7 @@ export const cloudinaryService = {
       
       // Si no hay extensión, devolvemos el string completo
       return publicId || pathWithoutVersion;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return null;
     }

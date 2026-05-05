@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import Image from "next/image";
+
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -120,7 +120,7 @@ async function createRestaurantOnboardingAction(formData: FormData) {
   let heroImage = DEFAULT_HERO_IMAGE;
   const imageFile = formData.get("heroImage") as File | null;
 
-  console.log("[Onboarding] Procesando imagen de portada...");
+  
 
   if (imageFile && imageFile.size > 0) {
     console.log("[Onboarding] Imagen recibida:", {

@@ -24,11 +24,6 @@ export interface GuideLine {
   orientation: GuideOrientation;
 }
 
-interface StatusPalette {
-  label: string;
-  fill: string;
-  text: string;
-}
 
 interface FloorPlanCanvasProps {
   canvasWidth: number;
@@ -61,23 +56,6 @@ interface FloorPlanCanvasProps {
   onNewElementDrop: (type: "WALL" | "WALL_V" | "PLANT", x: number, y: number) => void;
 }
 
-const tableStatusPalette: Record<FloorPlanTable["status"], StatusPalette> = {
-  active: {
-    label: "Disponible",
-    fill: "#c7ead3",
-    text: "#173b27",
-  },
-  occupied: {
-    label: "Ocupada",
-    fill: "#f7c9bf",
-    text: "#54261d",
-  },
-  inactive: {
-    label: "Inactiva",
-    fill: "#e3e3e3",
-    text: "#4b4b4b",
-  },
-};
 
 //-aqui empieza funcion getShapeCornerRadius y es para redondear las mesas según su forma-//
 /**
@@ -99,14 +77,6 @@ function getShapeCornerRadius(shape: TableShape): number {
 //-aqui termina funcion getShapeCornerRadius-//
 
 //-aqui empieza funcion getStatusPalette y es para resolver el estilo del estado-//
-/**
- * Devuelve la paleta visual de estado para una mesa.
- *
- * @pure
- */
-function getStatusPalette(status: FloorPlanTable["status"]): StatusPalette {
-  return tableStatusPalette[status];
-}
 //-aqui termina funcion getStatusPalette-//
 
 //-aqui empieza componente FloorPlanCanvas y es para dibujar la sala con las mesas-//

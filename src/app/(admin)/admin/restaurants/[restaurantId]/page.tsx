@@ -46,6 +46,7 @@ export default async function AdminRestaurantDetailPage({ params }: AdminRestaur
   let details;
   try {
     details = await useCase.execute(restaurantId);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     notFound();
   }

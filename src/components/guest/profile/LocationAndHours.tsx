@@ -6,6 +6,7 @@
 
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+import Image from "next/image";
 
 interface LocationDetail {
   icon: "locationOn" | "schedule" | "contactMail";
@@ -51,7 +52,9 @@ export function LocationAndHours({ details }: LocationAndHoursProps) {
       </div>
 
       <div className="relative min-h-[300px] overflow-hidden rounded-3xl bg-surface-container-high shadow-inner h-64 md:h-full">
-        <img 
+        <Image
+          width={800}
+          height={600}
           className="h-full w-full object-cover opacity-80 grayscale" 
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTvUakdE2nc_b_--lnN3eQGM1OpsSJaKtH8bT-UpKoXtB84Vt3hVS-xEjECFOkwqSpf0XmQCFv6xzaEuQl4-zcbN0-NrRC2hfkk9OJOTABpOJsmlntFYwJT4LIHYKxkjcJs2JnkqRjQzneb4OwoCmP15TDFm8lCHC3qXXGnq9DB5g7uLJrkgBSQma-P-L5QdsJkaAYSq29jUj1_MEQwDCVwWjo1pI3jmcfGD6_j8ZfqDdmX4B6WFF18yNhEcfgVcDiGSQ6xNjGUnM" 
           alt="Mapa de ubicación" 

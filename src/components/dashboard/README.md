@@ -9,3 +9,9 @@ Encapsular el `header`, el `sidebar` y el shell visual del dashboard para que la
 ## Estado
 
 Base reutilizable para el crecimiento del área privada.
+
+---
+
+## Log de cambios — 05/05/2026 16:10
+
+- **tables/FloorPlanCanvas.tsx**: Eliminación de interfaz `StatusPalette` y objeto `tableStatusPalette` no utilizados. Eliminación de función `getStatusPalette` muerta.

@@ -11,6 +11,7 @@ export interface MenuItemPrimitives {
   description: string | null;
   price: number | null; // null = "precio a consultar" (ej: precio de mercado)
   imageUrl: string | null;
+  imagePublicId: string | null;
   allergens: string[];
   isAvailable: boolean;
   sortOrder: number;
@@ -25,6 +26,7 @@ export interface CreateMenuItemProps {
   description?: string | null;
   price?: number | null;
   imageUrl?: string | null;
+  imagePublicId?: string | null;
   allergens?: string[];
   isAvailable?: boolean;
   sortOrder?: number;
@@ -60,6 +62,7 @@ export class MenuItem {
       description: props.description?.trim() || null,
       price: props.price ?? null,
       imageUrl: props.imageUrl?.trim() || null,
+      imagePublicId: props.imagePublicId?.trim() || null,
       allergens: props.allergens ?? [],
       isAvailable: props.isAvailable ?? true,
       sortOrder: props.sortOrder ?? 0,
@@ -82,6 +85,7 @@ export class MenuItem {
   get description(): string | null { return this.props.description; }
   get price(): number | null { return this.props.price; }
   get imageUrl(): string | null { return this.props.imageUrl; }
+  get imagePublicId(): string | null { return this.props.imagePublicId; }
   get allergens(): string[] { return this.props.allergens; }
   get isAvailable(): boolean { return this.props.isAvailable; }
   get sortOrder(): number { return this.props.sortOrder; }

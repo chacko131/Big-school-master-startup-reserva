@@ -8,6 +8,7 @@
 
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+import Image from "next/image";
 
 interface ReservationSummaryProps {
   restaurantName: string;
@@ -75,7 +76,9 @@ export function ReservationSummary({ restaurantName }: ReservationSummaryProps) 
           </div>
         </div>
         <div className="mt-8 border-t border-zinc-100 pt-8">
-          <img
+          <Image
+            width={800}
+            height={600}
             alt="minimal monochromatic map of Mexico City downtown showing major streets and restaurant location point"
             className="h-32 w-full rounded-2xl object-cover grayscale contrast-125 brightness-90"
             src={reservationCardImageUrl}

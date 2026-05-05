@@ -5,6 +5,7 @@
  */
 
 import { T } from "@/components/T";
+import Image from "next/image";
 
 interface ConfirmationSummaryCardProps {
   restaurantName: string;
@@ -74,7 +75,9 @@ export function ConfirmationSummaryCard({
         </div>
       </div>
       <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 opacity-10">
-        <img
+        <Image
+          width={800}
+          height={600}
           alt="abstract background"
           className="h-full w-full object-cover"
           src={imageUrl}

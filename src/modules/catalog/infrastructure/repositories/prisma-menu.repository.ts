@@ -16,6 +16,21 @@ import { type MenuRepository } from "../../application/ports/menu-repository.por
 export class PrismaMenuRepository implements MenuRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
 
+  //-aqui empieza funcion findCategoryById y es para obtener una categoría por su id-//
+  /**
+   * @sideEffect
+   */
+  async findCategoryById(categoryId: string): Promise<MenuCategory | null> {
+    const record = await this.prismaClient.menuCategory.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!record) return null;
+
+    return mapCategoryRecordToEntity(record);
+  }
+  //-aqui termina funcion findCategoryById-//
+
   //-aqui empieza funcion findCategoriesByRestaurantId y es para obtener categorías de la carta de un restaurante-//
   /**
    * @sideEffect
@@ -29,6 +44,21 @@ export class PrismaMenuRepository implements MenuRepository {
     return records.map(mapCategoryRecordToEntity);
   }
   //-aqui termina funcion findCategoriesByRestaurantId-//
+
+  //-aqui empieza funcion findItemById y es para obtener un plato por su id-//
+  /**
+   * @sideEffect
+   */
+  async findItemById(itemId: string): Promise<MenuItem | null> {
+    const record = await this.prismaClient.menuItem.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!record) return null;
+
+    return mapItemRecordToEntity(record);
+  }
+  //-aqui termina funcion findItemById-//
 
   //-aqui empieza funcion findItemsByCategoryId y es para obtener los platos de una categoría-//
   /**
@@ -89,6 +119,7 @@ export class PrismaMenuRepository implements MenuRepository {
         description: p.description,
         price: p.price !== null ? p.price : null,
         imageUrl: p.imageUrl,
+        imagePublicId: p.imagePublicId,
         allergens: p.allergens,
         isAvailable: p.isAvailable,
         sortOrder: p.sortOrder,
@@ -98,6 +129,7 @@ export class PrismaMenuRepository implements MenuRepository {
         description: p.description,
         price: p.price !== null ? p.price : null,
         imageUrl: p.imageUrl,
+        imagePublicId: p.imagePublicId,
         allergens: p.allergens,
         isAvailable: p.isAvailable,
         sortOrder: p.sortOrder,
@@ -155,6 +187,7 @@ function mapItemRecordToEntity(record: PrismaMenuItemRecord): MenuItem {
     description: record.description,
     price: record.price !== null ? Number(record.price) : null,
     imageUrl: record.imageUrl,
+    imagePublicId: record.imagePublicId,
     allergens: record.allergens,
     isAvailable: record.isAvailable,
     sortOrder: record.sortOrder,

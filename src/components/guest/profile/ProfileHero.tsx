@@ -6,6 +6,7 @@
 
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+import Image from "next/image";
 
 interface ProfileHeroProps {
   displayName: string;
@@ -20,10 +21,12 @@ interface ProfileHeroProps {
 export function ProfileHero({ displayName, subtitle, heroImageUrl }: ProfileHeroProps) {
   return (
     <section className="relative h-[819px] w-full overflow-hidden">
-      <img 
+      <Image 
         className="h-full w-full object-cover" 
         src={heroImageUrl} 
         alt={displayName} 
+        width={800}
+        height={600}
       />
       <div className="absolute inset-0 flex items-end bg-black/30 px-4 pb-16 sm:px-6 sm:pb-24 lg:px-8">
         <div className="mx-auto flex w-full max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-end">

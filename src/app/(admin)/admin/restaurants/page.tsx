@@ -5,8 +5,8 @@
  */
 
 import { T } from "@/components/T";
-import { RestaurantMetricCard, RestaurantMetricDefinition } from "@/components/admin/restaurants/RestaurantMetricCard";
-import { RestaurantTenantRow, RestaurantTenantDefinition } from "@/components/admin/restaurants/RestaurantTenantRow";
+import { RestaurantMetricCard } from "@/components/admin/restaurants/RestaurantMetricCard";
+import { RestaurantTenantRow } from "@/components/admin/restaurants/RestaurantTenantRow";
 import { RestaurantTasksRail } from "@/components/admin/restaurants/RestaurantTasksRail";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { ListRestaurantsUseCase } from "@/modules/catalog/application/use-cases/list-restaurants.use-case";

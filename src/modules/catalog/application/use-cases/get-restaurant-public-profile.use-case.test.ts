@@ -4,7 +4,7 @@
  * Tipo: test
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { GetRestaurantPublicProfileUseCase } from "./get-restaurant-public-profile.use-case";
 import { RestaurantNotFoundError } from "../errors/restaurant-not-found.error";
 import { Restaurant } from "../../domain/entities/restaurant.entity";
@@ -89,6 +89,12 @@ function buildMocks(restaurantOrNull: Restaurant | null = buildRestaurant()) {
     saveItem: vi.fn(),
     deleteCategoryById: vi.fn(),
     deleteItemById: vi.fn(),
+    findCategoryById: function (): Promise<MenuCategory | null> {
+      throw new Error("Function not implemented.");
+    },
+    findItemById: function (): Promise<MenuItem | null> {
+      throw new Error("Function not implemented.");
+    }
   };
 
   return { restaurantRepository, businessHoursRepository, menuRepository };

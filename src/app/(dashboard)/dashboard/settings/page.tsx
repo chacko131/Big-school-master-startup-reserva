@@ -16,6 +16,7 @@ import {
 } from "@/components/dashboard/settings/SettingsSecondaryPanels";
 import { SettingsProfilePanel } from "@/components/dashboard/settings/SettingsProfilePanel";
 import { SettingsToolbar } from "@/components/dashboard/settings/SettingsToolbar";
+import { SettingsMenuPanel } from "@/components/dashboard/settings/SettingsMenuPanel";
 import { RestaurantNotFoundError } from "@/modules/catalog/application/errors/restaurant-not-found.error";
 import { RestaurantSettingsNotFoundError } from "@/modules/catalog/application/errors/restaurant-settings-not-found.error";
 import { UpdateRestaurant } from "@/modules/catalog/application/use-cases/update-restaurant.use-case";
@@ -199,8 +200,7 @@ async function saveCatalogProfileAction(formData: FormData) {
   }
 
   try {
-    console.log("[Settings] Intentando guardar perfil público para:", restaurantId);
-    console.log("[Settings] Datos a persistir:", JSON.stringify(parsedInput.data, null, 2));
+    
 
     const catalogInfrastructure = getCatalogInfrastructure();
     const updateRestaurantProfile = new UpdateRestaurantProfile(catalogInfrastructure.restaurantRepository);
@@ -210,7 +210,7 @@ async function saveCatalogProfileAction(formData: FormData) {
       ...parsedInput.data,
     });
 
-    console.log("[Settings] ✅ Perfil público guardado con éxito en BD");
+   
   } catch (error) {
     if (error instanceof RestaurantNotFoundError) {
       redirect("/onboarding/restaurant");
@@ -254,7 +254,6 @@ async function generateCloudinarySignatureAction(
     cfg.api_secret as string
   );
 
-  console.log("[Signature] Firma generada para folder:", folder);
 
   return {
     signature,
@@ -290,8 +289,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
     throw new Error("[Photos] No hay sesión activa de restaurante");
   }
 
-  console.log("[Photos] Persistiendo URLs para restaurantId:", restaurantId);
-  console.log("[Photos] Payload recibido:", JSON.stringify(payload, null, 2));
+
 
   const catalogInfrastructure = getCatalogInfrastructure();
   const updateRestaurantProfile = new UpdateRestaurantProfile(catalogInfrastructure.restaurantRepository);
@@ -317,7 +315,6 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
     ...payload.newGalleryImages,
   ].slice(0, MAX_GALLERY_SERVER);
 
-  console.log("[Photos] Galería final:", finalGallery.length, "imágenes (max:", MAX_GALLERY_SERVER, ")");
 
   const patch: { heroImage?: RestaurantImage | null; galleryImages?: RestaurantImage[] } = {
     galleryImages: finalGallery,
@@ -325,11 +322,10 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 
   if (payload.heroImage !== undefined) {
     patch.heroImage = payload.heroImage;
-    console.log("[Photos] Hero actualizada:", payload.heroImage?.url ?? "null");
   }
 
   await updateRestaurantProfile.execute({ restaurantId, ...patch });
-  console.log("[Photos] ✅ URLs persistidas correctamente en BD");
+
 
   // Invalidamos la caché para que la página refleje los cambios al navegar
   revalidatePath("/dashboard/settings");
@@ -541,6 +537,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             savePhotoUrlsAction={savePhotoUrlsAction}
             successMessage={photosSuccessMessage}
           />
+          <SettingsMenuPanel generateSignatureAction={generateCloudinarySignatureAction} />
           <SettingsRulesPanel errorMessage={rulesErrorMessage} initialValues={restaurantSettingsInitialValues} saveAction={saveRestaurantSettingsAction} successMessage={rulesSuccessMessage} />
           <SettingsTeamPanel />
         </div>

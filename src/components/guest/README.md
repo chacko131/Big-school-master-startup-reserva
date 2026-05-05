@@ -16,3 +16,16 @@ Esta carpeta contiene los componentes de UI utilizados en las superficies públi
 - `/ReservationSummary.tsx`: Panel lateral con el resumen de la reserva.
 - `/PublicNavbar.tsx`: Barra de navegación pública.
 - `/PublicFooter.tsx`: Pie de página público.
+
+---
+
+## Log de cambios — 05/05/2026 16:10
+
+- **ReservationSummary.tsx**: Migración de `<img>` a `<Image>` de Next.js con width/height explícitos.
+- **profile/LocationAndHours.tsx**: Migración de `<img>` a `<Image>`.
+- **profile/ProfileHero.tsx**: Migración de `<img>` a `<Image>`.
+- **profile/RestaurantGallery.tsx**: Migración de `<img>` a `<Image>`.
+- **reserva/ConfirmationLocationCard.tsx**: Migración de `<img>` a `<Image>`.
+- **reserva/ConfirmationPromoCard.tsx**: Migración de `<img>` a `<Image>`.
+- **reserva/ConfirmationSummaryCard.tsx**: Migración de `<img>` a `<Image>`.
+- **reservar/ReservationSummary.tsx**: Migración de `<img>` a `<Image>`.

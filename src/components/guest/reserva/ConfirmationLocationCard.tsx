@@ -6,6 +6,7 @@
 
 import { T } from "@/components/T";
 import { PublicIcon } from "@/components/public/PublicIcon";
+import Image from "next/image";
 
 interface ConfirmationLocationCardProps {
   locationLabel: string;
@@ -27,7 +28,9 @@ export function ConfirmationLocationCard({
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-surface-container-low md:col-span-4">
       <div className="relative h-48 w-full bg-surface-container-highest">
-        <img
+        <Image
+          width={800}
+          height={600}
           alt="Map location"
           className="h-full w-full object-cover"
           src={mapImageUrl}

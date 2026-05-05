@@ -13,6 +13,7 @@ import { type ZoneRepository } from "../application/ports/zone-repository.port";
 import { type FloorPlanElementRepository } from "../application/ports/floor-plan-element-repository.port";
 import { type BusinessHoursRepository } from "../application/ports/business-hours-repository.port";
 import { type MenuRepository } from "../application/ports/menu-repository.port";
+import { type FeatureGatePort } from "../application/ports/feature-gate.port";
 import { PrismaDiningTableRepository } from "./repositories/prisma-dining-table.repository";
 import { PrismaRestaurantRepository } from "./repositories/prisma-restaurant.repository";
 import { PrismaRestaurantSettingsRepository } from "./repositories/prisma-restaurant-settings.repository";
@@ -20,6 +21,7 @@ import { PrismaZoneRepository } from "./repositories/prisma-zone.repository";
 import { PrismaFloorPlanElementRepository } from "./repositories/prisma-floor-plan-element.repository";
 import { PrismaBusinessHoursRepository } from "./repositories/prisma-business-hours.repository";
 import { PrismaMenuRepository } from "./repositories/prisma-menu.repository";
+import { AlwaysAllowedFeatureGate } from "./adapters/always-allowed-feature-gate";
 
 export interface CatalogInfrastructure {
   restaurantRepository: RestaurantRepository;
@@ -29,6 +31,7 @@ export interface CatalogInfrastructure {
   floorPlanElementRepository: FloorPlanElementRepository;
   businessHoursRepository: BusinessHoursRepository;
   menuRepository: MenuRepository;
+  featureGate: FeatureGatePort;
 }
 
 //-aqui empieza funcion createCatalogInfrastructure y es para ensamblar la infraestructura concreta del catalogo-//
@@ -45,6 +48,7 @@ export function createCatalogInfrastructure(prismaClient: PrismaClient): Catalog
     floorPlanElementRepository: new PrismaFloorPlanElementRepository(prismaClient),
     businessHoursRepository: new PrismaBusinessHoursRepository(prismaClient),
     menuRepository: new PrismaMenuRepository(prismaClient),
+    featureGate: new AlwaysAllowedFeatureGate(),
   };
 }
 //-aqui termina funcion createCatalogInfrastructure y se va autilizar en composition root del servidor-//

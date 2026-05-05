@@ -5,6 +5,7 @@
  */
 
 import { T } from "@/components/T";
+import Image from "next/image";
 
 interface ConfirmationPromoCardProps {
   title?: string;
@@ -26,7 +27,9 @@ export function ConfirmationPromoCard({
   return (
     <section className="mx-auto mt-12 max-w-5xl px-6">
       <div className="relative flex h-64 items-center overflow-hidden rounded-2xl bg-black p-12">
-        <img
+        <Image
+          width={800}
+          height={600}
           alt="Luxury background"
           className="absolute inset-0 h-full w-full object-cover opacity-50"
           src={imageUrl}
