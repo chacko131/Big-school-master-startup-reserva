@@ -23,3 +23,11 @@ Se usan cuando un caso de uso no puede completar una operación, por ejemplo:
 ## Estado actual
 
 La carpeta ya está preparada y contiene los primeros errores de aplicación.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`no-availability.error.ts`**: nuevo error que se lanza cuando no hay disponibilidad para el slot horario solicitado al crear una reserva.

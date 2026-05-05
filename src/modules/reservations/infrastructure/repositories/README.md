@@ -26,3 +26,14 @@ Ya existen repositorios concretos basados en Prisma para:
 - `Guest`
 - consultas de `DiningTable` activas
 - consultas de `RestaurantSettings`
+- consultas de `BusinessHours`
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`prisma-reservation.repository.ts`**: añadidos `findByRestaurantAndDateRange()` (excluye CANCELLED y NO_SHOW) y `findByGuestId()` (historial ordenado por fecha desc).
+- **`prisma-guest.repository.ts`**: añadido `findByRestaurantAndPhone()` usando el constraint unique `restaurantId_phone`.
+- **`prisma-business-hours.repository.ts`**: nuevo repositorio que consulta los horarios de apertura del restaurante.

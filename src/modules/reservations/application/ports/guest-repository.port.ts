@@ -8,5 +8,6 @@ import { Guest } from "../../domain/entities/guest.entity";
 
 export interface GuestRepository {
   findById(id: string): Promise<Guest | null>;
+  findByRestaurantAndPhone(restaurantId: string, phone: string): Promise<Guest | null>;
   save(guest: Guest): Promise<Guest>;
 }

@@ -25,3 +25,11 @@ Sirven para modelar el negocio real del flujo de reservas.
 ## Estado actual
 
 La carpeta ya contiene las entidades principales del flujo de reservas.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`reservation.entity.ts`**: añadidos `checkIn()`, `complete()` con guards de estado (solo CONFIRMED → CHECKED_IN, solo CHECKED_IN → COMPLETED). `markNoShow()` ahora valida que el estado sea CONFIRMED. Nuevos getters: `startAt`, `endAt`, `cancellationDeadlineAt`.

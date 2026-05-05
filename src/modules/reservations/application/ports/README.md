@@ -31,3 +31,13 @@ Definen la forma en la que `application` habla con:
 ## Estado actual
 
 La carpeta está preparada para las interfaces del módulo.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`reservation-repository.port.ts`**: añadidos `findByRestaurantAndDateRange()` y `findByGuestId()`.
+- **`guest-repository.port.ts`**: añadido `findByRestaurantAndPhone()`.
+- **`business-hours-repository.port.ts`**: nuevo puerto para consultar horarios de apertura del restaurante.

@@ -32,6 +32,45 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
   //-aqui termina funcion findById y se va autilizar en casos de uso de reservas-//
 
+  //-aqui empieza funcion findByRestaurantAndDateRange y es para buscar reservas en un rango de fechas-//
+  /**
+   * Busca reservas de un restaurante cuyo startAt caiga dentro del rango [from, to).
+   * Inicio inclusivo, fin exclusivo. Excluye canceladas y no-show para cálculos de disponibilidad.
+   * @sideEffect
+   */
+  async findByRestaurantAndDateRange(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<Reservation[]> {
+    const records = await this.prismaClient.reservation.findMany({
+      where: {
+        restaurantId,
+        startAt: { gte: from, lt: to },
+        status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      },
+      orderBy: { startAt: "asc" },
+    });
+
+    return records.map(mapReservationRecordToEntity);
+  }
+  //-aqui termina funcion findByRestaurantAndDateRange y se va autilizar en disponibilidad-//
+
+  //-aqui empieza funcion findByGuestId y es para buscar el historial de reservas de un guest-//
+  /**
+   * Busca todas las reservas de un guest ordenadas por fecha descendente.
+   * @sideEffect
+   */
+  async findByGuestId(guestId: string): Promise<Reservation[]> {
+    const records = await this.prismaClient.reservation.findMany({
+      where: { guestId },
+      orderBy: { startAt: "desc" },
+    });
+
+    return records.map(mapReservationRecordToEntity);
+  }
+  //-aqui termina funcion findByGuestId y se va autilizar en historial del guest-//
+
   //-aqui empieza funcion save y es para persistir una reserva usando Prisma-//
   /**
    * Guarda una reserva en la base de datos mediante upsert.

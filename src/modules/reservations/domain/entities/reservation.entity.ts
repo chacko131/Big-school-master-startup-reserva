@@ -126,6 +126,18 @@ export class Reservation {
     return this.props.partySize;
   }
 
+  get startAt(): Date {
+    return this.props.startAt;
+  }
+
+  get endAt(): Date {
+    return this.props.endAt;
+  }
+
+  get cancellationDeadlineAt(): Date | null {
+    return this.props.cancellationDeadlineAt;
+  }
+
   //-aqui empieza funcion confirm y es para confirmar una reserva dentro del dominio-//
   /**
    * Devuelve una nueva entidad con estado confirmado.
@@ -152,18 +164,77 @@ export class Reservation {
   }
   //-aqui termina funcion cancel y se va autilizar en casos de uso de reservas-//
 
+  //-aqui empieza funcion checkIn y es para registrar la llegada del cliente-//
+  /**
+   * Devuelve una nueva entidad con estado CHECKED_IN y timestamp de llegada.
+   * @pure
+   */
+  checkIn(): Reservation {
+    if (this.props.status !== "CONFIRMED") {
+      throw new ReservationValidationError(
+        "status",
+        "only CONFIRMED reservations can be checked in."
+      );
+    }
+
+    const now = new Date();
+
+    return new Reservation({
+      ...this.props,
+      status: "CHECKED_IN",
+      checkedInAt: now,
+      version: this.props.version + 1,
+      updatedAt: now,
+    });
+  }
+  //-aqui termina funcion checkIn y se va autilizar en casos de uso de reservas-//
+
+  //-aqui empieza funcion complete y es para marcar una reserva como completada-//
+  /**
+   * Devuelve una nueva entidad con estado COMPLETED y timestamp de finalización.
+   * @pure
+   */
+  complete(): Reservation {
+    if (this.props.status !== "CHECKED_IN") {
+      throw new ReservationValidationError(
+        "status",
+        "only CHECKED_IN reservations can be completed."
+      );
+    }
+
+    const now = new Date();
+
+    return new Reservation({
+      ...this.props,
+      status: "COMPLETED",
+      completedAt: now,
+      version: this.props.version + 1,
+      updatedAt: now,
+    });
+  }
+  //-aqui termina funcion complete y se va autilizar en casos de uso de reservas-//
+
   //-aqui empieza funcion markNoShow y es para marcar un no-show dentro del dominio-//
   /**
    * Devuelve una nueva entidad marcando un no-show.
    * @pure
    */
   markNoShow(): Reservation {
+    if (this.props.status !== "CONFIRMED") {
+      throw new ReservationValidationError(
+        "status",
+        "only CONFIRMED reservations can be marked as no-show."
+      );
+    }
+
+    const now = new Date();
+
     return new Reservation({
       ...this.props,
       status: "NO_SHOW",
-      noShowMarkedAt: new Date(),
+      noShowMarkedAt: now,
       version: this.props.version + 1,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
   }
   //-aqui termina funcion markNoShow y se va autilizar en casos de uso de reservas-//

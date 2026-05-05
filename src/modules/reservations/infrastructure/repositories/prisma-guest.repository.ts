@@ -29,6 +29,26 @@ export class PrismaGuestRepository implements GuestRepository {
   }
   //-aqui termina funcion findById y se va autilizar en casos de uso de reservas-//
 
+  //-aqui empieza funcion findByRestaurantAndPhone y es para buscar un huesped por restaurante+telefono-//
+  /**
+   * Busca un huésped por su restaurante y teléfono (constraint unique en Prisma).
+   * @sideEffect
+   */
+  async findByRestaurantAndPhone(restaurantId: string, phone: string): Promise<Guest | null> {
+    const guestRecord = await this.prismaClient.guest.findUnique({
+      where: {
+        restaurantId_phone: { restaurantId, phone },
+      },
+    });
+
+    if (guestRecord === null) {
+      return null;
+    }
+
+    return mapGuestRecordToEntity(guestRecord);
+  }
+  //-aqui termina funcion findByRestaurantAndPhone y se va autilizar en CreateReservationFull-//
+
   //-aqui empieza funcion save y es para persistir un huesped usando Prisma-//
   /**
    * Guarda un huésped en la base de datos mediante upsert.

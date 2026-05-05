@@ -36,3 +36,17 @@ Porque la reserva es una parte central del negocio y no debe mezclarse con la co
 ## Estado actual
 
 La estructura ya está preparada y el dominio base está modelado; ahora se está construyendo la capa de aplicación.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **Entidad `Reservation`**: añadidos métodos `checkIn()` y `complete()` con guards de estado. Reforzado `markNoShow()` para solo aceptar reservas CONFIRMED. Añadidos getters `startAt`, `endAt`, `cancellationDeadlineAt`.
+- **Puertos extendidos**: `ReservationRepository` (+`findByRestaurantAndDateRange`, +`findByGuestId`), `GuestRepository` (+`findByRestaurantAndPhone`). Nuevo puerto `BusinessHoursRepository`.
+- **Nuevos use cases**: `GetAvailableSlots` (cálculo de disponibilidad cruzando horarios, mesas y reservas existentes), `CreateReservationFull` (flujo completo: find-or-create guest → validar disponibilidad → crear reserva → auto-confirmar si aplica).
+- **Nuevos DTOs**: `GetAvailableSlotsInput/Output`, `CreateReservationFullInput/Output`.
+- **Nuevo error**: `NoAvailabilityError`.
+- **Infraestructura**: nuevos métodos en `PrismaReservationRepository` y `PrismaGuestRepository`. Nuevo `PrismaBusinessHoursRepository`. Composición actualizada en `reservations-infrastructure.ts`.
+- **Tests**: 19/19 pasan. 7 nuevos tests para transiciones de estado (confirm, checkIn, complete, markNoShow + guards).

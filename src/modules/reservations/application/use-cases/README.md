@@ -35,3 +35,12 @@ Así el negocio queda más fácil de mantener y de testear.
 ## Estado actual
 
 La carpeta está preparada para los primeros casos de uso del flujo de reservas.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`get-available-slots.use-case.ts`**: nuevo use case que calcula slots horarios disponibles cruzando horarios de apertura, mesas activas, reservas existentes y configuración del restaurante (duración, buffer, combinación de mesas).
+- **`create-reservation-full.use-case.ts`**: nuevo use case que orquesta el flujo completo de creación de reserva desde el lado público: find-or-create guest → validar disponibilidad → crear reserva → auto-confirmar si `approvalMode === AUTO` → calcular deadline de cancelación.

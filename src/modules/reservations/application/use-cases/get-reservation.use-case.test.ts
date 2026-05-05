@@ -17,6 +17,16 @@ class InMemoryReservationRepository implements ReservationRepository {
     return this.reservation;
   }
 
+  /** Stub: devuelve array vacío — este test no valida búsquedas por rango. */
+  async findByRestaurantAndDateRange(): Promise<Reservation[]> {
+    return [];
+  }
+
+  /** Stub: devuelve array vacío — este test no valida búsquedas por guest. */
+  async findByGuestId(): Promise<Reservation[]> {
+    return [];
+  }
+
   async save(reservation: Reservation): Promise<Reservation> {
     return reservation;
   }

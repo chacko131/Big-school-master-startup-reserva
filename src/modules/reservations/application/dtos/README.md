@@ -21,3 +21,12 @@ Son los contratos de datos que entran o salen de los casos de uso.
 ## Estado actual
 
 La carpeta está lista para definir contratos de datos del flujo de reservas.
+
+---
+
+## Changelog
+
+### 2026-05-05 21:10 (UTC+02:00)
+
+- **`get-available-slots.dto.ts`**: nuevo DTO con `GetAvailableSlotsInput` (restaurantId, date, partySize), `AvailableSlot` (startAt, endAt, availableTables) y `GetAvailableSlotsOutput`.
+- **`create-reservation-full.dto.ts`**: nuevo DTO con `CreateReservationFullInput` (datos del guest + partySize + startAt + specialRequests) y `CreateReservationFullOutput` (reservationId, guestId, status, startAt, endAt, cancellationDeadlineAt).
