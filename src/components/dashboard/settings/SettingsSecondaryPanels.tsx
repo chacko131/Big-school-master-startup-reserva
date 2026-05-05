@@ -32,11 +32,7 @@ interface RestaurantIntegrationDefinition {
   statusTone: "connected" | "available" | "attention";
 }
 
-interface RestaurantTeamMemberDefinition {
-  name: string;
-  role: string;
-  status: string;
-}
+
 
 interface RestaurantActivityDefinition {
   time: string;
@@ -65,23 +61,7 @@ const restaurantIntegrationDefinitions: ReadonlyArray<RestaurantIntegrationDefin
   },
 ] as const;
 
-const restaurantTeamMemberDefinitions: ReadonlyArray<RestaurantTeamMemberDefinition> = [
-  {
-    name: "Julian Rossi",
-    role: "Propietario",
-    status: "Acceso total",
-  },
-  {
-    name: "Carla Méndez",
-    role: "Encargada de sala",
-    status: "Permisos de reservas",
-  },
-  {
-    name: "Leo Vargas",
-    role: "Host",
-    status: "Confirmaciones y mesas",
-  },
-] as const;
+
 
 const restaurantActivityDefinitions: ReadonlyArray<RestaurantActivityDefinition> = [
   {
@@ -310,47 +290,7 @@ export function SettingsIntegrationsPanel() {
 /**
  * Renderiza el bloque de usuarios del restaurante.
  *
- * @pure
- */
-export function SettingsTeamPanel() {
-  return (
-    <section className="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
-      <h3 className="text-xl font-black tracking-tight text-primary md:text-2xl">
-        <T>Equipo con acceso</T>
-      </h3>
-      <p className="mt-1 text-sm text-on-surface-variant">
-        <T>Controla quién puede operar reservas, sala y facturación.</T>
-      </p>
-
-      <div className="mt-6 space-y-4">
-        {restaurantTeamMemberDefinitions.map((memberDefinition) => (
-          <article className="flex items-center justify-between gap-4 rounded-2xl bg-surface-container-low px-5 py-4" key={memberDefinition.name}>
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-high text-sm font-black text-on-surface-variant">
-                {memberDefinition.name
-                  .split(" ")
-                  .slice(0, 2)
-                  .map((word) => word.charAt(0))
-                  .join("")}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-on-surface">
-                  <T>{memberDefinition.name}</T>
-                </p>
-                <p className="text-xs text-on-surface-variant">
-                  <T>{memberDefinition.role}</T>
-                </p>
-              </div>
-            </div>
-            <span className="inline-flex rounded-full bg-secondary-container px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-on-secondary-container">
-              <T>{memberDefinition.status}</T>
-            </span>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
+ 
 //-aqui termina componente SettingsTeamPanel-//
 
 //-aqui empieza componente SettingsActivityRail y es para mostrar cambios recientes-//

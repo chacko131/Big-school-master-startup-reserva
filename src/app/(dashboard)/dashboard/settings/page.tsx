@@ -12,7 +12,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { SettingsCatalogPanel } from "@/components/dashboard/settings/SettingsCatalogPanel";
 import {
   SettingsRulesPanel,
-  SettingsTeamPanel,
+
 } from "@/components/dashboard/settings/SettingsSecondaryPanels";
 import { SettingsProfilePanel } from "@/components/dashboard/settings/SettingsProfilePanel";
 import { SettingsToolbar } from "@/components/dashboard/settings/SettingsToolbar";
@@ -539,7 +539,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           />
           <SettingsMenuPanel generateSignatureAction={generateCloudinarySignatureAction} />
           <SettingsRulesPanel errorMessage={rulesErrorMessage} initialValues={restaurantSettingsInitialValues} saveAction={saveRestaurantSettingsAction} successMessage={rulesSuccessMessage} />
-          <SettingsTeamPanel />
+          
         </div>
       </section>
     </>
