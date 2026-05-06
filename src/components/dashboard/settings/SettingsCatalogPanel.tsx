@@ -10,6 +10,7 @@ import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { NotificationBanner } from "@/components/ui/NotificationBanner";
 import { type PriceRange } from "@/modules/catalog/domain/entities/restaurant.entity";
+import { PRICE_RANGE_OPTIONS } from "@/constants/price-range";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -47,13 +48,6 @@ const CUISINE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: "Steakhouse", label: "Carnes" },
   { value: "Vegetarian", label: "Vegetariana / Vegana" },
   { value: "Other", label: "Otro" },
-];
-
-const PRICE_RANGE_OPTIONS: ReadonlyArray<{ value: PriceRange; label: string; description: string }> = [
-  { value: "BUDGET", label: "€", description: "Menos de 15 € por persona" },
-  { value: "MODERATE", label: "€€", description: "15 – 35 € por persona" },
-  { value: "UPSCALE", label: "€€€", description: "35 – 60 € por persona" },
-  { value: "FINE_DINING", label: "€€€€", description: "Más de 60 € por persona" },
 ];
 
 const COUNTRY_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [

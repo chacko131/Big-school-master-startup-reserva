@@ -10,6 +10,11 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { T } from "@/components/T";
+import { type PriceRange } from "@/modules/catalog/domain/entities/restaurant.entity";
+import {
+  getPriceRangeDescription,
+} from "@/constants/price-range";
 
 interface MenuItemView {
   id: string;
@@ -29,6 +34,8 @@ interface MenuCategoryView {
 
 interface RestaurantMenuSectionProps {
   categories: MenuCategoryView[];
+  priceRange?: PriceRange | null;
+  cuisineType?: string | null;
 }
 
 const ITEMS_PER_PAGE = 6;
@@ -41,6 +48,7 @@ function formatPrice(price: number): string {
   return price.toLocaleString("es", { style: "currency", currency: "EUR", minimumFractionDigits: 2 });
 }
 //-aqui termina funcion formatPrice-//
+
 
 // ════════════════════════════════════════════════════════════════════════════════
 // ItemViewer — visor fullscreen con swipe tipo TikTok
@@ -162,14 +170,14 @@ function ItemViewer({ items, initialIndex, onClose }: ItemViewerProps) {
         )}
 
         <div className="mt-6 w-full max-w-sm space-y-2 text-center sm:max-w-md">
-          <h3 className="text-xl font-bold text-white! sm:text-2xl">{current.name}</h3>
+          <h3 className="text-xl font-bold text-white! sm:text-2xl"><T>{current.name}</T></h3>
 
           {current.price !== null ? (
             <p className="text-lg font-bold text-amber-400">{formatPrice(current.price)}</p>
           ) : null}
 
           {current.description ? (
-            <p className="text-sm leading-relaxed text-white!">{current.description}</p>
+            <p className="text-sm leading-relaxed text-white!"><T>{current.description}</T></p>
           ) : null}
 
           {current.allergens.length > 0 ? (
@@ -179,7 +187,7 @@ function ItemViewer({ items, initialIndex, onClose }: ItemViewerProps) {
                   className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80"
                   key={allergen}
                 >
-                  {allergen}
+                  <T>{allergen}</T>
                 </span>
               ))}
             </div>
@@ -211,7 +219,7 @@ function ItemViewer({ items, initialIndex, onClose }: ItemViewerProps) {
 
       {/* Indicador swipe mobile */}
       <div className="pb-6 pt-4 text-center text-xs text-white/40 sm:hidden">
-        Desliza para navegar
+        <T>Desliza para navegar</T>
       </div>
     </div>
   );
@@ -224,7 +232,7 @@ function ItemViewer({ items, initialIndex, onClose }: ItemViewerProps) {
 /**
  * Muestra la carta con selector de categorías, grid paginado y modal de detalle.
  */
-export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps) {
+export function RestaurantMenuSection({ categories, priceRange, cuisineType }: RestaurantMenuSectionProps) {
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
   const [page, setPage] = useState(0);
   const [selectedItem, setSelectedItem] = useState<MenuItemView | null>(null);
@@ -249,8 +257,29 @@ export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps
       <div className="space-y-6">
         {/* ─── Título ──────────────────────────────────────────────── */}
         <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
-          Nuestra Carta
+          <T>Nuestra Carta</T>
         </h2>
+
+        {/* ─── Tipo de cocina y rango de precio ───────────────────── */}
+        {(cuisineType || priceRange) && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-on-surface-variant">
+            {cuisineType && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-base">🍴</span>
+                <span className="font-medium"><T>{cuisineType}</T></span>
+              </span>
+            )}
+            {cuisineType && priceRange && <span className="text-on-surface-variant/30">|</span>}
+            {priceRange && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-base">💰</span>            
+                <span className="text-on-surface-variant/60">
+                  — <T>{getPriceRangeDescription(priceRange)}</T>
+                </span>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* ─── Selector de categorías ─────────────────────────────── */}
         <div className="flex flex-wrap gap-2">
@@ -265,14 +294,14 @@ export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps
                   : "bg-surface-container-low text-on-surface hover:bg-surface-container"
               }`}
             >
-              {cat.name}
+              <T>{cat.name}</T>
             </button>
           ))}
         </div>
 
         {/* ─── Descripción de categoría ───────────────────────────── */}
         {activeCategory.description ? (
-          <p className="text-sm text-on-surface-variant">{activeCategory.description}</p>
+          <p className="text-sm text-on-surface-variant"><T>{activeCategory.description}</T></p>
         ) : null}
 
         {/* ─── Grid de platos (altura contenida) ──────────────────── */}
@@ -301,7 +330,7 @@ export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps
                   )}
                 </div>
                 <p className="line-clamp-2 text-xs font-semibold text-on-surface sm:text-sm">
-                  {item.name}
+                  <T>{item.name}</T>
                 </p>
               </button>
             ))}
@@ -317,7 +346,7 @@ export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps
               disabled={page === 0}
               className="rounded-lg px-3 py-1.5 text-sm font-semibold text-primary transition-opacity disabled:opacity-30"
             >
-              ← Anterior
+              ← <T>Anterior</T>
             </button>
             <span className="text-xs text-on-surface-variant">
               {page + 1} / {totalPages}
@@ -328,7 +357,7 @@ export function RestaurantMenuSection({ categories }: RestaurantMenuSectionProps
               disabled={page === totalPages - 1}
               className="rounded-lg px-3 py-1.5 text-sm font-semibold text-primary transition-opacity disabled:opacity-30"
             >
-              Siguiente →
+              <T>Siguiente</T> →
             </button>
           </div>
         ) : null}

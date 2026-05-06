@@ -33,11 +33,20 @@ export class CreateReservationFull {
   // TODO [V2]: Cuando se implemente asignación de mesas, la verificación de disponibilidad debe
   //  cruzar tableAssignments en vez de contar reservas solapadas (CodeRabbit #8).
   async execute(input: CreateReservationFullInput): Promise<CreateReservationFullOutput> {
+    console.log("[CreateReservationFull] START", {
+      restaurantId: input.restaurantId,
+      guestPhone: input.guestPhone,
+      guestFullName: input.guestFullName,
+      partySize: input.partySize,
+      startAt: input.startAt.toISOString(),
+    });
+
     const settings = await this.restaurantSettingsRepository.findByRestaurantId(
       input.restaurantId
     );
 
     if (settings === null) {
+      console.error("[CreateReservationFull] ERROR settings no encontrados para restaurantId=", input.restaurantId);
       throw new Error("Restaurant settings not found.");
     }
 
@@ -46,10 +55,18 @@ export class CreateReservationFull {
     const cancellationHours = settingsPrimitives.cancellationWindowHours;
     const approvalMode = settingsPrimitives.reservationApprovalMode;
 
+    console.log("[CreateReservationFull] settings cargados →", { durationMinutes, cancellationHours, approvalMode });
+
     const endAt = new Date(input.startAt.getTime() + durationMinutes * 60 * 1000);
     const cancellationDeadlineAt = new Date(
       input.startAt.getTime() - cancellationHours * 60 * 60 * 1000
     );
+
+    console.log("[CreateReservationFull] rango calculado →", {
+      startAt: input.startAt.toISOString(),
+      endAt: endAt.toISOString(),
+      cancellationDeadlineAt: cancellationDeadlineAt.toISOString(),
+    });
 
     const existingReservations =
       await this.reservationRepository.findByRestaurantAndDateRange(
@@ -57,6 +74,8 @@ export class CreateReservationFull {
         input.startAt,
         endAt
       );
+
+    console.log(`[CreateReservationFull] reservas solapadas encontradas: ${existingReservations.length}`);
 
     if (existingReservations.length > 0) {
       const hasConflict = existingReservations.some((r) => {
@@ -69,11 +88,14 @@ export class CreateReservationFull {
       });
 
       if (hasConflict) {
+        console.warn("[CreateReservationFull] CONFLICT → no hay disponibilidad para", input.startAt.toISOString());
         throw new NoAvailabilityError(input.startAt);
       }
     }
 
     const guest = await this.findOrCreateGuest(input);
+
+    console.log("[CreateReservationFull] guest resuelto →", { guestId: guest.id, fullName: guest.fullName });
 
     const reservationId = crypto.randomUUID();
 
@@ -90,9 +112,19 @@ export class CreateReservationFull {
 
     if (approvalMode === "AUTO") {
       reservation = reservation.confirm();
+      console.log("[CreateReservationFull] reserva auto-confirmada (approvalMode=AUTO)");
+    } else {
+      console.log("[CreateReservationFull] reserva en estado PENDING (approvalMode=MANUAL)");
     }
 
     const persisted = await this.reservationRepository.save(reservation);
+
+    console.log("[CreateReservationFull] END → reserva persistida", {
+      reservationId: persisted.id,
+      status: persisted.status,
+      startAt: persisted.startAt.toISOString(),
+      endAt: persisted.endAt.toISOString(),
+    });
 
     return {
       reservationId: persisted.id,
@@ -113,14 +145,19 @@ export class CreateReservationFull {
   private async findOrCreateGuest(
     input: CreateReservationFullInput
   ): Promise<Guest> {
+    console.log("[CreateReservationFull] findOrCreateGuest buscando phone=", input.guestPhone);
+
     const existingGuest = await this.guestRepository.findByRestaurantAndPhone(
       input.restaurantId,
       input.guestPhone
     );
 
     if (existingGuest !== null) {
+      console.log("[CreateReservationFull] guest existente encontrado →", { guestId: existingGuest.id, fullName: existingGuest.fullName });
       return existingGuest;
     }
+
+    console.log("[CreateReservationFull] guest no existe → creando nuevo");
 
     const newGuest = Guest.create({
       id: crypto.randomUUID(),
@@ -130,7 +167,9 @@ export class CreateReservationFull {
       email: input.guestEmail ?? null,
     });
 
-    return this.guestRepository.save(newGuest);
+    const saved = await this.guestRepository.save(newGuest);
+    console.log("[CreateReservationFull] nuevo guest creado →", { guestId: saved.id, fullName: saved.fullName });
+    return saved;
   }
   //-aqui termina funcion findOrCreateGuest y se va autilizar en execute-//
 }

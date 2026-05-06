@@ -89,7 +89,11 @@ export default async function RestaurantProfilePage({ params }: RestaurantProfil
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
             <div className="space-y-16 lg:col-span-8">
-              <RestaurantMenuSection categories={publicProfile.menu} />
+              <RestaurantMenuSection
+                categories={publicProfile.menu}
+                priceRange={publicProfile.priceRange}
+                cuisineType={publicProfile.cuisine}
+              />
 
               <RestaurantGallery
                 imageUrls={publicProfile.galleryImageUrls.length > 0
