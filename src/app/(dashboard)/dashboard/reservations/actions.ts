@@ -59,6 +59,7 @@ export interface CreateReservationActionResult {
   success: boolean;
   error?: string;
   reservationId?: string;
+  alternativeSlots?: string[];
 }
 
 //-aqui empieza funcion createReservationAction y es para crear una reserva desde el dashboard-//
@@ -110,8 +111,8 @@ export async function createReservationAction(formData: FormData): Promise<Creat
   console.log("[action:createReservation] validación OK → ejecutando use case");
 
   try {
-    const { reservationRepository, guestRepository, restaurantSettingsRepository } = getReservationsInfrastructure();
-    const useCase = new CreateReservationFull(reservationRepository, guestRepository, restaurantSettingsRepository);
+    const { reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository } = getReservationsInfrastructure();
+    const useCase = new CreateReservationFull(reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository);
 
     const result = await useCase.execute({
       restaurantId,
@@ -134,8 +135,15 @@ export async function createReservationAction(formData: FormData): Promise<Creat
     return { success: true, reservationId: result.reservationId };
   } catch (error) {
     if (error instanceof NoAvailabilityError) {
-      console.warn("[action:createReservation] NoAvailabilityError → sin disponibilidad para", startAt.toISOString());
-      return { success: false, error: "No hay disponibilidad para esa fecha y hora." };
+      const alternativeSlots = error.alternatives.map((d: Date) =>
+        d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+      );
+      console.warn("[action:createReservation] NoAvailabilityError → sin disponibilidad para", startAt.toISOString(), "| alternativos:", alternativeSlots);
+      return {
+        success: false,
+        error: "No hay mesas disponibles para esa hora.",
+        alternativeSlots,
+      };
     }
 
     console.error("[action:createReservation] ERROR inesperado:", error);

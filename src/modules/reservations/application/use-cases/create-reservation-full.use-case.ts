@@ -7,6 +7,7 @@
 
 import { Guest } from "../../domain/entities/guest.entity";
 import { Reservation } from "../../domain/entities/reservation.entity";
+import { type DiningTableRepository } from "../ports/dining-table-repository.port";
 import { type GuestRepository } from "../ports/guest-repository.port";
 import { type ReservationRepository } from "../ports/reservation-repository.port";
 import { type RestaurantSettingsRepository } from "../ports/restaurant-settings-repository.port";
@@ -16,11 +17,15 @@ import {
 } from "../dtos/create-reservation-full.dto";
 import { NoAvailabilityError } from "../errors/no-availability.error";
 
+const ALTERNATIVE_SLOTS_COUNT = 3;
+const ALTERNATIVE_SLOT_STEP_MINUTES = 30;
+
 export class CreateReservationFull {
   constructor(
     private readonly reservationRepository: ReservationRepository,
     private readonly guestRepository: GuestRepository,
-    private readonly restaurantSettingsRepository: RestaurantSettingsRepository
+    private readonly restaurantSettingsRepository: RestaurantSettingsRepository,
+    private readonly diningTableRepository: DiningTableRepository
   ) {}
 
   //-aqui empieza funcion execute y es para orquestar la creación completa de una reserva-//
@@ -75,22 +80,32 @@ export class CreateReservationFull {
         endAt
       );
 
+    const activeTables = await this.diningTableRepository.findActiveByRestaurantId(input.restaurantId);
+    const totalActiveTables = activeTables.length;
+
+    console.log(`[CreateReservationFull] mesas activas en el restaurante: ${totalActiveTables}`);
     console.log(`[CreateReservationFull] reservas solapadas encontradas: ${existingReservations.length}`);
 
-    if (existingReservations.length > 0) {
-      const hasConflict = existingReservations.some((r) => {
-        const rStart = r.startAt.getTime();
-        const rEnd = r.endAt.getTime();
-        const cStart = input.startAt.getTime();
-        const cEnd = endAt.getTime();
+    const overlappingCount = existingReservations.filter((r) => {
+      const rStart = r.startAt.getTime();
+      const rEnd = r.endAt.getTime();
+      const cStart = input.startAt.getTime();
+      const cEnd = endAt.getTime();
+      return rStart < cEnd && rEnd > cStart;
+    }).length;
 
-        return rStart < cEnd && rEnd > cStart;
-      });
+    console.log(`[CreateReservationFull] reservas que solapan exactamente: ${overlappingCount} / ${totalActiveTables} mesas`);
 
-      if (hasConflict) {
-        console.warn("[CreateReservationFull] CONFLICT → no hay disponibilidad para", input.startAt.toISOString());
-        throw new NoAvailabilityError(input.startAt);
-      }
+    if (totalActiveTables === 0 || overlappingCount >= totalActiveTables) {
+      const alternatives = await this.findAlternativeSlots(
+        input.restaurantId,
+        input.startAt,
+        durationMinutes,
+        totalActiveTables
+      );
+
+      console.warn("[CreateReservationFull] CONFLICT → sin mesas disponibles para", input.startAt.toISOString(), "| alternativas:", alternatives.map((alt: Date) => alt.toISOString()));
+      throw new NoAvailabilityError(input.startAt, alternatives);
     }
 
     const guest = await this.findOrCreateGuest(input);
@@ -136,6 +151,49 @@ export class CreateReservationFull {
     };
   }
   //-aqui termina funcion execute y se va autilizar en server actions del flujo público-//
+
+  //-aqui empieza funcion findAlternativeSlots y es para sugerir horarios cercanos con disponibilidad-//
+  /**
+   * Busca hasta ALTERNATIVE_SLOTS_COUNT franjas horarias cercanas donde haya mesas libres.
+   * Prueba slots hacia adelante y hacia atrás en pasos de ALTERNATIVE_SLOT_STEP_MINUTES.
+   * @sideEffect
+   */
+  private async findAlternativeSlots(
+    restaurantId: string,
+    requestedStart: Date,
+    durationMinutes: number,
+    totalActiveTables: number
+  ): Promise<Date[]> {
+    const alternatives: Date[] = [];
+    const stepMs = ALTERNATIVE_SLOT_STEP_MINUTES * 60 * 1000;
+    const maxAttempts = 12;
+
+    for (let i = 1; i <= maxAttempts && alternatives.length < ALTERNATIVE_SLOTS_COUNT; i++) {
+      for (const direction of [1, -1]) {
+        if (alternatives.length >= ALTERNATIVE_SLOTS_COUNT) break;
+
+        const candidateStart = new Date(requestedStart.getTime() + direction * i * stepMs);
+        const candidateEnd = new Date(candidateStart.getTime() + durationMinutes * 60 * 1000);
+
+        const overlapping = await this.reservationRepository.findByRestaurantAndDateRange(
+          restaurantId,
+          candidateStart,
+          candidateEnd
+        );
+
+        const overlappingCount = overlapping.filter((r) => {
+          return r.startAt.getTime() < candidateEnd.getTime() && r.endAt.getTime() > candidateStart.getTime();
+        }).length;
+
+        if (overlappingCount < totalActiveTables) {
+          alternatives.push(candidateStart);
+        }
+      }
+    }
+
+    return alternatives;
+  }
+  //-aqui termina funcion findAlternativeSlots-//
 
   //-aqui empieza funcion findOrCreateGuest y es para buscar o crear un guest por teléfono-//
   /**

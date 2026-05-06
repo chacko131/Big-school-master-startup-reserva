@@ -28,28 +28,37 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<CreateReservationActionResult | null>(null);
+  const [selectedAlternative, setSelectedAlternative] = useState<string | null>(null);
 
   if (!isOpen) {
     return null;
   }
 
   function handleSubmit(formData: FormData) {
+    if (selectedAlternative !== null) {
+      formData.set("time", selectedAlternative);
+    }
+
     startTransition(async () => {
       const actionResult = await createReservationAction(formData);
       setResult(actionResult);
 
       if (actionResult.success) {
         formRef.current?.reset();
+        setSelectedAlternative(null);
         setTimeout(() => {
           setResult(null);
           onClose();
         }, 1500);
+      } else {
+        setSelectedAlternative(null);
       }
     });
   }
 
   function handleClose() {
     setResult(null);
+    setSelectedAlternative(null);
     onClose();
   }
 
@@ -76,8 +85,37 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
         )}
 
         {result?.error && (
-          <div className="mt-4 rounded-xl bg-error-container p-4 text-sm font-bold text-on-error-container">
-            {result.error}
+          <div className="mt-4 rounded-xl bg-error-container p-4 text-on-error-container">
+            <p className="text-sm font-bold">{result.error}</p>
+
+            {result.alternativeSlots && result.alternativeSlots.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] opacity-80">
+                  <T>Horarios disponibles cercanos:</T>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {result.alternativeSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setSelectedAlternative(slot)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${
+                        selectedAlternative === slot
+                          ? "bg-primary text-on-primary"
+                          : "bg-error-container/60 text-on-error-container ring-1 ring-on-error-container/30 hover:bg-on-error-container/10"
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+                {selectedAlternative !== null && (
+                  <p className="mt-2 text-xs opacity-70">
+                    <T>Seleccionado:</T> <strong>{selectedAlternative}</strong> — <T>pulsa &ldquo;Crear reserva&rdquo; para confirmar.</T>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
