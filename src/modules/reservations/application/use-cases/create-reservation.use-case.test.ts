@@ -27,6 +27,16 @@ class InMemoryReservationRepository implements ReservationRepository {
     return [];
   }
 
+  /** Stub: devuelve array vacío — este test no valida detección de duplicados. */
+  async findActiveByGuestAndDateRange(
+    _guestId: string,
+    _restaurantId: string,
+    _from: Date,
+    _to: Date
+  ): Promise<Reservation[]> {
+    return [];
+  }
+
   /** Stub: devuelve array vacío — este test no valida búsquedas por guest. */
   async findByGuestId(): Promise<Reservation[]> {
     return [];

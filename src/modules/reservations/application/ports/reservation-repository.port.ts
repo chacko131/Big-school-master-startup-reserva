@@ -13,6 +13,12 @@ export interface ReservationRepository {
     from: Date,
     to: Date
   ): Promise<Reservation[]>;
+  findActiveByGuestAndDateRange(
+    guestId: string,
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<Reservation[]>;
   findByGuestId(guestId: string): Promise<Reservation[]>;
   save(reservation: Reservation): Promise<Reservation>;
 }

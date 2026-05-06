@@ -7,6 +7,7 @@
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { NewReservationButton } from "@/components/reservation/NewReservationButton";
+import { ReservationStatusSelect } from "@/components/reservation/ReservationStatusSelect";
 import { type ReservationStatus } from "@/modules/reservations/domain/entities/reservation.entity";
 
 export interface ReservationRowData {
@@ -157,9 +158,10 @@ export function ReservationsLedger({ reservations, totalCount }: ReservationsLed
                     </span>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button className="text-xl leading-none text-on-surface-variant transition-colors hover:text-primary" type="button" aria-label="Más acciones">
-                      ⋯
-                    </button>
+                    <ReservationStatusSelect
+                      reservationId={reservation.id}
+                      currentStatus={reservation.status}
+                    />
                   </td>
                 </tr>
               );

@@ -46,8 +46,9 @@ export class PrismaReservationRepository implements ReservationRepository {
     const records = await this.prismaClient.reservation.findMany({
       where: {
         restaurantId,
-        startAt: { gte: from, lt: to },
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
+        startAt: { lt: to },
+        endAt: { gt: from },
+        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
       },
       orderBy: { startAt: "asc" },
     });
@@ -55,6 +56,33 @@ export class PrismaReservationRepository implements ReservationRepository {
     return records.map(mapReservationRecordToEntity);
   }
   //-aqui termina funcion findByRestaurantAndDateRange y se va autilizar en disponibilidad-//
+
+  //-aqui empieza funcion findActiveByGuestAndDateRange y es para detectar reservas duplicadas de un guest en un restaurante-//
+  /**
+   * Busca reservas activas (no CANCELLED, NO_SHOW ni COMPLETED) de un guest específico
+   * en un restaurante específico que solapen el rango dado. Usado para detección de duplicados.
+   * @sideEffect
+   */
+  async findActiveByGuestAndDateRange(
+    guestId: string,
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<Reservation[]> {
+    const records = await this.prismaClient.reservation.findMany({
+      where: {
+        guestId,
+        restaurantId,
+        startAt: { lt: to },
+        endAt: { gt: from },
+        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+      },
+      orderBy: { startAt: "asc" },
+    });
+
+    return records.map(mapReservationRecordToEntity);
+  }
+  //-aqui termina funcion findActiveByGuestAndDateRange y se va autilizar en detección de duplicados-//
 
   //-aqui empieza funcion findByGuestId y es para buscar el historial de reservas de un guest-//
   /**
