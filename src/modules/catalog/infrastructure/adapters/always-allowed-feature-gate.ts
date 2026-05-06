@@ -19,7 +19,6 @@ export class AlwaysAllowedFeatureGate implements FeatureGatePort {
    * Siempre devuelve true — todo desbloqueado mientras no exista billing.
    * @pure
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async isFeatureAllowed(_restaurantId: string, _feature: FeatureName): Promise<boolean> {
     return true;
   }

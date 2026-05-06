@@ -180,3 +180,141 @@ export async function saveFloorPlanAction(
   revalidatePath("/dashboard/tables");
 }
 //-aqui termina funcion saveFloorPlanAction-//
+
+//-aqui empieza funcion assignTableToReservationAction y es para asignar una mesa a una reserva-//
+/**
+ * Asigna una mesa física a una reserva existente creando un registro en ReservationTable.
+ * @sideEffect
+ */
+export async function assignTableToReservationAction(
+  reservationId: string,
+  tableId: string
+): Promise<{ success: boolean; error?: string }> {
+  const restaurantId = await getRestaurantIdFromCookie();
+  const prisma = (await import("@/services/prisma.service")).getPrismaClient();
+
+  // Verificar que la reserva pertenece al restaurante
+  const reservation = await prisma.reservation.findFirst({
+    where: { id: reservationId, restaurantId },
+  });
+
+  if (!reservation) {
+    return { success: false, error: "Reserva no encontrada o no pertenece a este restaurante." };
+  }
+
+  // Verificar que la mesa pertenece al restaurante
+  const table = await prisma.diningTable.findFirst({
+    where: { id: tableId, restaurantId },
+  });
+
+  if (!table) {
+    return { success: false, error: "Mesa no encontrada o no pertenece a este restaurante." };
+  }
+
+  // Verificar que no exista ya la asignación
+  const existing = await prisma.reservationTable.findUnique({
+    where: { reservationId_tableId: { reservationId, tableId } },
+  });
+
+  if (existing) {
+    return { success: false, error: "La mesa ya está asignada a esta reserva." };
+  }
+
+  await prisma.reservationTable.create({
+    data: {
+      reservationId,
+      tableId,
+      assignedSeats: reservation.partySize,
+    },
+  });
+
+  revalidatePath("/dashboard/tables");
+  return { success: true };
+}
+//-aqui termina funcion assignTableToReservationAction-//
+
+//-aqui empieza funcion unassignTableFromReservationAction y es para desasignar una mesa de una reserva-//
+/**
+ * Elimina la asignación de una mesa a una reserva.
+ * @sideEffect
+ */
+export async function unassignTableFromReservationAction(
+  reservationId: string,
+  tableId: string
+): Promise<{ success: boolean; error?: string }> {
+  const restaurantId = await getRestaurantIdFromCookie();
+  const prisma = (await import("@/services/prisma.service")).getPrismaClient();
+
+  const existing = await prisma.reservationTable.findUnique({
+    where: { reservationId_tableId: { reservationId, tableId } },
+    include: { reservation: { select: { restaurantId: true } } },
+  });
+
+  if (!existing) {
+    return { success: false, error: "No existe esa asignación." };
+  }
+
+  if (existing.reservation.restaurantId !== restaurantId) {
+    return { success: false, error: "No autorizado." };
+  }
+
+  await prisma.reservationTable.delete({
+    where: { id: existing.id },
+  });
+
+  revalidatePath("/dashboard/tables");
+  return { success: true };
+}
+//-aqui termina funcion unassignTableFromReservationAction-//
+
+export interface TableOccupancy {
+  tableId: string;
+  reservationId: string;
+  guestName: string;
+  partySize: number;
+  startAt: string;
+  endAt: string;
+  status: string;
+}
+
+//-aqui empieza funcion getTableOccupancyAction y es para obtener la ocupación actual de mesas-//
+/**
+ * Devuelve las mesas que tienen reservas activas en la hora actual (o próxima hora).
+ * @sideEffect
+ */
+export async function getTableOccupancyAction(): Promise<TableOccupancy[]> {
+  const restaurantId = await getRestaurantIdFromCookie();
+  const prisma = (await import("@/services/prisma.service")).getPrismaClient();
+
+  const now = new Date();
+  // Mostramos reservas desde hace 1h (por si están en servicio) hasta fin del día operativo (+8h)
+  const windowStart = new Date(now.getTime() - 60 * 60 * 1000);
+  const windowEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+
+  const assignments = await prisma.reservationTable.findMany({
+    where: {
+      reservation: {
+        restaurantId,
+        startAt: { lt: windowEnd },
+        endAt: { gt: windowStart },
+        status: { in: ["PENDING", "CONFIRMED", "CHECKED_IN"] },
+      },
+    },
+    include: {
+      reservation: {
+        include: { guest: { select: { fullName: true } } },
+      },
+    },
+  });
+
+  return assignments.map((a) => ({
+    tableId: a.tableId,
+    reservationId: a.reservationId,
+    guestName: a.reservation.guest?.fullName ?? "Huésped",
+    partySize: a.reservation.partySize,
+    startAt: a.reservation.startAt.toISOString(),
+    endAt: a.reservation.endAt.toISOString(),
+    status: a.reservation.status,
+  }));
+}
+//-aqui termina funcion getTableOccupancyAction-//

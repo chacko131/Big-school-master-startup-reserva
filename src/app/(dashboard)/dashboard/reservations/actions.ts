@@ -126,8 +126,8 @@ export async function createReservationAction(formData: FormData): Promise<Creat
   console.log("[action:createReservation] validación OK → ejecutando use case");
 
   try {
-    const { reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository } = getReservationsInfrastructure();
-    const useCase = new CreateReservationFull(reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository);
+    const { reservationRepository, reservationTableRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository } = getReservationsInfrastructure();
+    const useCase = new CreateReservationFull(reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository, reservationTableRepository);
 
     const result = await useCase.execute({
       restaurantId,

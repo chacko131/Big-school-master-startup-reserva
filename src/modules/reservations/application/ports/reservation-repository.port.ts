@@ -21,4 +21,5 @@ export interface ReservationRepository {
   ): Promise<Reservation[]>;
   findByGuestId(guestId: string): Promise<Reservation[]>;
   save(reservation: Reservation): Promise<Reservation>;
+  delete(id: string): Promise<void>;
 }

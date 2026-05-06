@@ -8,10 +8,11 @@
 
 import { Group, Layer, Line, Rect, Circle, Stage, Text } from "react-konva";
 import type Konva from "konva";
-import type { RefObject } from "react";
+import { type RefObject, useState } from "react";
 import type {
   DiningTableLayoutDefinition,
   FloorPlanTable,
+  TableOccupancyInfo,
 } from "./floorPlanMocks";
 import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 
@@ -77,6 +78,21 @@ function getShapeCornerRadius(shape: TableShape): number {
 //-aqui termina funcion getShapeCornerRadius-//
 
 //-aqui empieza funcion getStatusPalette y es para resolver el estilo del estado-//
+/**
+ * Devuelve colores de fondo y texto para la etiqueta de estado de la mesa.
+ * @pure
+ */
+function getStatusPalette(status: "active" | "inactive" | "occupied"): { fill: string; text: string; label: string } {
+  switch (status) {
+    case "occupied":
+      return { fill: "#dc2626", text: "#ffffff", label: "OCUPADA" };
+    case "inactive":
+      return { fill: "#6b7280", text: "#ffffff", label: "INACTIVA" };
+    case "active":
+    default:
+      return { fill: "#16a34a", text: "#ffffff", label: "LIBRE" };
+  }
+}
 //-aqui termina funcion getStatusPalette-//
 
 //-aqui empieza componente FloorPlanCanvas y es para dibujar la sala con las mesas-//
@@ -85,6 +101,43 @@ function getShapeCornerRadius(shape: TableShape): number {
  *
  * @sideEffect
  */
+interface TooltipState {
+  x: number;
+  y: number;
+  occupancy: TableOccupancyInfo;
+  tableName: string;
+  tableCapacity: number;
+}
+
+const CANVAS_PADDING = 16;
+
+//-aqui empieza funcion formatTime y es para formatear ISO a HH:MM legible-//
+/**
+ * Convierte una fecha ISO a hora local HH:MM.
+ * @pure
+ */
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "-";
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+//-aqui termina funcion formatTime-//
+
+//-aqui empieza funcion getStatusBadge y es para resolver etiqueta legible del estado de reserva-//
+/**
+ * Devuelve la etiqueta en español del estado de reserva.
+ * @pure
+ */
+function getStatusBadge(status: string): { label: string; color: string } {
+  switch (status) {
+    case "CONFIRMED": return { label: "Confirmada", color: "#16a34a" };
+    case "CHECKED_IN": return { label: "En sala", color: "#2563eb" };
+    case "PENDING": return { label: "Pendiente", color: "#d97706" };
+    default: return { label: status, color: "#6b7280" };
+  }
+}
+//-aqui termina funcion getStatusBadge-//
+
 export function FloorPlanCanvas({
   canvasWidth,
   canvasHeight,
@@ -103,11 +156,13 @@ export function FloorPlanCanvas({
   onElementDragEnd,
   onNewElementDrop,
 }: FloorPlanCanvasProps) {
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+
   return (
     <section className="space-y-4">
       <div
         ref={workspaceRef}
-        className="overflow-hidden rounded-[32px] bg-white p-4 shadow-sm ring-1 ring-black/5"
+        className="relative overflow-hidden rounded-[32px] bg-white p-4 shadow-sm ring-1 ring-black/5"
         style={{
           backgroundImage:
             "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
@@ -138,6 +193,31 @@ export function FloorPlanCanvas({
           }
         }}
       >
+        {tooltip && (
+          <div
+            className="pointer-events-none absolute z-50 min-w-[180px] rounded-xl border border-white/10 bg-gray-900 p-3 shadow-2xl"
+            style={{ left: tooltip.x + CANVAS_PADDING + 12, top: tooltip.y + CANVAS_PADDING - 8 }}
+          >
+            <p className="mb-1 text-sm font-bold text-white">{tooltip.tableName}</p>
+            <div className="mb-2 flex items-center gap-1.5">
+              <span
+                className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold"
+                style={{ backgroundColor: getStatusBadge(tooltip.occupancy.status).color }}
+              >
+                {getStatusBadge(tooltip.occupancy.status).label}
+              </span>
+            </div>
+            <p className="text-xs text-gray-300">
+              <span className="text-gray-400">Huésped:</span> {tooltip.occupancy.guestName}
+            </p>
+            <p className="text-xs text-gray-300">
+              <span className="text-gray-400">Personas:</span> {tooltip.occupancy.partySize} / {tooltip.tableCapacity}
+            </p>
+            <p className="text-xs text-gray-300">
+              <span className="text-gray-400">Horario:</span> {formatTime(tooltip.occupancy.startAt)} – {formatTime(tooltip.occupancy.endAt)}
+            </p>
+          </div>
+        )}
         <Stage width={canvasWidth} height={canvasHeight}>
           <Layer>
             {tables.map((table) => {
@@ -155,7 +235,30 @@ export function FloorPlanCanvas({
                   draggable
                   onClick={() => setSelectedTableId(table.id)}
                   onDragMove={(event) => onTableDragMove(event, table.id)}
-                  onDragEnd={(event) => onTableDragEnd(event, table.id)}
+                  onDragEnd={(event) => { setTooltip(null); onTableDragEnd(event, table.id); }}
+                  onMouseEnter={(e) => {
+                    if (!table.occupancy) return;
+                    const stage = e.target.getStage();
+                    if (!stage) return;
+                    const pos = stage.getPointerPosition();
+                    if (!pos) return;
+                    setTooltip({
+                      x: pos.x,
+                      y: pos.y,
+                      occupancy: table.occupancy,
+                      tableName: table.name,
+                      tableCapacity: table.capacity,
+                    });
+                  }}
+                  onMouseMove={(e) => {
+                    if (!table.occupancy || !tooltip) return;
+                    const stage = e.target.getStage();
+                    if (!stage) return;
+                    const pos = stage.getPointerPosition();
+                    if (!pos) return;
+                    setTooltip((prev) => prev ? { ...prev, x: pos.x, y: pos.y } : prev);
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
                 >
                   <Rect
                     width={table.width}
@@ -209,28 +312,33 @@ export function FloorPlanCanvas({
                     />
                   )}
 
-                  {/* TODO: Implementar etiqueta de estado dinámica basada en reservaciones reales */}
-                  {/*
-                  <Rect
-                    x={table.width / 2 - 42}
-                    y={table.height - 28}
-                    width={84}
-                    height={18}
-                    cornerRadius={9}
-                    fill={statusStyle.fill}
-                  />
-                  <Text
-                    x={0}
-                    y={table.height - 24}
-                    width={table.width}
-                    align="center"
-                    text={statusStyle.label.toUpperCase()}
-                    fontSize={9}
-                    fontStyle="bold"
-                    fill={statusStyle.text}
-                    letterSpacing={1}
-                  />
-                  */}
+                  {table.width > 60 && table.height > 40 && (() => {
+                    const statusStyle = getStatusPalette(table.status);
+                    const displayLabel = table.status === "occupied" ? table.statusLabel : statusStyle.label;
+                    return (
+                      <>
+                        <Rect
+                          x={table.width / 2 - 42}
+                          y={table.height - 28}
+                          width={84}
+                          height={18}
+                          cornerRadius={9}
+                          fill={statusStyle.fill}
+                        />
+                        <Text
+                          x={0}
+                          y={table.height - 24}
+                          width={table.width}
+                          align="center"
+                          text={displayLabel.length > 12 ? displayLabel.slice(0, 11) + "…" : displayLabel}
+                          fontSize={9}
+                          fontStyle="bold"
+                          fill={statusStyle.text}
+                          letterSpacing={0.5}
+                        />
+                      </>
+                    );
+                  })()}
 
                   {isSelected && table.width > 30 && (
                     <Group x={table.width - 14} y={-8}>

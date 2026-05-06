@@ -33,9 +33,19 @@ export interface DiningTableLayoutDefinition {
   statusTone: "active" | "inactive" | "occupied";
 }
 
+export interface TableOccupancyInfo {
+  reservationId: string;
+  guestName: string;
+  partySize: number;
+  startAt: string;
+  endAt: string;
+  status: string;
+}
+
 export interface FloorPlanTable extends DiningTableLayoutDefinition {
   restaurantId: string;
   status: DiningTableLayoutDefinition["statusTone"];
+  occupancy?: TableOccupancyInfo;
 }
 
 export const floorPlanToolDefinitions: ReadonlyArray<FloorPlanToolDefinition> =

@@ -37,6 +37,9 @@ class InMemoryReservationRepository implements ReservationRepository {
     return [];
   }
 
+  /** Stub: no-op — este test no valida rollback de reservas. */
+  async delete(_id: string): Promise<void> {}
+
   async save(reservation: Reservation): Promise<Reservation> {
     return reservation;
   }

@@ -133,6 +133,16 @@ export class PrismaReservationRepository implements ReservationRepository {
     return mapReservationRecordToEntity(persistedReservation);
   }
   //-aqui termina funcion save y se va autilizar en application-//
+
+  //-aqui empieza funcion delete y es para eliminar una reserva por id (rollback compensatorio)-//
+  /**
+   * Elimina una reserva por su id. Usado como rollback compensatorio si la asignación de mesa falla.
+   * @sideEffect
+   */
+  async delete(id: string): Promise<void> {
+    await this.prismaClient.reservation.delete({ where: { id } });
+  }
+  //-aqui termina funcion delete y se va autilizar en rollback de CreateReservationFull-//
 }
 
 //-aqui empieza funcion mapReservationRecordToEntity y es para rehidratar la entidad Reservation-//

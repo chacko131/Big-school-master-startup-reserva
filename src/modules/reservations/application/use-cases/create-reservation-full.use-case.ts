@@ -7,10 +7,12 @@
 
 import { Guest } from "../../domain/entities/guest.entity";
 import { Reservation } from "../../domain/entities/reservation.entity";
+import { ReservationTable } from "../../domain/entities/reservation-table.entity";
 import { type BusinessHoursRepository } from "../ports/business-hours-repository.port";
 import { type DiningTableRepository } from "../ports/dining-table-repository.port";
 import { type GuestRepository } from "../ports/guest-repository.port";
 import { type ReservationRepository } from "../ports/reservation-repository.port";
+import { type ReservationTableRepository } from "../ports/reservation-table-repository.port";
 import { type RestaurantSettingsRepository } from "../ports/restaurant-settings-repository.port";
 import {
   type CreateReservationFullInput,
@@ -54,7 +56,8 @@ export class CreateReservationFull {
     private readonly guestRepository: GuestRepository,
     private readonly restaurantSettingsRepository: RestaurantSettingsRepository,
     private readonly diningTableRepository: DiningTableRepository,
-    private readonly businessHoursRepository: BusinessHoursRepository
+    private readonly businessHoursRepository: BusinessHoursRepository,
+    private readonly reservationTableRepository: ReservationTableRepository
   ) {}
 
   //-aqui empieza funcion execute y es para orquestar la creación completa de una reserva-//
@@ -64,8 +67,6 @@ export class CreateReservationFull {
    */
   // TODO [V2]: Envolver conflict-check + save en una transacción serializable o exclusion constraint
   //  para evitar race condition TOCTOU bajo concurrencia alta (CodeRabbit #5).
-  // TODO [V2]: Cuando se implemente asignación de mesas, la verificación de disponibilidad debe
-  //  cruzar tableAssignments en vez de contar reservas solapadas (CodeRabbit #8).
   async execute(input: CreateReservationFullInput): Promise<CreateReservationFullOutput> {
     console.log("[CreateReservationFull] START", {
       restaurantId: input.restaurantId,
@@ -115,30 +116,24 @@ export class CreateReservationFull {
     // --- Buffer: el check de solapamiento incluye el buffer de limpieza ---
     const bufferedEndAt = new Date(endAt.getTime() + bufferMinutes * 60 * 1000);
 
-    const existingReservations =
-      await this.reservationRepository.findByRestaurantAndDateRange(
-        input.restaurantId,
-        input.startAt,
-        bufferedEndAt
-      );
-
     const activeTables = await this.diningTableRepository.findActiveByRestaurantId(input.restaurantId);
     const totalActiveTables = activeTables.length;
 
     console.log(`[CreateReservationFull] mesas activas en el restaurante: ${totalActiveTables}`);
-    console.log(`[CreateReservationFull] reservas solapadas encontradas: ${existingReservations.length}`);
 
-    const overlappingCount = existingReservations.filter((r) => {
-      const rStart = r.startAt.getTime();
-      const rEnd = r.endAt.getTime();
-      const cStart = input.startAt.getTime();
-      const cEnd = bufferedEndAt.getTime();
-      return rStart < cEnd && rEnd > cStart;
-    }).length;
+    // Consultar qué mesas específicas están ocupadas en este rango temporal
+    const occupiedTableIds = await this.reservationTableRepository.findOccupiedTableIds(
+      input.restaurantId,
+      input.startAt,
+      bufferedEndAt
+    );
 
-    console.log(`[CreateReservationFull] reservas que solapan exactamente: ${overlappingCount} / ${totalActiveTables} mesas`);
+    const occupiedSet = new Set(occupiedTableIds);
+    const freeTables = activeTables.filter((t) => !occupiedSet.has(t.toPrimitives().id));
 
-    if (totalActiveTables === 0 || overlappingCount >= totalActiveTables) {
+    console.log(`[CreateReservationFull] mesas ocupadas: ${occupiedTableIds.length} / ${totalActiveTables} | libres: ${freeTables.length}`);
+
+    if (freeTables.length === 0) {
       const alternatives = await this.findAlternativeSlots(
         input.restaurantId,
         input.startAt,
@@ -151,6 +146,9 @@ export class CreateReservationFull {
       console.warn("[CreateReservationFull] CONFLICT → sin mesas disponibles para", input.startAt.toISOString(), "| alternativas:", alternatives.map((alt: Date) => alt.toISOString()));
       throw new NoAvailabilityError(input.startAt, alternatives);
     }
+
+    // Elegir la primera mesa libre (ordenada por sortOrder implícitamente por la query)
+    const assignedTable = freeTables[0];
 
     const guest = await this.findOrCreateGuest(input);
 
@@ -192,11 +190,30 @@ export class CreateReservationFull {
 
     const persisted = await this.reservationRepository.save(reservation);
 
-    console.log("[CreateReservationFull] END → reserva persistida", {
+    // --- Auto-asignar mesa a la reserva (con rollback compensatorio si falla) ---
+    const assignedTablePrimitives = assignedTable.toPrimitives();
+    const reservationTableEntity = ReservationTable.create({
+      id: crypto.randomUUID(),
+      reservationId: persisted.id,
+      tableId: assignedTablePrimitives.id,
+      assignedSeats: input.partySize,
+    });
+
+    try {
+      await this.reservationTableRepository.save(reservationTableEntity);
+    } catch (tableAssignError) {
+      console.error("[CreateReservationFull] ROLLBACK → fallo al asignar mesa, eliminando reserva huérfana", persisted.id, tableAssignError);
+      await this.reservationRepository.delete(persisted.id);
+      throw tableAssignError;
+    }
+
+    console.log("[CreateReservationFull] END → reserva persistida con mesa asignada", {
       reservationId: persisted.id,
       status: persisted.status,
       startAt: persisted.startAt.toISOString(),
       endAt: persisted.endAt.toISOString(),
+      assignedTableId: assignedTablePrimitives.id,
+      assignedTableName: assignedTablePrimitives.name,
     });
 
     return {
@@ -227,12 +244,19 @@ export class CreateReservationFull {
     const alternatives: Date[] = [];
     const stepMs = ALTERNATIVE_SLOT_STEP_MINUTES * 60 * 1000;
     const maxAttempts = 12;
+    const now = new Date();
 
     for (let i = 1; i <= maxAttempts && alternatives.length < ALTERNATIVE_SLOTS_COUNT; i++) {
       for (const direction of [1, -1]) {
         if (alternatives.length >= ALTERNATIVE_SLOTS_COUNT) break;
 
         const candidateStart = new Date(requestedStart.getTime() + direction * i * stepMs);
+
+        // No sugerir horas que ya pasaron
+        if (candidateStart.getTime() <= now.getTime()) {
+          continue;
+        }
+
         const candidateEnd = new Date(candidateStart.getTime() + durationMinutes * 60 * 1000);
         const candidateBufferedEnd = new Date(candidateEnd.getTime() + bufferMinutes * 60 * 1000);
 
@@ -240,17 +264,13 @@ export class CreateReservationFull {
           continue;
         }
 
-        const overlapping = await this.reservationRepository.findByRestaurantAndDateRange(
+        const occupiedTableIds = await this.reservationTableRepository.findOccupiedTableIds(
           restaurantId,
           candidateStart,
           candidateBufferedEnd
         );
 
-        const overlappingCount = overlapping.filter((r) => {
-          return r.startAt.getTime() < candidateBufferedEnd.getTime() && r.endAt.getTime() > candidateStart.getTime();
-        }).length;
-
-        if (overlappingCount < totalActiveTables) {
+        if (occupiedTableIds.length < totalActiveTables) {
           alternatives.push(candidateStart);
         }
       }

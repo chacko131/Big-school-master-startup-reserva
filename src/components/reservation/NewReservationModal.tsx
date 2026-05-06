@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import {
@@ -24,45 +24,84 @@ interface NewReservationModalProps {
  * Modal con formulario para crear una reserva desde el dashboard.
  * @sideEffect
  */
+interface FormData {
+  guestFullName: string;
+  guestPhone: string;
+  guestEmail: string;
+  partySize: string;
+  date: string;
+  time: string;
+  specialRequests: string;
+}
+
+function getInitialFormData(): FormData {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return {
+    guestFullName: "",
+    guestPhone: "",
+    guestEmail: "",
+    partySize: "2",
+    date: `${year}-${month}-${day}`,
+    time: "20:00",
+    specialRequests: "",
+  };
+}
+
 export function NewReservationModal({ isOpen, onClose }: NewReservationModalProps) {
-  const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<CreateReservationActionResult | null>(null);
   const [selectedAlternative, setSelectedAlternative] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>(getInitialFormData);
 
   if (!isOpen) {
     return null;
   }
 
-  function handleSubmit(formData: FormData) {
-    if (selectedAlternative !== null) {
-      formData.set("time", selectedAlternative);
-    }
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const submitData = new FormData();
+    submitData.set("guestFullName", formData.guestFullName);
+    submitData.set("guestPhone", formData.guestPhone);
+    submitData.set("guestEmail", formData.guestEmail);
+    submitData.set("partySize", formData.partySize);
+    submitData.set("date", formData.date);
+    submitData.set("time", selectedAlternative ?? formData.time);
+    submitData.set("specialRequests", formData.specialRequests);
 
     startTransition(async () => {
-      const actionResult = await createReservationAction(formData);
+      const actionResult = await createReservationAction(submitData);
       setResult(actionResult);
 
       if (actionResult.success) {
-        formRef.current?.reset();
+        setFormData(getInitialFormData());
         setSelectedAlternative(null);
         setTimeout(() => {
           setResult(null);
           onClose();
         }, 1500);
-      } else {
-        setSelectedAlternative(null);
       }
+      // En caso de error: NO limpiamos formData para preservar los datos
     });
+  }
+
+  function handleChange(field: keyof FormData, value: string) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Limpiar alternativa seleccionada si cambian fecha u hora
+    if (field === "date" || field === "time") {
+      setSelectedAlternative(null);
+    }
   }
 
   function handleClose() {
     setResult(null);
     setSelectedAlternative(null);
+    setFormData(getInitialFormData());
     onClose();
   }
-
-  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -119,7 +158,7 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
           </div>
         )}
 
-        <form ref={formRef} action={handleSubmit} className="mt-6 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="guestFullName" className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
@@ -130,6 +169,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
                 name="guestFullName"
                 type="text"
                 required
+                value={formData.guestFullName}
+                onChange={(e) => handleChange("guestFullName", e.target.value)}
                 className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
                 placeholder="Ej: María López"
               />
@@ -144,6 +185,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
                 name="guestPhone"
                 type="tel"
                 required
+                value={formData.guestPhone}
+                onChange={(e) => handleChange("guestPhone", e.target.value)}
                 className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
                 placeholder="+34 612 345 678"
               />
@@ -158,6 +201,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
               id="guestEmail"
               name="guestEmail"
               type="email"
+              value={formData.guestEmail}
+              onChange={(e) => handleChange("guestEmail", e.target.value)}
               className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
               placeholder="email@ejemplo.com"
             />
@@ -175,7 +220,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
                 min="1"
                 max="20"
                 required
-                defaultValue="2"
+                value={formData.partySize}
+                onChange={(e) => handleChange("partySize", e.target.value)}
                 className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface focus:border-primary focus:outline-none"
               />
             </div>
@@ -189,7 +235,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
                 name="date"
                 type="date"
                 required
-                defaultValue={today}
+                value={formData.date}
+                onChange={(e) => handleChange("date", e.target.value)}
                 className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface focus:border-primary focus:outline-none"
               />
             </div>
@@ -203,7 +250,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
                 name="time"
                 type="time"
                 required
-                defaultValue="20:00"
+                value={selectedAlternative ?? formData.time}
+                onChange={(e) => handleChange("time", e.target.value)}
                 className="mt-2 w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface focus:border-primary focus:outline-none"
               />
             </div>
@@ -217,6 +265,8 @@ export function NewReservationModal({ isOpen, onClose }: NewReservationModalProp
               id="specialRequests"
               name="specialRequests"
               rows={2}
+              value={formData.specialRequests}
+              onChange={(e) => handleChange("specialRequests", e.target.value)}
               className="mt-2 w-full resize-none rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
               placeholder="Alergias, celebración, preferencia de mesa..."
             />

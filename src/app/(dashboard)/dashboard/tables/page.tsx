@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { FloorPlanEditor } from "@/components/dashboard/tables/FloorPlanEditor";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { GetZonesByRestaurant } from "@/modules/catalog/application/use-cases/get-zones-by-restaurant.use-case";
-import { ensureDefaultZoneAction } from "./actions";
+import { ensureDefaultZoneAction, getTableOccupancyAction } from "./actions";
 import type { FloorPlanTable } from "@/components/dashboard/tables/floorPlanMocks";
 import type { RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
 import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
@@ -36,8 +36,8 @@ export default async function TablesPage() {
 
   const catalogInfrastructure = getCatalogInfrastructure();
 
-  // Obtenemos mesas, zonas y elementos decorativos en paralelo para minimizar tiempo de carga
-  const [diningTables, zones, floorPlanElements] = await Promise.all([
+  // Obtenemos mesas, zonas, elementos decorativos y ocupación en paralelo
+  const [diningTables, zones, floorPlanElements, occupancy] = await Promise.all([
     catalogInfrastructure.diningTableRepository.findByRestaurantId(
       restaurantId,
     ),
@@ -47,14 +47,31 @@ export default async function TablesPage() {
     catalogInfrastructure.floorPlanElementRepository.findByRestaurantId(
       restaurantId,
     ),
+    getTableOccupancyAction(),
   ]);
 
-  // Mapeamos a FloorPlanTable (el formato que espera la UI)
+  // Crear un mapa de ocupación por tableId para lookup rápido
+  const occupancyByTable = new Map(occupancy.map((o) => [o.tableId, o]));
+
+  // Mapeamos a FloorPlanTable (el formato que espera la UI) con estado de ocupación real
   const initialTables: FloorPlanTable[] = diningTables.map((table) => {
     const primitives = table.toPrimitives();
 
     // Buscamos el nombre de la zona para display (puede ser null si no tiene zona)
     const zoneName = zones.find((z) => z.id === primitives.zoneId)?.name ?? "";
+
+    // Resolver estado: occupied si tiene reserva activa ahora, inactive si está deshabilitada, active si está libre
+    const currentOccupancy = occupancyByTable.get(primitives.id);
+    let statusLabel = "Disponible";
+    let statusTone: "active" | "inactive" | "occupied" = "active";
+
+    if (!primitives.isActive) {
+      statusLabel = "Inactiva";
+      statusTone = "inactive";
+    } else if (currentOccupancy) {
+      statusLabel = currentOccupancy.guestName.trim() || "Ocupada";
+      statusTone = "occupied";
+    }
 
     return {
       id: primitives.id,
@@ -73,9 +90,19 @@ export default async function TablesPage() {
       height: primitives.height ?? (primitives.shape === "ROUND" ? 80 : 100),
       zoneId: primitives.zoneId,
       zone: zoneName,
-      statusLabel: primitives.isActive ? "Disponible" : "Inactiva",
-      statusTone: primitives.isActive ? "active" : "inactive",
-      status: primitives.isActive ? "active" : "inactive",
+      statusLabel,
+      statusTone,
+      status: statusTone,
+      occupancy: currentOccupancy
+        ? {
+            reservationId: currentOccupancy.reservationId,
+            guestName: currentOccupancy.guestName,
+            partySize: currentOccupancy.partySize,
+            startAt: currentOccupancy.startAt,
+            endAt: currentOccupancy.endAt,
+            status: currentOccupancy.status,
+          }
+        : undefined,
     };
   });
 
