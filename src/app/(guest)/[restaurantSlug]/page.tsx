@@ -18,6 +18,7 @@ import { QuickReservationCard } from "@/components/guest/profile/QuickReservatio
 import { PrivateEventsCard } from "@/components/guest/profile/PrivateEventsCard";
 import { MobileReservationButton } from "@/components/guest/profile/MobileReservationButton";
 
+
 interface RestaurantProfilePageProps {
   params:
     | {

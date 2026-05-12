@@ -65,12 +65,14 @@ export function ConfirmationSummaryCard({
                 <T>{tableTypeLabel}</T>
               </p>
             </div>
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-on-primary-container">
-                <T>{reservationIdLabel}</T>
-              </p>
-              <p className="text-xl font-bold">{reservationIdValue}</p>
-            </div>
+            {reservationIdValue.length > 0 && (
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-on-primary-container">
+                  <T>{reservationIdLabel}</T>
+                </p>
+                <p className="text-xl font-bold">{reservationIdValue}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

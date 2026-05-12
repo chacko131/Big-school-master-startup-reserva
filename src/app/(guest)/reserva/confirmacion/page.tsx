@@ -1,53 +1,85 @@
 /**
  * Archivo: page.tsx
- * Responsabilidad: Mostrar la confirmación pública de una reserva recién creada.
+ * Responsabilidad: Mostrar la confirmación pública de una reserva recién creada con datos reales.
  * Tipo: UI
  */
 
+import { notFound } from "next/navigation";
 import { PublicNavbar } from "@/components/guest/PublicNavbar";
 import { PublicFooter } from "@/components/guest/PublicFooter";
 import { ConfirmationHero } from "@/components/guest/reserva/ConfirmationHero";
 import { ConfirmationSummaryCard } from "@/components/guest/reserva/ConfirmationSummaryCard";
 import { ConfirmationLocationCard } from "@/components/guest/reserva/ConfirmationLocationCard";
 import { ConfirmationActionButtons } from "@/components/guest/reserva/ConfirmationActionButtons";
-import { ConfirmationPromoCard } from "@/components/guest/reserva/ConfirmationPromoCard";
+import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { GetReservation } from "@/modules/reservations/application/use-cases/get-reservation.use-case";
+import { ReservationNotFoundError } from "@/modules/reservations/application/errors/reservation-not-found.error";
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface ReservationConfirmationPageProps {
+  searchParams: Promise<{ reservationId?: string }>;
+}
 
 //-aqui empieza funcion ReservationConfirmationPage y es para renderizar la pantalla de exito de la reserva-//
 /**
- * Renderiza la confirmación pública orquestando componentes modulares.
- * @pure
+ * Obtiene reserva, guest y restaurante reales desde los repositorios usando reservationId del searchParam.
+ * @sideEffect
  */
-export default function ReservationConfirmationPage() {
-  // Mock data (en el futuro vendrá de un servicio/action)
-  const reservationData = {
-    restaurantName: "La Hacienda",
-    restaurantSlug: "la-hacienda",
-    confirmedLabel: "Confirmado",
-    dateLabel: "Fecha y Hora",
-    dateValue: "24 Oct, 2024",
-    timeValue: "20:30 hrs",
-    partyLabel: "Personas",
-    partyValue: "4 Personas",
-    reservationIdLabel: "ID de Reserva",
-    reservationIdValue: "#LH-8829",
-    locationLabel: "Ubicación",
-    locationValue: "Av. Paseo de la Reforma 250, Juárez, 06600 Ciudad de México, CDMX",
-  };
+export default async function ReservationConfirmationPage({ searchParams }: ReservationConfirmationPageProps) {
+  const { reservationId } = await searchParams;
+
+  if (!reservationId) {
+    notFound();
+  }
+
+  const { reservationRepository, guestRepository } = getReservationsInfrastructure();
+  const { restaurantRepository } = getCatalogInfrastructure();
+
+  // --- Obtener reserva ---
+  let reservation;
+  try {
+    const useCase = new GetReservation(reservationRepository);
+    reservation = await useCase.execute({ reservationId });
+  } catch (error) {
+    if (error instanceof ReservationNotFoundError) notFound();
+    throw error;
+  }
+
+  const r = reservation.toPrimitives();
+
+  // --- Obtener guest y restaurante en paralelo ---
+  const [guest, restaurant] = await Promise.all([
+    guestRepository.findById(r.guestId),
+    restaurantRepository.findById(r.restaurantId),
+  ]);
+
+  if (restaurant === null) notFound();
+
+  const restaurantPrimitives = restaurant.toPrimitives();
+
+  // --- Formatear datos para la UI ---
+  const startAt = new Date(r.startAt);
+  const dateValue = startAt.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+  const timeValue = startAt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) + " hrs";
+  const partyValue = `${r.partySize} ${r.partySize === 1 ? "Persona" : "Personas"}`;
+  const locationParts = [restaurantPrimitives.address, restaurantPrimitives.city].filter(Boolean);
+  const locationValue = locationParts.join(", ") || "Consultar con el restaurante";
+  const directionsUrl = locationParts.length > 0
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationParts.join(", "))}`
+    : undefined;
+  const guestName = guest?.toPrimitives().fullName;
 
   const actions = [
     {
-      label: "Añadir al calendario",
-      href: "#",
-      icon: "calendarAddOn" as const,
-    },
-    {
       label: "Gestionar reserva",
-      href: `/mi-reserva/${reservationData.reservationIdValue.replace("#", "")}`,
+      href: `/${restaurantPrimitives.slug}#contacto`,
       icon: "editCalendar" as const,
     },
     {
-      label: "Compartir detalles",
-      href: "#",
+      label: "Volver al restaurante",
+      href: `/${restaurantPrimitives.slug}`,
       icon: "share" as const,
       primary: true,
     },
@@ -55,40 +87,39 @@ export default function ReservationConfirmationPage() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface antialiased">
-      <PublicNavbar 
-        restaurantSlug={reservationData.restaurantSlug}
-        restaurantName={reservationData.restaurantName}
+      <PublicNavbar
+        restaurantSlug={restaurantPrimitives.slug}
+        restaurantName={restaurantPrimitives.name}
         buttonText="Volver al Inicio"
         buttonHref="/"
       />
 
       <main className="pb-24">
-        <ConfirmationHero restaurantName={reservationData.restaurantName} />
+        <ConfirmationHero restaurantName={restaurantPrimitives.name} />
 
         <section className="mx-auto mt-16 max-w-5xl px-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-            <ConfirmationSummaryCard 
-              restaurantName={reservationData.restaurantName}
-              confirmedLabel={reservationData.confirmedLabel}
-              dateLabel={reservationData.dateLabel}
-              dateValue={reservationData.dateValue}
-              timeValue={reservationData.timeValue}
-              partyLabel={reservationData.partyLabel}
-              partyValue={reservationData.partyValue}
-              reservationIdLabel={reservationData.reservationIdLabel}
-              reservationIdValue={reservationData.reservationIdValue}
+            <ConfirmationSummaryCard
+              restaurantName={guestName !== undefined ? `Para ${guestName}` : restaurantPrimitives.name}
+              confirmedLabel={r.status === "CONFIRMED" ? "Confirmado" : "Pendiente"}
+              dateLabel="Fecha y Hora"
+              dateValue={dateValue}
+              timeValue={timeValue}
+              partyLabel="Personas"
+              partyValue={partyValue}
+              reservationIdLabel=""
+              reservationIdValue=""
             />
 
-            <ConfirmationLocationCard 
-              locationLabel={reservationData.locationLabel}
-              locationValue={reservationData.locationValue}
+            <ConfirmationLocationCard
+              locationLabel="Ubicación"
+              locationValue={locationValue}
+              directionsUrl={directionsUrl}
             />
 
             <ConfirmationActionButtons actions={actions} />
           </div>
         </section>
-
-        <ConfirmationPromoCard />
       </main>
 
       <PublicFooter />

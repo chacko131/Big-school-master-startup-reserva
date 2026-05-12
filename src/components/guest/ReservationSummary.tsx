@@ -12,6 +12,9 @@ import Image from "next/image";
 
 interface ReservationSummaryProps {
   restaurantName: string;
+  partySize?: number;
+  date?: string;
+  time?: string;
 }
 
 //-aqui empieza funcion getSummaryItemClassName y es para estructurar la tarjeta resumen lateral-//
@@ -27,7 +30,14 @@ function getSummaryItemClassName(): string {
 /**
  * @pure
  */
-export function ReservationSummary({ restaurantName }: ReservationSummaryProps) {
+export function ReservationSummary({ restaurantName, partySize = 2, date, time }: ReservationSummaryProps) {
+  const formattedDate = (() => {
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return "—";
+    const [y, m, d] = date.split("-").map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    if (isNaN(dateObj.getTime())) return "—";
+    return dateObj.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  })();
   const reservationCardImageUrl =
     "https://lh3.googleusercontent.com/aida-public/AB6AXuD2B4aW7oKiJk6gyllIR0OxTEpzcnEFt39_FZy85ulg2cbUA3cKUfu1dQj0tZzEeAArJ5OJVakO-nKezlhbqMsY5VcLNLuBsA9yu2tTZ01FY6GI9NUwcr5yuA0Ivo_tBlps_Q-9HQx_P9ADfSax9MLSOzeZOXfSCKr9E451Dfd8Y0Rcw1JqjoUCLPW9UnmeIo9yHOW0pBSXOAeaC5Ilhu7SEK0ti6HYI3N0oJsmpRmUTQGsPwtAsmmOC7nJxqJogKe14GkFcxZr0xs";
 
@@ -59,8 +69,8 @@ export function ReservationSummary({ restaurantName }: ReservationSummaryProps) 
               <p className="text-sm font-bold uppercase tracking-tighter text-on-surface/60">
                 <T>Día y Hora</T>
               </p>
-              <p className="font-headline text-lg font-extrabold">Miércoles, 9 de Oct</p>
-              <p className="text-sm font-bold text-on-tertiary-container">19:30 h</p>
+              <p className="font-headline text-lg font-extrabold capitalize">{formattedDate}</p>
+              <p className="text-sm font-bold text-on-tertiary-container">{time ?? "—"} h</p>
             </div>
           </div>
           <div className={getSummaryItemClassName()}>
@@ -71,7 +81,7 @@ export function ReservationSummary({ restaurantName }: ReservationSummaryProps) 
               <p className="text-sm font-bold uppercase tracking-tighter text-on-surface/60">
                 <T>Invitados</T>
               </p>
-              <p className="font-headline text-lg font-extrabold">2 personas</p>
+              <p className="font-headline text-lg font-extrabold">{partySize} {partySize === 1 ? "persona" : "personas"}</p>
             </div>
           </div>
         </div>
