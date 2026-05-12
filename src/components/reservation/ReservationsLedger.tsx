@@ -23,6 +23,7 @@ export interface ReservationRowData {
 interface ReservationsLedgerProps {
   reservations: ReadonlyArray<ReservationRowData>;
   onEdit: (reservation: ReservationRowData) => void;
+  onStatusChange?: (reservationId: string, newStatus: ReservationStatus) => void;
 }
 
 //-aqui empieza funcion getStatusBadge y es para resolver el estilo y label del badge de estado-//
@@ -73,7 +74,7 @@ function getInitials(fullName: string): string {
  *
  * @pure
  */
-export function ReservationsLedger({ reservations, onEdit }: ReservationsLedgerProps) {
+export function ReservationsLedger({ reservations, onEdit, onStatusChange }: ReservationsLedgerProps) {
   if (reservations.length === 0) {
     return (
       <section className="overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest p-12 text-center shadow-sm">
@@ -171,6 +172,7 @@ export function ReservationsLedger({ reservations, onEdit }: ReservationsLedgerP
                       <ReservationStatusSelect
                         reservationId={reservation.id}
                         currentStatus={reservation.status}
+                        onStatusChange={onStatusChange}
                       />
                     </div>
                   </td>

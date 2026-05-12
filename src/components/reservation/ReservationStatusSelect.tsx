@@ -15,6 +15,7 @@ import {
 interface ReservationStatusSelectProps {
   reservationId: string;
   currentStatus: ReservationStatus;
+  onStatusChange?: (reservationId: string, newStatus: ReservationStatus) => void;
 }
 
 interface StatusOption {
@@ -67,6 +68,7 @@ function getAvailableTransitions(current: ReservationStatus): StatusOption[] {
 export function ReservationStatusSelect({
   reservationId,
   currentStatus,
+  onStatusChange,
 }: ReservationStatusSelectProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,9 @@ export function ReservationStatusSelect({
     startTransition(async () => {
       const result = await updateReservationStatusAction(reservationId, targetStatus);
 
-      if (!result.success) {
+      if (result.success) {
+        onStatusChange?.(reservationId, targetStatus as ReservationStatus);
+      } else {
         setError(result.error ?? "Error al actualizar el estado.");
       }
     });

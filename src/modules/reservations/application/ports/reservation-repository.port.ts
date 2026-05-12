@@ -11,7 +11,8 @@ export interface ReservationRepository {
   findByRestaurantAndDateRange(
     restaurantId: string,
     from: Date,
-    to: Date
+    to: Date,
+    includeAllStatuses?: boolean
   ): Promise<Reservation[]>;
   findActiveByGuestAndDateRange(
     guestId: string,

@@ -33,7 +33,8 @@ export class GetTodayReservations {
     const reservations = await this.reservationRepository.findByRestaurantAndDateRange(
       input.restaurantId,
       startOfDay,
-      endOfDay
+      endOfDay,
+      true
     );
 
     const guestIds = [...new Set(reservations.map((r) => r.guestId))];

@@ -41,14 +41,15 @@ export class PrismaReservationRepository implements ReservationRepository {
   async findByRestaurantAndDateRange(
     restaurantId: string,
     from: Date,
-    to: Date
+    to: Date,
+    includeAllStatuses = false
   ): Promise<Reservation[]> {
     const records = await this.prismaClient.reservation.findMany({
       where: {
         restaurantId,
         startAt: { lt: to },
         endAt: { gt: from },
-        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        ...(includeAllStatuses ? {} : { status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] } }),
       },
       orderBy: { startAt: "asc" },
     });

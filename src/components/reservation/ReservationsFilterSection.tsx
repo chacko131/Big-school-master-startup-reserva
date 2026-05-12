@@ -100,6 +100,14 @@ export function ReservationsFilterSection({ allReservations }: ReservationsFilte
   }, []);
   //-aqui termina handleDaySelect-//
 
+  //-aqui empieza handleStatusChange y es para actualizar el estado de una reserva en la lista local sin recargar la pagina-//
+  const handleStatusChange = useCallback((reservationId: string, newStatus: ReservationStatus) => {
+    setLoadedReservations((prev) =>
+      prev.map((r) => r.id === reservationId ? { ...r, status: newStatus } : r)
+    );
+  }, []);
+  //-aqui termina handleStatusChange-//
+
   //-aqui empieza filteredReservations y es para filtrar por estado sobre los datos ya cargados del dia-//
   const filteredReservations = selectedStatus === "ALL"
     ? loadedReservations
@@ -168,6 +176,7 @@ export function ReservationsFilterSection({ allReservations }: ReservationsFilte
       <ReservationsLedger
         reservations={filteredReservations}
         onEdit={setEditingReservation}
+        onStatusChange={handleStatusChange}
       />
 
       {/* Modal de edición */}
