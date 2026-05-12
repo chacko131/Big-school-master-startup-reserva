@@ -4,7 +4,8 @@
  * Tipo: UI
  */
 
-import { getRestaurantProfile } from "@/lib/public/siteContent";
+import { notFound } from "next/navigation";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { PublicNavbar } from "@/components/guest/PublicNavbar";
 import { PublicFooter } from "@/components/guest/PublicFooter";
 import { ReservationHero } from "@/components/guest/ReservationHero";
@@ -62,9 +63,10 @@ export default async function ReservationFlowPage({ params, searchParams }: Rese
   const { restaurantSlug } = await params;
   const sp = await searchParams;
 
-  // TODO: Reemplazar por GetRestaurantPublicProfileUseCase cuando estemos listos para CRUD
-  const restaurantProfile = getRestaurantProfile(restaurantSlug);
-  const restaurantName = restaurantProfile.displayName;
+  const { restaurantRepository } = getCatalogInfrastructure();
+  const restaurant = await restaurantRepository.findBySlug(restaurantSlug);
+  if (restaurant === null) notFound();
+  const restaurantName = restaurant.toPrimitives().name;
 
   const defaultPartySize = parsePartySize(sp.partySize) ?? 2;
   const defaultDate = parseDate(sp.date);
