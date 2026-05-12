@@ -239,6 +239,51 @@ export class Reservation {
   }
   //-aqui termina funcion markNoShow y se va autilizar en casos de uso de reservas-//
 
+  //-aqui empieza funcion reschedule y es para modificar campos operativos de la reserva-//
+  /**
+   * Devuelve una nueva entidad con los campos operativos actualizados.
+   * Solo permite modificar reservas que no estén canceladas, completadas o no-show.
+   * @pure
+   */
+  reschedule(props: {
+    partySize?: number;
+    startAt?: Date;
+    endAt?: Date;
+    specialRequests?: string | null;
+    internalNotes?: string | null;
+  }): Reservation {
+    const IMMUTABLE_STATUSES: ReservationStatus[] = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+    if (IMMUTABLE_STATUSES.includes(this.props.status)) {
+      throw new ReservationValidationError(
+        "status",
+        `cannot reschedule a reservation with status ${this.props.status}.`
+      );
+    }
+
+    const newPartySize = props.partySize ?? this.props.partySize;
+    validatePartySize(newPartySize);
+
+    const newStartAt = props.startAt ?? this.props.startAt;
+    const newEndAt = props.endAt ?? this.props.endAt;
+    validateDateOrder(newStartAt, newEndAt);
+
+    return new Reservation({
+      ...this.props,
+      partySize: newPartySize,
+      startAt: newStartAt,
+      endAt: newEndAt,
+      specialRequests: props.specialRequests !== undefined
+        ? normalizeOptionalText(props.specialRequests)
+        : this.props.specialRequests,
+      internalNotes: props.internalNotes !== undefined
+        ? normalizeOptionalText(props.internalNotes)
+        : this.props.internalNotes,
+      version: this.props.version + 1,
+      updatedAt: new Date(),
+    });
+  }
+  //-aqui termina funcion reschedule-//
+
   //-aqui empieza funcion toPrimitives y es para exponer la entidad en formato serializable-//
   /**
    * Expone la entidad en formato primitivo.

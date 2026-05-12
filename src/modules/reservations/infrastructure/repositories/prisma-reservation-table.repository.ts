@@ -37,6 +37,33 @@ export class PrismaReservationTableRepository implements ReservationTableReposit
   }
   //-aqui termina funcion findOccupiedTableIds-//
 
+  //-aqui empieza funcion findByDateRange y es para obtener asignaciones mesa↔reserva de un dia-//
+  /**
+   * Devuelve pares { reservationId, tableId } para reservas activas solapando [from, to).
+   * Usado para construir el timeline diario.
+   * @sideEffect
+   */
+  async findByDateRange(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<Array<{ reservationId: string; tableId: string }>> {
+    const assignments = await this.prismaClient.reservationTable.findMany({
+      where: {
+        reservation: {
+          restaurantId,
+          startAt: { lt: to },
+          endAt: { gt: from },
+          status: { notIn: ["CANCELLED", "NO_SHOW"] },
+        },
+      },
+      select: { reservationId: true, tableId: true },
+    });
+
+    return assignments.map((a) => ({ reservationId: a.reservationId, tableId: a.tableId }));
+  }
+  //-aqui termina funcion findByDateRange-//
+
   //-aqui empieza funcion save y es para persistir una asignación mesa↔reserva-//
   /**
    * Persiste una asignación mesa↔reserva usando upsert para idempotencia.

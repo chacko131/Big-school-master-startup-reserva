@@ -41,21 +41,33 @@ async function getRestaurantId(): Promise<string> {
 export async function fetchTodayReservations(): Promise<GetTodayReservationsOutput> {
   const restaurantId = await getRestaurantId();
 
-  console.log("[action:fetchTodayReservations] iniciando para restaurantId=", restaurantId);
+  const { reservationRepository, guestRepository } = getReservationsInfrastructure();
+  const useCase = new GetTodayReservations(reservationRepository, guestRepository);
+
+  return useCase.execute({
+    restaurantId,
+    date: new Date(),
+  });
+}
+//-aqui termina funcion fetchTodayReservations y se va autilizar en la pagina de reservas del dashboard-//
+
+//-aqui empieza funcion fetchReservationsByDate y es para obtener reservas de un dia especifico desde el cliente-//
+/**
+ * Server Action que recibe una fecha YYYY-MM-DD del cliente y devuelve
+ * solo las reservas de ese día para el restaurante en sesión.
+ * @sideEffect
+ */
+export async function fetchReservationsByDate(dateStr: string): Promise<GetTodayReservationsOutput> {
+  const restaurantId = await getRestaurantId();
+
+  const date = new Date(`${dateStr}T12:00:00`);
 
   const { reservationRepository, guestRepository } = getReservationsInfrastructure();
   const useCase = new GetTodayReservations(reservationRepository, guestRepository);
 
-  const result = await useCase.execute({
-    restaurantId,
-    date: new Date(),
-  });
-
-  console.log(`[action:fetchTodayReservations] completado → ${result.totalCount} reservas`);
-
-  return result;
+  return useCase.execute({ restaurantId, date });
 }
-//-aqui termina funcion fetchTodayReservations y se va autilizar en la pagina de reservas del dashboard-//
+//-aqui termina funcion fetchReservationsByDate-//
 
 export interface CreateReservationActionResult {
   success: boolean;
@@ -82,48 +94,30 @@ export async function createReservationAction(formData: FormData): Promise<Creat
   const timeRaw = formData.get("time") as string;
   const specialRequests = (formData.get("specialRequests") as string)?.trim() || null;
 
-  console.log("[action:createReservation] datos recibidos del formulario →", {
-    restaurantId,
-    guestFullName,
-    guestPhone,
-    guestEmail,
-    partySize: partySizeRaw,
-    date: dateRaw,
-    time: timeRaw,
-    specialRequests,
-  });
-
   if (guestFullName.length === 0 || guestPhone.length === 0 || !partySizeRaw || !dateRaw || !timeRaw) {
-    console.warn("[action:createReservation] VALIDACIÓN FALLIDA → campos obligatorios incompletos");
     return { success: false, error: "Todos los campos obligatorios deben completarse." };
   }
 
   const partySize = parseInt(partySizeRaw, 10);
 
   if (isNaN(partySize) || partySize < 1) {
-    console.warn("[action:createReservation] VALIDACIÓN FALLIDA → partySize inválido:", partySizeRaw);
     return { success: false, error: "El número de personas debe ser al menos 1." };
   }
 
   if (partySize > MAX_PARTY_SIZE) {
-    console.warn(`[action:createReservation] VALIDACIÓN FALLIDA → partySize ${partySize} supera el máximo permitido (${MAX_PARTY_SIZE})`);
     return { success: false, error: `El número máximo de personas por reserva online es ${MAX_PARTY_SIZE}. Para grupos más grandes, contacta directamente con el restaurante.` };
   }
 
   const startAt = new Date(`${dateRaw}T${timeRaw}:00`);
 
   if (isNaN(startAt.getTime())) {
-    console.warn("[action:createReservation] VALIDACIÓN FALLIDA → fecha/hora inválida:", dateRaw, timeRaw);
     return { success: false, error: "La fecha y hora no son válidas." };
   }
 
   const now = new Date();
   if (startAt.getTime() <= now.getTime()) {
-    console.warn("[action:createReservation] VALIDACIÓN FALLIDA → fecha en el pasado:", startAt.toISOString());
     return { success: false, error: "No se pueden crear reservas en una fecha y hora pasadas." };
   }
-
-  console.log("[action:createReservation] validación OK → ejecutando use case");
 
   try {
     const { reservationRepository, reservationTableRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository } = getReservationsInfrastructure();
@@ -139,12 +133,6 @@ export async function createReservationAction(formData: FormData): Promise<Creat
       specialRequests,
     });
 
-    console.log("[action:createReservation] SUCCESS →", {
-      reservationId: result.reservationId,
-      status: result.status,
-      startAt: result.startAt.toISOString(),
-    });
-
     revalidatePath("/dashboard/reservations");
 
     return { success: true, reservationId: result.reservationId };
@@ -153,7 +141,6 @@ export async function createReservationAction(formData: FormData): Promise<Creat
       const alternativeSlots = error.alternatives.map((d: Date) =>
         d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
       );
-      console.warn("[action:createReservation] NoAvailabilityError → sin disponibilidad para", startAt.toISOString(), "| alternativos:", alternativeSlots);
       return {
         success: false,
         error: "No hay mesas disponibles para esa hora.",
@@ -162,7 +149,6 @@ export async function createReservationAction(formData: FormData): Promise<Creat
     }
 
     if (error instanceof OutsideBusinessHoursError) {
-      console.warn("[action:createReservation] OutsideBusinessHoursError → hora fuera de horario de negocio:", startAt.toISOString());
       return {
         success: false,
         error: "El restaurante no está abierto a esa hora. Consulta nuestro horario y selecciona un horario válido.",
@@ -170,7 +156,6 @@ export async function createReservationAction(formData: FormData): Promise<Creat
     }
 
     if (error instanceof DuplicateReservationError) {
-      console.warn("[action:createReservation] DuplicateReservationError → reserva duplicada para guest:", error.guestId);
       return {
         success: false,
         error: "Ya tienes una reserva activa en esa franja horaria. Cancela la anterior o elige otro horario.",
@@ -182,6 +167,94 @@ export async function createReservationAction(formData: FormData): Promise<Creat
   }
 }
 //-aqui termina funcion createReservationAction y se va autilizar en el modal de nueva reserva-//
+
+export interface UpdateReservationActionResult {
+  success: boolean;
+  error?: string;
+}
+
+//-aqui empieza funcion updateReservationAction y es para editar los campos operativos de una reserva existente-//
+/**
+ * Server action para editar partySize, fecha/hora y specialRequests de una reserva.
+ * Valida ownership del restaurante antes de persistir.
+ * @sideEffect
+ */
+const MAX_PARTY_SIZE_EDIT = 20;
+
+export async function updateReservationAction(
+  reservationId: string,
+  formData: FormData
+): Promise<UpdateReservationActionResult> {
+  const restaurantId = await getRestaurantId();
+
+  const partySizeRaw = (formData.get("partySize") as string)?.trim();
+  const dateRaw = (formData.get("date") as string)?.trim();
+  const timeRaw = (formData.get("time") as string)?.trim();
+  const specialRequests = (formData.get("specialRequests") as string)?.trim() || null;
+  const internalNotes = (formData.get("internalNotes") as string)?.trim() || null;
+
+  if (!partySizeRaw || !dateRaw || !timeRaw) {
+    return { success: false, error: "Todos los campos obligatorios deben completarse." };
+  }
+
+  const partySize = parseInt(partySizeRaw, 10);
+  if (isNaN(partySize) || partySize < 1) {
+    return { success: false, error: "El número de personas debe ser al menos 1." };
+  }
+  if (partySize > MAX_PARTY_SIZE_EDIT) {
+    return { success: false, error: `El número máximo de personas por reserva es ${MAX_PARTY_SIZE_EDIT}.` };
+  }
+
+  const startAt = new Date(`${dateRaw}T${timeRaw}:00`);
+  if (isNaN(startAt.getTime())) {
+    return { success: false, error: "La fecha y hora no son válidas." };
+  }
+
+  const now = new Date();
+  if (startAt.getTime() <= now.getTime()) {
+    return { success: false, error: "No se pueden mover reservas a una fecha y hora pasadas." };
+  }
+
+  try {
+    const { reservationRepository, restaurantSettingsRepository } = getReservationsInfrastructure();
+
+    const reservation = await reservationRepository.findById(reservationId);
+    if (reservation === null) {
+      return { success: false, error: "Reserva no encontrada." };
+    }
+    if (reservation.restaurantId !== restaurantId) {
+      return { success: false, error: "No tienes permiso para modificar esta reserva." };
+    }
+
+    // endAt se calcula desde settings del restaurante; si no hay settings, mantiene la duración original
+    const originalDurationMs = reservation.endAt.getTime() - reservation.startAt.getTime();
+    const settings = await restaurantSettingsRepository.findByRestaurantId(restaurantId);
+    const durationMs = settings !== null
+      ? settings.toPrimitives().defaultReservationDurationMinutes * 60 * 1000
+      : originalDurationMs;
+    const endAt = new Date(startAt.getTime() + durationMs);
+
+    const updated = reservation.reschedule({
+      partySize,
+      startAt,
+      endAt,
+      specialRequests,
+      internalNotes,
+    });
+
+    await reservationRepository.save(updated);
+    revalidatePath("/dashboard/reservations");
+
+    return { success: true };
+  } catch (err) {
+    if (err instanceof Error && err.name === "ReservationValidationError") {
+      return { success: false, error: "No se puede modificar una reserva en ese estado." };
+    }
+    console.error("[action:updateReservation] ERROR inesperado:", err);
+    return { success: false, error: "Error inesperado al actualizar la reserva." };
+  }
+}
+//-aqui termina funcion updateReservationAction-//
 
 export interface UpdateStatusActionResult {
   success: boolean;
@@ -230,20 +303,16 @@ export async function updateReservationStatusAction(
 ): Promise<UpdateStatusActionResult> {
   const restaurantId = await getRestaurantId();
 
-  console.log("[action:updateReservationStatus] reservationId=", reservationId, "targetStatus=", targetStatus, "restaurantId=", restaurantId);
-
   const { reservationRepository } = getReservationsInfrastructure();
 
   const reservation = await reservationRepository.findById(reservationId);
 
   if (reservation === null) {
-    console.warn("[action:updateReservationStatus] reserva no encontrada:", reservationId);
     return { success: false, error: "Reserva no encontrada." };
   }
 
   //-aqui empieza verificacion de ownership-//
   if (reservation.restaurantId !== restaurantId) {
-    console.warn("[action:updateReservationStatus] intento de acceso no autorizado:", { reservationId, restaurantId, reservationRestaurantId: reservation.restaurantId });
     return { success: false, error: "No tienes permiso para modificar esta reserva." };
   }
   //-aqui termina verificacion de ownership-//
@@ -268,21 +337,16 @@ export async function updateReservationStatusAction(
         updated = reservation.markNoShow();
         break;
       default:
-        console.warn("[action:updateReservationStatus] transición no soportada:", targetStatus);
         return { success: false, error: `Transición a estado "${targetStatus}" no soportada.` };
     }
 
     await reservationRepository.save(updated);
 
-    console.log("[action:updateReservationStatus] estado actualizado →", { reservationId, targetStatus });
-
     revalidatePath("/dashboard/reservations");
 
     return { success: true };
   } catch (err) {
-    const originalMessage = err instanceof Error ? err.message : "Error desconocido.";
     const userMessage = mapDomainErrorToUserMessage(err);
-    console.error("[action:updateReservationStatus] ERROR de dominio:", originalMessage);
     return { success: false, error: userMessage };
   }
 }

@@ -22,7 +22,7 @@ export interface ReservationRowData {
 
 interface ReservationsLedgerProps {
   reservations: ReadonlyArray<ReservationRowData>;
-  totalCount: number;
+  onEdit: (reservation: ReservationRowData) => void;
 }
 
 //-aqui empieza funcion getStatusBadge y es para resolver el estilo y label del badge de estado-//
@@ -73,7 +73,7 @@ function getInitials(fullName: string): string {
  *
  * @pure
  */
-export function ReservationsLedger({ reservations, totalCount }: ReservationsLedgerProps) {
+export function ReservationsLedger({ reservations, onEdit }: ReservationsLedgerProps) {
   if (reservations.length === 0) {
     return (
       <section className="overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest p-12 text-center shadow-sm">
@@ -157,11 +157,22 @@ export function ReservationsLedger({ reservations, totalCount }: ReservationsLed
                       {badge.label}
                     </span>
                   </td>
-                  <td className="px-6 py-5 text-right">
-                    <ReservationStatusSelect
-                      reservationId={reservation.id}
-                      currentStatus={reservation.status}
-                    />
+                  <td className="px-6 py-5">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(reservation)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-high px-3 py-1.5 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container-highest"
+                        aria-label={`Editar reserva de ${reservation.guestFullName}`}
+                      >
+                        <OnboardingIcon name="edit" className="h-3.5 w-3.5" />
+                        <T>Editar</T>
+                      </button>
+                      <ReservationStatusSelect
+                        reservationId={reservation.id}
+                        currentStatus={reservation.status}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
@@ -170,18 +181,10 @@ export function ReservationsLedger({ reservations, totalCount }: ReservationsLed
         </table>
       </div>
 
-      <div className="flex items-center justify-between border-t border-outline-variant/10 bg-surface-container-low px-6 py-4">
+      <div className="border-t border-outline-variant/10 bg-surface-container-low px-6 py-4">
         <p className="text-xs font-medium text-on-surface-variant">
-          <T>{`Mostrando ${reservations.length} de ${totalCount} reservas`}</T>
+          <T>{`${reservations.length} reserva${reservations.length !== 1 ? "s" : ""}`}</T>
         </p>
-        <div className="flex gap-2">
-          <button className="rounded-lg p-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-30" type="button" disabled aria-label="Anterior">
-            ‹
-          </button>
-          <button className="rounded-lg p-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-high" type="button" aria-label="Siguiente">
-            ›
-          </button>
-        </div>
       </div>
     </section>
   );

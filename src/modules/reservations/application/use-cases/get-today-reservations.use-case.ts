@@ -30,23 +30,13 @@ export class GetTodayReservations {
     const endOfDay = new Date(input.date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    console.log("[GetTodayReservations] START", {
-      restaurantId: input.restaurantId,
-      from: startOfDay.toISOString(),
-      to: endOfDay.toISOString(),
-    });
-
     const reservations = await this.reservationRepository.findByRestaurantAndDateRange(
       input.restaurantId,
       startOfDay,
       endOfDay
     );
 
-    console.log(`[GetTodayReservations] reservas encontradas: ${reservations.length}`);
-
     const guestIds = [...new Set(reservations.map((r) => r.guestId))];
-
-    console.log(`[GetTodayReservations] guests únicos a resolver: ${guestIds.length}`);
 
     const guests = await Promise.all(
       guestIds.map((guestId) => this.guestRepository.findById(guestId))
@@ -58,15 +48,10 @@ export class GetTodayReservations {
         .map((g) => [g.id, g])
     );
 
-    console.log(`[GetTodayReservations] guests resueltos: ${guestMap.size}`);
-
     const enrichedReservations: ReservationWithGuest[] = reservations.map((reservation) => {
       const primitives = reservation.toPrimitives();
       const guest = guestMap.get(primitives.guestId);
 
-      if (guest === undefined) {
-        console.warn(`[GetTodayReservations] guest no encontrado para guestId=${primitives.guestId}, reservationId=${primitives.id}`);
-      }
 
       return {
         id: primitives.id,
@@ -80,14 +65,6 @@ export class GetTodayReservations {
         specialRequests: primitives.specialRequests,
       };
     });
-
-    console.log("[GetTodayReservations] END →", enrichedReservations.map((r) => ({
-      id: r.id,
-      guest: r.guestFullName,
-      partySize: r.partySize,
-      startAt: r.startAt.toISOString(),
-      status: r.status,
-    })));
 
     return {
       reservations: enrichedReservations,

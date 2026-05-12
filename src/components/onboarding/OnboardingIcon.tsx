@@ -153,6 +153,13 @@ export function OnboardingIcon({ name, className = "" }: OnboardingIconProps) {
           <path d="m8.5 12.5 2.5 2.5 4.5-5" />
         </svg>
       );
+    case "edit":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+          <path d="M17.5 2.5a2.12 2.12 0 0 1 3 3L12 14l-4 1 1-4Z" />
+        </svg>
+      );
     default:
       return null;
   }

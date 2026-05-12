@@ -14,6 +14,16 @@ export interface ReservationTableRepository {
   findOccupiedTableIds(restaurantId: string, from: Date, to: Date): Promise<string[]>;
 
   /**
+   * Devuelve las asignaciones mesa↔reserva cuyas reservas se solapan con el rango dado.
+   * Usado para construir el timeline diario.
+   */
+  findByDateRange(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<Array<{ reservationId: string; tableId: string }>>;
+
+  /**
    * Persiste una asignación mesa↔reserva.
    */
   save(reservationTable: ReservationTable): Promise<ReservationTable>;

@@ -22,7 +22,8 @@ export type OnboardingChromeIconName =
   | "person"
   | "rocketLaunch"
   | "schedule"
-  | "checkCircle";
+  | "checkCircle"
+  | "edit";
 
 export type OnboardingIconName = OnboardingStepIconName | OnboardingChromeIconName;
 
