@@ -1,11 +1,15 @@
 # `sign-in`
 
-Ruta pública para autenticación.
+Ruta pública de autenticación con Clerk.
 
 ## Responsabilidad
 
-Permitir el acceso a staff, dueños y administradores del SaaS.
+Renderizar el formulario real de login de Clerk para staff, dueños y administradores del SaaS.
+
+## Estructura
+
+Usa catch-all route `[[...rest]]/page.tsx` requerida por Clerk para su routing interno.
 
 ## Estado
 
-La ruta ya cuenta con una UI pública base y queda preparada para conectar la autenticación real.
+Implementado. Usa el componente `<SignIn />` de `@clerk/nextjs`. Tras login redirige a `/dashboard`.

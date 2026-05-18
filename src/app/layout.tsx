@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import "./globals.css";
 
@@ -25,10 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`light ${manrope.variable} ${inter.variable} h-full antialiased`}>
-      < body className="min-h-full flex flex-col bg-background text-on-background font-sans overflow-x-hidden selection:bg-secondary-fixed-dim selection:text-on-secondary-fixed">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+      <body className="min-h-full flex flex-col bg-background text-on-background font-sans overflow-x-hidden selection:bg-secondary-fixed-dim selection:text-on-secondary-fixed">
+        <ClerkProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

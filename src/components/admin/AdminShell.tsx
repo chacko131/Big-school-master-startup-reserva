@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import type { OnboardingIconName } from "@/types/onboarding";
+import { UserButton } from "@clerk/nextjs";
 import {
   adminNavigationDefinitions,
   getAdminActiveNavigationDefinition,
@@ -109,9 +110,7 @@ function AdminSidebar({ activePathname, sectionLabel }: AdminSidebarProps) {
       </nav>
 
       <div className="mt-auto flex items-center gap-3 rounded-[20px] border border-outline-variant/20 bg-surface-container-low p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-on-primary">
-          SA
-        </div>
+        <UserButton />
         <div className="min-w-0">
           <p className="truncate text-xs font-bold text-on-surface">
             <T>Super Admin</T>
@@ -155,12 +154,7 @@ function AdminHeader({ sectionLabel }: AdminHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 text-on-surface-variant">
-          <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Ayuda">
-            <OnboardingIcon name="help" className="h-5 w-5" />
-          </button>
-          <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Cuenta">
-            <OnboardingIcon name="accountCircle" className="h-5 w-5" />
-          </button>
+          <UserButton />
         </div>
       </div>
     </header>

@@ -99,6 +99,7 @@ model Restaurant {
   reservations  Reservation[]
   businessHours BusinessHours[]
   menuCategories MenuCategory[]
+  memberships   UserRestaurantMembership[]
 
   @@index([isActive])
   @@index([slug])
@@ -297,4 +298,77 @@ model MenuItem {
 
   @@index([categoryId, isAvailable])
   @@index([categoryId, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// MÓDULO: USERS
+// ---------------------------------------------------------------------------
+
+/// Rol global del usuario dentro de la plataforma SaaS.
+/// SUPER_ADMIN → dueño de la startup (acceso total a todos los restaurantes).
+/// USER        → cualquier usuario autenticado sin privilegios globales.
+enum GlobalRole {
+  SUPER_ADMIN
+  USER
+}
+
+/// Rol del usuario dentro de un restaurante concreto.
+/// Un mismo usuario puede tener distintos roles en distintos restaurantes.
+enum MembershipRole {
+  RESTAURANT_OWNER  /// Dueño del restaurante. Puede invitar staff y gestionar todo.
+  MANAGER           /// Gerente. Ve todo excepto billing.
+  STAFF_WAITER      /// Mesero. Ve reservas y agenda.
+  STAFF_KITCHEN     /// Cocina. Ve solo la agenda/timeline.
+  STAFF_BAR         /// Barra. Ve reservas.
+}
+
+/// Estado del vínculo entre un usuario y un restaurante.
+/// PENDING  → invitado pero aún no ha aceptado.
+/// ACTIVE   → acceso activo y operativo.
+/// REVOKED  → acceso revocado por el owner o el admin.
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+/// Usuario autenticado de la plataforma.
+/// La identidad real la gestiona Clerk; aquí guardamos la representación de negocio.
+/// clerkId es el "sub" que devuelve Clerk en cada sesión.
+model User {
+  id          String       @id @default(cuid())
+  clerkId     String       @unique /// Identificador único de Clerk (sub del JWT).
+  email       String       @unique
+  fullName    String?
+  globalRole  GlobalRole   @default(USER)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  memberships           UserRestaurantMembership[] @relation("UserMemberships")
+  sentInvitations       UserRestaurantMembership[] @relation("InvitedByUser")
+
+  @@index([email])
+  @@index([clerkId])
+}
+
+/// Vínculo entre un User y un Restaurant con un rol específico.
+/// Un user puede pertenecer a varios restaurantes con roles distintos.
+/// Un restaurante puede tener un único RESTAURANT_OWNER activo.
+model UserRestaurantMembership {
+  id           String           @id @default(cuid())
+  userId       String
+  restaurantId String
+  role         MembershipRole
+  status       MembershipStatus @default(PENDING)
+  invitedById  String?          /// FK al User que generó la invitación. Null si es el owner original.
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  user         User         @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  invitedBy    User?        @relation("InvitedByUser", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, restaurantId]) /// Un user solo puede tener un rol por restaurante.
+  @@index([userId, status])
+  @@index([restaurantId, role, status])
 }

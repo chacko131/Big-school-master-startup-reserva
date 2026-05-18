@@ -1,11 +1,15 @@
 # `sign-up`
 
-Ruta pública para registro inicial.
+Ruta pública de registro con Clerk.
 
 ## Responsabilidad
 
-Iniciar el alta del restaurante en la plataforma.
+Renderizar el formulario real de registro de Clerk para el alta de nuevos restaurantes en la plataforma.
+
+## Estructura
+
+Usa catch-all route `[[...rest]]/page.tsx` requerida por Clerk para su routing interno.
 
 ## Estado
 
-La ruta ya cuenta con una UI pública base y queda preparada para conectar el alta real.
+Implementado. Usa el componente `<SignUp />` de `@clerk/nextjs`. Tras registro redirige a `/onboarding/restaurant`.
