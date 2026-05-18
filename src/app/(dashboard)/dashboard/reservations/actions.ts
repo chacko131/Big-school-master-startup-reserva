@@ -6,8 +6,7 @@
 
 "use server";
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { revalidatePath } from "next/cache";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
 import { GetTodayReservations } from "@/modules/reservations/application/use-cases/get-today-reservations.use-case";
@@ -17,21 +16,6 @@ import { DuplicateReservationError } from "@/modules/reservations/application/er
 import { NoAvailabilityError } from "@/modules/reservations/application/errors/no-availability.error";
 import { OutsideBusinessHoursError } from "@/modules/reservations/application/errors/outside-business-hours.error";
 
-const RESTAURANT_ID_COOKIE = "onboarding_restaurant_id";
-
-//-aqui empieza funcion getRestaurantId y es para obtener el restaurantId de la cookie de sesion-//
-/** @sideEffect */
-async function getRestaurantId(): Promise<string> {
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(RESTAURANT_ID_COOKIE)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
-
-  return restaurantId;
-}
-//-aqui termina funcion getRestaurantId-//
 
 //-aqui empieza funcion fetchTodayReservations y es para obtener reservas del dia desde el servidor-//
 /**
@@ -39,7 +23,7 @@ async function getRestaurantId(): Promise<string> {
  * @sideEffect
  */
 export async function fetchTodayReservations(): Promise<GetTodayReservationsOutput> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const { reservationRepository, guestRepository } = getReservationsInfrastructure();
   const useCase = new GetTodayReservations(reservationRepository, guestRepository);
@@ -58,7 +42,7 @@ export async function fetchTodayReservations(): Promise<GetTodayReservationsOutp
  * @sideEffect
  */
 export async function fetchReservationsByDate(dateStr: string): Promise<GetTodayReservationsOutput> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const date = new Date(`${dateStr}T12:00:00`);
 
@@ -84,7 +68,7 @@ export interface CreateReservationActionResult {
 const MAX_PARTY_SIZE = 20;
 
 export async function createReservationAction(formData: FormData): Promise<CreateReservationActionResult> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const guestFullName = (formData.get("guestFullName") as string)?.trim() ?? "";
   const guestPhone = (formData.get("guestPhone") as string)?.trim() ?? "";
@@ -185,7 +169,7 @@ export async function updateReservationAction(
   reservationId: string,
   formData: FormData
 ): Promise<UpdateReservationActionResult> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const partySizeRaw = (formData.get("partySize") as string)?.trim();
   const dateRaw = (formData.get("date") as string)?.trim();
@@ -301,7 +285,7 @@ export async function updateReservationStatusAction(
   reservationId: string,
   targetStatus: string
 ): Promise<UpdateStatusActionResult> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const { reservationRepository } = getReservationsInfrastructure();
 

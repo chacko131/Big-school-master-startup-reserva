@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import type { OnboardingIconName } from "@/types/onboarding";
@@ -98,6 +99,8 @@ function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProp
  */
 function DashboardSidebarContent({ activePathname, sectionLabel, className = "", onNavigate }: DashboardSidebarContentProps) {
   const activeNavigationKey = getDashboardActiveNavigationDefinition(activePathname).key;
+  const { user } = useUser();
+  const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "";
 
   return (
     <div className={`${sidebarBaseClassName} ${className}`}>
@@ -140,17 +143,12 @@ function DashboardSidebarContent({ activePathname, sectionLabel, className = "",
       </nav>
 
       <div className="mt-auto flex items-center gap-3 rounded-[20px] border border-outline-variant/20 bg-surface-container-low p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-on-primary">
-          JR
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-bold text-on-surface">
-            <T>Julian Rossi</T>
+        <UserButton />
+        {displayName.length > 0 && (
+          <p className="min-w-0 truncate text-xs font-semibold text-on-surface">
+            {displayName}
           </p>
-          <p className="truncate text-[10px] text-on-surface-variant">
-            <T>Owner</T>
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -230,9 +228,7 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
           <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Ayuda">
             <OnboardingIcon name="help" className="h-5 w-5" />
           </button>
-          <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Cuenta">
-            <OnboardingIcon name="accountCircle" className="h-5 w-5" />
-          </button>
+          <UserButton />
         </div>
       </div>
     </header>

@@ -5,7 +5,6 @@
  */
 
 import Image from "next/image";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ONBOARDING_TOTAL_STEPS, getOnboardingStepNumber, getOnboardingSteps } from "@/constants/onboarding";
 import { T } from "@/components/T";
@@ -24,14 +23,7 @@ interface PlanDefinition {
 }
 
 const planPageLayoutClassName = "flex w-full max-w-6xl flex-col gap-16";
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 const planCompletionFormId = "plan-completion-form";
-const onboardingRootCookieOptions = {
-  httpOnly: true,
-  maxAge: 60 * 60 * 24 * 7,
-  path: "/",
-  sameSite: "lax" as const,
-};
 const planDefinitions: ReadonlyArray<PlanDefinition> = [
   {
     eyebrow: "Esencial",
@@ -66,11 +58,8 @@ const hospitalityTrustImageSrc = "https://lh3.googleusercontent.com/aida-public/
  * Valida que el onboarding mínimo esté completo antes de mostrar el plan.
  * @sideEffect
  */
-async function ensurePlanPrerequisites(): Promise<void> {
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
+async function ensurePlanPrerequisites(restaurantId: string): Promise<void> {
+  if (restaurantId.trim().length === 0) {
     redirect("/onboarding/restaurant");
   }
 
@@ -102,15 +91,6 @@ async function ensurePlanPrerequisites(): Promise<void> {
  */
 async function completeOnboardingAndGoToDashboardAction() {
   "use server";
-
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
-
-  cookieStore.set(onboardingRestaurantIdCookieName, restaurantId, onboardingRootCookieOptions);
 
   redirect("/dashboard");
 }
@@ -270,8 +250,9 @@ function PlanFooter() {
 /**
  * Presenta la pantalla de selección de plan SaaS para el restaurante.
  */
-export default async function PlanOnboardingPage() {
-  await ensurePlanPrerequisites();
+export default async function PlanOnboardingPage({ searchParams }: { searchParams: Promise<{ restaurantId?: string }> }) {
+  const { restaurantId = "" } = await searchParams;
+  await ensurePlanPrerequisites(restaurantId);
 
   const currentStepKey = "plan" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);

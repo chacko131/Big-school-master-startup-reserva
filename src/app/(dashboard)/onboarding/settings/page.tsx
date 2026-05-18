@@ -16,6 +16,8 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { RestaurantSettings } from "@/modules/catalog/domain/entities/restaurant-settings.entity";
 import { UpdateRestaurantSettings } from "@/modules/catalog/application/use-cases/update-restaurant-settings.use-case";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { requireCurrentUser } from "@/modules/auth/get-current-user";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 
 const settingsOnboardingFormId = "settings-onboarding-form";
 
@@ -35,7 +37,6 @@ interface SettingsOnboardingDraft {
 }
 
 interface OperationalSettingsFormProps {
-  restaurantId: string;
   errorMessage?: string;
   successMessage?: string;
   initialValues: SettingsOnboardingDraft;
@@ -64,7 +65,6 @@ const settingsOnboardingDraftSchema = z.object({
 });
 
 const settingsOnboardingDraftCookieName = "onboarding_settings_draft";
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
 const settingsOnboardingCookieOptions = {
   httpOnly: true,
@@ -94,8 +94,16 @@ async function updateRestaurantSettingsOnboardingAction(formData: FormData) {
   const cookieStore = await cookies();
   const intent = String(formData.get("intent") ?? "continue").trim();
 
+  const currentUser = await requireCurrentUser();
+  const { membershipRepository } = getUsersInfrastructure();
+  const memberships = await membershipRepository.findActiveByUserId(currentUser.id);
+  if (memberships.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+  const restaurantId = memberships[0]!.toPrimitives().restaurantId;
+
   const draftInput: SettingsOnboardingDraft = {
-    restaurantId: String(formData.get("restaurantId") ?? "").trim(),
+    restaurantId,
     reservationApprovalMode: String(formData.get("reservationApprovalMode") ?? "AUTO") as "AUTO" | "MANUAL",
     waitlistMode: String(formData.get("waitlistMode") ?? "MANUAL") as "MANUAL" | "AUTO",
     defaultReservationDurationMinutes: Number(formData.get("defaultReservationDurationMinutes") ?? 90),
@@ -158,9 +166,7 @@ async function updateRestaurantSettingsOnboardingAction(formData: FormData) {
     enableAutoTableAssignment: parsedInput.data.enableAutoTableAssignment,
   });
 
-  cookieStore.set(onboardingRestaurantIdCookieName, parsedInput.data.restaurantId, settingsOnboardingCookieOptions);
-
-  redirect("/onboarding/tables");
+  redirect(`/onboarding/tables?restaurantId=${parsedInput.data.restaurantId}`);
 }
 //-aqui termina funcion updateRestaurantSettingsOnboardingAction y se va autilizar en el submit del onboarding-//
 
@@ -317,11 +323,10 @@ function SettingsSwitchRow({ name, title, description, highlighted = false, defa
 //-aqui termina componente SettingsSwitchRow-//
 
 //-aqui empieza componente OperationalSettingsForm y es para montar la columna principal de configuraciones-//
-function OperationalSettingsForm({ restaurantId, errorMessage, successMessage, initialValues }: OperationalSettingsFormProps) {
+function OperationalSettingsForm({ errorMessage, successMessage, initialValues }: OperationalSettingsFormProps) {
   return (
     <section className="space-y-10 md:col-span-8">
       <form action={updateRestaurantSettingsOnboardingAction} className="space-y-10" id={settingsOnboardingFormId}>
-        <input name="restaurantId" type="hidden" value={restaurantId} />
 
         {errorMessage ? (
           <div className="rounded-2xl border border-error/20 bg-error/5 px-4 py-3 text-sm font-medium text-error">
@@ -549,8 +554,7 @@ export default async function SettingsOnboardingPage({ searchParams }: SettingsO
   const resolvedSearchParams = await searchParams;
   const restaurantIdValue = resolvedSearchParams.restaurantId;
   const queryRestaurantId = Array.isArray(restaurantIdValue) ? restaurantIdValue[0] ?? "" : restaurantIdValue ?? "";
-  const cookieRestaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value ?? "";
-  const restaurantId = queryRestaurantId.length > 0 ? queryRestaurantId : cookieRestaurantId;
+  const restaurantId = queryRestaurantId;
 
   const errorValue = resolvedSearchParams.error;
   const errorKey = Array.isArray(errorValue) ? errorValue[0] ?? "" : errorValue ?? "";
@@ -590,7 +594,7 @@ export default async function SettingsOnboardingPage({ searchParams }: SettingsO
       <div className={settingsPageLayoutClassName}>
         <OperationalSettingsIntro />
         <div className={settingsGridClassName}>
-          <OperationalSettingsForm errorMessage={errorMessage} initialValues={initialValues} restaurantId={restaurantId} successMessage={successMessage} />
+          <OperationalSettingsForm errorMessage={errorMessage} initialValues={initialValues} successMessage={successMessage} />
           <FlowEffectPanel />
         </div>
         <OperationalSettingsFooter currentStepNumber={currentStepNumber} totalSteps={ONBOARDING_TOTAL_STEPS} />

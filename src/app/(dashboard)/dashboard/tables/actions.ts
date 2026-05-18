@@ -7,7 +7,7 @@
  */
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { UpdateFloorPlanUseCase } from "@/modules/catalog/application/use-cases/update-floor-plan.use-case";
 import { GetZonesByRestaurant } from "@/modules/catalog/application/use-cases/get-zones-by-restaurant.use-case";
@@ -19,25 +19,6 @@ import { type RestaurantZonePrimitives } from "@/modules/catalog/domain/entities
 import { type FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 import { type DiningTablePrimitives } from "@/modules/catalog/domain/entities/dining-table.entity";
 
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
-
-//-aqui empieza funcion getRestaurantIdFromCookie y es para extraer el restaurantId de forma segura-//
-/**
- * Extrae el restaurantId de la cookie de sesión y lanza error si no existe.
- * @pure
- */
-async function getRestaurantIdFromCookie(): Promise<string> {
-  const cookieStore = await cookies();
-  const restaurantId =
-    cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    throw new Error("No hay un restaurante seleccionado.");
-  }
-
-  return restaurantId;
-}
-//-aqui termina funcion getRestaurantIdFromCookie-//
 
 //-aqui empieza funcion ensureDefaultZoneAction y es para garantizar que el restaurante tenga al menos la zona principal-//
 /**
@@ -46,7 +27,7 @@ async function getRestaurantIdFromCookie(): Promise<string> {
  * @sideEffect
  */
 export async function ensureDefaultZoneAction(): Promise<void> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const { zoneRepository, diningTableRepository } = getCatalogInfrastructure();
   const useCase = new EnsureDefaultZone(zoneRepository, diningTableRepository);
 
@@ -60,7 +41,7 @@ export async function ensureDefaultZoneAction(): Promise<void> {
  * @sideEffect
  */
 export async function getZonesAction(): Promise<RestaurantZonePrimitives[]> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const { zoneRepository } = getCatalogInfrastructure();
   const useCase = new GetZonesByRestaurant(zoneRepository);
 
@@ -77,7 +58,7 @@ export async function createZoneAction(
   name: string,
   color?: string,
 ): Promise<RestaurantZonePrimitives> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const { zoneRepository } = getCatalogInfrastructure();
   const useCase = new CreateZone(zoneRepository);
 
@@ -114,7 +95,7 @@ export async function saveFloorPlanAction(
   tables: FloorPlanTable[],
   elements: FloorPlanElementPrimitives[] = [],
 ) {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const catalogInfrastructure = getCatalogInfrastructure();
 
   // Cargamos zonas y mesas existentes en paralelo para el merge
@@ -190,7 +171,7 @@ export async function assignTableToReservationAction(
   reservationId: string,
   tableId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const prisma = (await import("@/services/prisma.service")).getPrismaClient();
 
   // Verificar que la reserva pertenece al restaurante
@@ -242,7 +223,7 @@ export async function unassignTableFromReservationAction(
   reservationId: string,
   tableId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const prisma = (await import("@/services/prisma.service")).getPrismaClient();
 
   const existing = await prisma.reservationTable.findUnique({
@@ -283,7 +264,7 @@ export interface TableOccupancy {
  * @sideEffect
  */
 export async function getTableOccupancyAction(): Promise<TableOccupancy[]> {
-  const restaurantId = await getRestaurantIdFromCookie();
+  const restaurantId = await getRestaurantIdFromSession();
   const prisma = (await import("@/services/prisma.service")).getPrismaClient();
 
   const now = new Date();

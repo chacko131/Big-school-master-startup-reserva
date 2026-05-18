@@ -5,8 +5,8 @@
  */
 
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 import { T } from "@/components/T";
 import type { OnboardingActionDefinition, OnboardingStepDefinition } from "@/types/onboarding";
 import { OnboardingIcon } from "./OnboardingIcon";
@@ -22,7 +22,6 @@ interface OnboardingShellProps {
 }
 
 const shellActionBaseClassName = "flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-semibold uppercase tracking-[0.18em] transition-all duration-150";
-const onboardingShellAvatarSrc = "https://lh3.googleusercontent.com/aida-public/AB6AXuDMqlPZVNQuPAmsHCYOlGvvdiyboRu-eEeCS_S-rPyzgtA1idn4u0ZDVUBMDRf7WJM5DjnZ0eET6lVQpUEqphh9vEnRGEzL2CvNx6tMXEHJ8FkMbU6jBjnXK73bhetNqMYtPpdy0jhnz3kxWWvS3mQxjSmykbtHAfyB9CLDJky7BreBnwYmbEyydTfF1r0PtaZSRQMBn47tqd7Gnxyz9Kamk5K5m2eSKC8dsrGRZa8smhH2NxZDb6vW3X_TZACxkE5GPqXLbSPyrEM";
 
 //-aqui empieza funcion renderShellAction y es para resolver acciones reutilizables del shell-//
 function renderShellAction(action: OnboardingActionDefinition, variant: "primary" | "secondary") {
@@ -166,19 +165,7 @@ export function OnboardingShell({
           </nav>
 
           <div className="mt-auto flex items-center gap-3 pt-6">
-            <Image
-              alt="Avatar del propietario del restaurante"
-              className="h-8 w-8 rounded-full object-cover"
-              height={32}
-              src={onboardingShellAvatarSrc}
-              width={32}
-            />
-            <div className="min-w-0">
-              <p className="truncate text-xs font-bold text-on-surface">Julian Rossi</p>
-              <p className="truncate text-[10px] text-on-surface-variant">
-                <T>Owner</T>
-              </p>
-            </div>
+            <UserButton />
           </div>
       </aside>
 
@@ -191,9 +178,7 @@ export function OnboardingShell({
             <Link aria-label="Ayuda" className="transition-colors hover:text-on-surface" href="/contact">
               <OnboardingIcon name="help" />
             </Link>
-            <Link aria-label="Acceso" className="transition-colors hover:text-on-surface" href="/sign-in">
-              <OnboardingIcon name="accountCircle" />
-            </Link>
+            <UserButton />
           </div>
         </header>
 

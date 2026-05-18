@@ -4,8 +4,7 @@
  * Tipo: UI
  */
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { FloorPlanEditor } from "@/components/dashboard/tables/FloorPlanEditor";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { GetZonesByRestaurant } from "@/modules/catalog/application/use-cases/get-zones-by-restaurant.use-case";
@@ -15,21 +14,13 @@ import type { RestaurantZonePrimitives } from "@/modules/catalog/domain/entities
 import type { FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 import { FloorPlanAuditLogPlaceholder } from "@/components/dashboard/tables/FloorPlanAuditLogPlaceholder";
 
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
-
 //-aqui empieza pagina TablesPage y es para mostrar el editor operativo de mesas con zonas-//
 /**
  * Presenta el editor del plano de mesas del restaurante.
  * Carga mesas y zonas en servidor y las pasa al editor cliente.
  */
 export default async function TablesPage() {
-  const cookieStore = await cookies();
-  const restaurantId =
-    cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
   // Garantizar que exista al menos una zona ("Salón principal") y migrar huérfanas
   await ensureDefaultZoneAction();

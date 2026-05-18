@@ -6,30 +6,38 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { T } from "@/components/T";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { getCurrentUser } from "@/modules/auth/get-current-user";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
-
 //-aqui empieza funcion getOnboardingCompletionRedirect y es para validar el acceso al dashboard-//
 /**
  * Determina si el onboarding mínimo está completo antes de renderizar el dashboard.
+ * Valida identidad desde Clerk + membership activa en lugar de cookie.
  * @sideEffect
  */
 async function getOnboardingCompletionRedirect(): Promise<void> {
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
+  const user = await getCurrentUser();
 
-  if (restaurantId.length === 0) {
+  if (user === null) {
+    redirect("/sign-in?redirect_url=/dashboard");
+  }
+
+  const { membershipRepository } = getUsersInfrastructure();
+  const memberships = await membershipRepository.findActiveByUserId(user.id);
+
+  if (memberships.length === 0) {
     redirect("/onboarding/restaurant");
   }
+
+  const restaurantId = memberships[0]!.toPrimitives().restaurantId;
 
   try {
     const catalogInfrastructure = getCatalogInfrastructure();
@@ -54,7 +62,6 @@ async function getOnboardingCompletionRedirect(): Promise<void> {
     unstable_rethrow(error);
     throw error;
   }
-
 }
 //-aqui termina funcion getOnboardingCompletionRedirect y se va autilizar en el layout-//
 

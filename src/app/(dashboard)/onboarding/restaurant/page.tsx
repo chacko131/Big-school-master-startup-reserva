@@ -18,6 +18,9 @@ import { RestaurantHeroImagePicker } from "@/components/onboarding/RestaurantHer
 import { CreateRestaurant } from "@/modules/catalog/application/use-cases/create-restaurant.use-case";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { requireCurrentUser } from "@/modules/auth/get-current-user";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { UserRestaurantMembership } from "@/modules/users/domain/entities/user-restaurant-membership.entity";
 
 const restaurantInputClassName = "w-full rounded-lg border-0 bg-surface-container-low px-4 py-4 text-base text-on-surface transition-all placeholder:text-outline focus:ring-1 focus:ring-primary";
 const restaurantContentLayoutClassName = "flex w-full max-w-5xl flex-col items-start gap-12 md:flex-row md:gap-16";
@@ -58,7 +61,6 @@ const restaurantOnboardingDraftSchema = z.object({
 });
 
 const restaurantOnboardingDraftCookieName = "onboarding_restaurant_draft";
-const restaurantOnboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
 const onboardingDraftCookieOptions = {
   httpOnly: true,
@@ -114,8 +116,13 @@ async function createRestaurantOnboardingAction(formData: FormData) {
     redirect("/onboarding/restaurant?error=invalidForm");
   }
 
-  const persistedRestaurantId = cookieStore.get(restaurantOnboardingRestaurantIdCookieName)?.value;
-  const restaurantId = persistedRestaurantId !== undefined && persistedRestaurantId.trim().length > 0 ? persistedRestaurantId : randomUUID();
+  const currentUser = await requireCurrentUser();
+
+  const { membershipRepository } = getUsersInfrastructure();
+  const existingMemberships = await membershipRepository.findActiveByUserId(currentUser.id);
+  const existingRestaurantId = existingMemberships[0]?.toPrimitives().restaurantId ?? null;
+  const restaurantId = existingRestaurantId ?? randomUUID();
+
 
   let heroImage = DEFAULT_HERO_IMAGE;
   const imageFile = formData.get("heroImage") as File | null;
@@ -123,26 +130,12 @@ async function createRestaurantOnboardingAction(formData: FormData) {
   
 
   if (imageFile && imageFile.size > 0) {
-    console.log("[Onboarding] Imagen recibida:", {
-      name: imageFile.name,
-      type: imageFile.type,
-      sizeKB: (imageFile.size / 1024).toFixed(2),
-    });
     try {
-      console.log("[Onboarding] Subiendo imagen a Cloudinary → carpeta: reserva-latina/restaurants");
       heroImage = await cloudinaryService.uploadImage(imageFile, "reserva-latina/restaurants");
-      console.log("[Onboarding] ✅ Imagen subida con éxito:", {
-        url: heroImage.url,
-        publicId: heroImage.publicId,
-      });
     } catch (error) {
-      console.error("[Onboarding] ❌ Error al subir imagen a Cloudinary, usando imagen por defecto:", error);
+      console.error("[Onboarding] Error al subir imagen a Cloudinary:", error);
     }
-  } else {
-    console.log("[Onboarding] No se seleccionó imagen — usando imagen por defecto:", DEFAULT_HERO_IMAGE.publicId);
   }
-
-  console.log("[Onboarding] Creando restaurante en BD:", { id: restaurantId, slug: parsedInput.data.slug });
 
   try {
     const catalogInfrastructure = getCatalogInfrastructure();
@@ -159,9 +152,16 @@ async function createRestaurantOnboardingAction(formData: FormData) {
       heroImage,
     });
 
-    console.log("[Onboarding] ✅ Restaurante guardado correctamente:", restaurantId);
-
-    cookieStore.set(restaurantOnboardingRestaurantIdCookieName, restaurantId, onboardingDraftCookieOptions);
+    if (existingRestaurantId === null) {
+      const membership = UserRestaurantMembership.create({
+        id: randomUUID(),
+        userId: currentUser.id,
+        restaurantId,
+        role: "RESTAURANT_OWNER",
+        status: "ACTIVE",
+      });
+      await membershipRepository.save(membership);
+    }
   } catch (error) {
     if (isDuplicateRestaurantSlugError(error)) {
       redirect("/onboarding/restaurant?error=duplicateSlug");
@@ -426,20 +426,11 @@ export default async function RestaurantOnboardingPage({ searchParams }: Restaur
         ? "Revisa los campos del formulario. Hay datos que no son válidos."
         : undefined;
 
-  const persistedRestaurantId = cookieStore.get(restaurantOnboardingRestaurantIdCookieName)?.value;
   const draftCookieValue = cookieStore.get(restaurantOnboardingDraftCookieName)?.value;
   const persistedDraft = parseRestaurantDraftCookie(draftCookieValue);
+  const initialValues = getRestaurantFormInitialValues(null, persistedDraft);
 
-  const catalogInfrastructure = getCatalogInfrastructure();
-  const persistedRestaurant =
-    persistedRestaurantId === undefined
-      ? null
-      : await catalogInfrastructure.restaurantRepository.findById(persistedRestaurantId);
-
-  const initialValues = getRestaurantFormInitialValues(persistedRestaurant === null ? null : persistedRestaurant.toPrimitives(), persistedDraft);
-
-  // URL de la imagen ya guardada en BD — null si el restaurante no existe aún o no tiene foto
-  const persistedHeroImageUrl = persistedRestaurant?.toPrimitives().heroImage?.url ?? null;
+  const persistedHeroImageUrl = null;
 
   const currentStepKey = "restaurant" as const;
   const currentStepNumber = getOnboardingStepNumber(currentStepKey);

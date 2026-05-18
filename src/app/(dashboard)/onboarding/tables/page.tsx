@@ -16,6 +16,8 @@ import { TablesOnboardingForm, type TablesOnboardingInitialRow, tablesOnboarding
 import { AddDiningTable } from "@/modules/catalog/application/use-cases/add-dining-table.use-case";
 import { RestaurantNotFoundError } from "@/modules/catalog/application/errors/restaurant-not-found.error";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { requireCurrentUser } from "@/modules/auth/get-current-user";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 
 interface TablesOnboardingPageProps {
   searchParams: Promise<{ restaurantId?: string | string[]; error?: string | string[] }>;
@@ -36,7 +38,6 @@ interface TablesOnboardingDraft {
 
 const tablesPageLayoutClassName = "flex w-full max-w-6xl flex-col gap-12";
 const tablesDraftCookieName = "onboarding_tables_draft";
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 
 const onboardingCookieOptions = {
   httpOnly: true,
@@ -79,8 +80,16 @@ const tablesDraftSchema = z.object({
 async function saveTablesOnboardingAction(formData: FormData) {
   "use server";
 
+  const currentUser = await requireCurrentUser();
+  const { membershipRepository } = getUsersInfrastructure();
+  const memberships = await membershipRepository.findActiveByUserId(currentUser.id);
+  if (memberships.length === 0) {
+    redirect("/onboarding/restaurant");
+  }
+  const restaurantId = memberships[0]!.toPrimitives().restaurantId;
+
   const cookieStore = await cookies();
-  const draftInput = buildTablesDraftFromFormData(formData);
+  const draftInput = buildTablesDraftFromFormData(formData, restaurantId);
 
   cookieStore.set(tablesDraftCookieName, serializeTablesDraft(draftInput), onboardingCookieOptions);
 
@@ -118,7 +127,6 @@ async function saveTablesOnboardingAction(formData: FormData) {
     }
 
     await catalogInfrastructure.diningTableRepository.deleteMissingByRestaurantId(parsedInput.data.restaurantId, idsToKeep);
-    cookieStore.set(onboardingRestaurantIdCookieName, parsedInput.data.restaurantId, onboardingCookieOptions);
   } catch (error) {
     if (error instanceof RestaurantNotFoundError) {
       redirect("/onboarding/restaurant");
@@ -140,8 +148,7 @@ async function saveTablesOnboardingAction(formData: FormData) {
  * Construye el borrador de mesas a partir del `FormData` recibido por el server action.
  * @pure
  */
-function buildTablesDraftFromFormData(formData: FormData): TablesOnboardingDraft {
-  const restaurantId = String(formData.get("restaurantId") ?? "").trim();
+function buildTablesDraftFromFormData(formData: FormData, restaurantId: string): TablesOnboardingDraft {
   const rowCount = Number(String(formData.get("rowCount") ?? "0"));
   const rows: TablesOnboardingDraftRow[] = [];
 
@@ -337,9 +344,7 @@ export default async function TablesOnboardingPage({ searchParams }: TablesOnboa
   const cookieStore = await cookies();
   const resolvedSearchParams = await searchParams;
   const restaurantIdValue = resolvedSearchParams.restaurantId;
-  const queryRestaurantId = Array.isArray(restaurantIdValue) ? restaurantIdValue[0] ?? "" : restaurantIdValue ?? "";
-  const cookieRestaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value ?? "";
-  const restaurantId = queryRestaurantId.length > 0 ? queryRestaurantId : cookieRestaurantId;
+  const restaurantId = Array.isArray(restaurantIdValue) ? restaurantIdValue[0] ?? "" : restaurantIdValue ?? "";
 
   if (restaurantId.length === 0) {
     redirect("/onboarding/restaurant");

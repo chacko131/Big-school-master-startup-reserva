@@ -6,29 +6,13 @@
 
 "use server";
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
 import { GetDailyTimeline } from "@/modules/reservations/application/use-cases/get-daily-timeline.use-case";
 import { GetWeeklySummary } from "@/modules/reservations/application/use-cases/get-weekly-summary.use-case";
 import { type GetDailyTimelineOutput } from "@/modules/reservations/application/dtos/get-daily-timeline.dto";
 import { type GetWeeklySummaryOutput } from "@/modules/reservations/application/dtos/get-weekly-summary.dto";
 
-const RESTAURANT_ID_COOKIE = "onboarding_restaurant_id";
-
-//-aqui empieza funcion getRestaurantId y es para obtener el restaurantId de la cookie de sesion-//
-/** @sideEffect */
-async function getRestaurantId(): Promise<string> {
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(RESTAURANT_ID_COOKIE)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
-
-  return restaurantId;
-}
-//-aqui termina funcion getRestaurantId-//
 
 //-aqui empieza funcion fetchDailyTimeline y es para obtener el timeline de mesas del dia desde el servidor-//
 /**
@@ -36,7 +20,7 @@ async function getRestaurantId(): Promise<string> {
  * @sideEffect
  */
 export async function fetchDailyTimeline(date?: Date): Promise<GetDailyTimelineOutput> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const {
     diningTableRepository,
@@ -64,7 +48,7 @@ export async function fetchDailyTimeline(date?: Date): Promise<GetDailyTimelineO
  * @sideEffect
  */
 export async function fetchWeeklySummary(referenceDate?: Date): Promise<GetWeeklySummaryOutput> {
-  const restaurantId = await getRestaurantId();
+  const restaurantId = await getRestaurantIdFromSession();
 
   const {
     diningTableRepository,

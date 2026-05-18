@@ -4,9 +4,9 @@
  * Tipo: UI
  */
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { z } from "zod";
 import { v2 as cloudinary } from "cloudinary";
 import { SettingsCatalogPanel } from "@/components/dashboard/settings/SettingsCatalogPanel";
@@ -76,7 +76,6 @@ interface RestaurantSettingsFormValues {
   enableAutoTableAssignment: boolean;
 }
 
-const onboardingRestaurantIdCookieName = "onboarding_restaurant_id";
 const settingsProfileFormSchema = z.object({
   name: z.string().trim().min(2),
   slug: z.string().trim().min(2).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -114,12 +113,7 @@ const settingsRulesFormSchema = z.object({
 async function saveRestaurantProfileAction(formData: FormData) {
   "use server";
 
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
   const draftInput = {
     name: String(formData.get("name") ?? "").trim(),
@@ -173,12 +167,7 @@ async function saveRestaurantProfileAction(formData: FormData) {
 async function saveCatalogProfileAction(formData: FormData) {
   "use server";
 
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
   // Normaliza cadenas vacías a null para no guardar strings vacíos en BD
   const normalize = (val: FormDataEntryValue | null): string | null => {
@@ -241,11 +230,7 @@ async function generateCloudinarySignatureAction(
   "use server";
 
   // Verificamos sesión antes de emitir la firma
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-  if (restaurantId.length === 0) {
-    throw new Error("[Signature] No hay sesión activa de restaurante");
-  }
+  await getRestaurantIdFromSession();
 
   // Configura el SDK (usa CLOUDINARY_URL del entorno automáticamente)
   cloudinary.config({ secure: true });
@@ -287,12 +272,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 
   const MAX_GALLERY_SERVER = 6;
 
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    throw new Error("[Photos] No hay sesión activa de restaurante");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
 
 
@@ -345,12 +325,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 async function saveRestaurantSettingsAction(formData: FormData) {
   "use server";
 
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
   const draftInput = {
     reservationApprovalMode: String(formData.get("reservationApprovalMode") ?? "AUTO") as "AUTO" | "MANUAL",
@@ -402,12 +377,7 @@ async function saveRestaurantSettingsAction(formData: FormData) {
 async function saveBusinessHoursAction(formData: FormData) {
   "use server";
 
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
+  const restaurantId = await getRestaurantIdFromSession();
 
   const validDays: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
@@ -454,13 +424,8 @@ function isDuplicateRestaurantSlugError(error: unknown): boolean {
  * Presenta la vista de configuración operativa del restaurante.
  */
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  const cookieStore = await cookies();
+  const restaurantId = await getRestaurantIdFromSession();
   const resolvedSearchParams = await searchParams;
-  const restaurantId = cookieStore.get(onboardingRestaurantIdCookieName)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    redirect("/onboarding/restaurant");
-  }
 
   const catalogInfrastructure = getCatalogInfrastructure();
   const persistedRestaurant = await catalogInfrastructure.restaurantRepository.findById(restaurantId);

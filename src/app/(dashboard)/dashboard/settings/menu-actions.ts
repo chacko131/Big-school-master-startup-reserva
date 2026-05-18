@@ -6,7 +6,7 @@
 
 "use server";
 
-import { cookies } from "next/headers";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { revalidatePath } from "next/cache";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { AddMenuCategory } from "@/modules/catalog/application/use-cases/add-menu-category.use-case";
@@ -19,23 +19,7 @@ import { type MenuCategoryPrimitives } from "@/modules/catalog/domain/entities/m
 import { type MenuItemPrimitives } from "@/modules/catalog/domain/entities/menu-item.entity";
 import { cloudinaryService } from "@/services/cloudinary.service";
 
-const COOKIE_NAME = "onboarding_restaurant_id";
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-//-aqui empieza funcion getRestaurantIdOrThrow y es para extraer restaurantId de la cookie o lanzar error-//
-/** @sideEffect — lee cookies */
-async function getRestaurantIdOrThrow(): Promise<string> {
-  const cookieStore = await cookies();
-  const restaurantId = cookieStore.get(COOKIE_NAME)?.value?.trim() ?? "";
-
-  if (restaurantId.length === 0) {
-    throw new Error("[MenuActions] No hay sesión activa de restaurante");
-  }
-
-  return restaurantId;
-}
-//-aqui termina funcion getRestaurantIdOrThrow-//
 
 //-aqui empieza funcion generateId y es para crear IDs únicos simples para entidades nuevas-//
 /** @pure */
@@ -63,7 +47,7 @@ export async function fetchMenuCategoriesAction(): Promise<
   MenuActionResult<Array<MenuCategoryPrimitives & { items: MenuItemPrimitives[] }>>
 > {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -96,7 +80,7 @@ export async function addMenuCategoryAction(
   description?: string,
 ): Promise<MenuActionResult<MenuCategoryPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -132,7 +116,7 @@ export async function updateMenuCategoryAction(
   fields: { name?: string; description?: string | null; sortOrder?: number; isActive?: boolean },
 ): Promise<MenuActionResult<MenuCategoryPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -164,7 +148,7 @@ export async function updateMenuCategoryAction(
  */
 export async function deleteMenuCategoryAction(categoryId: string): Promise<MenuActionResult> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -208,7 +192,7 @@ export async function addMenuItemAction(
   fields?: { description?: string; price?: number | null; imageUrl?: string; imagePublicId?: string; allergens?: string[] },
 ): Promise<MenuActionResult<MenuItemPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -258,7 +242,7 @@ export async function updateMenuItemAction(
   },
 ): Promise<MenuActionResult<MenuItemPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
@@ -300,7 +284,7 @@ export async function updateMenuItemAction(
  */
 export async function deleteMenuItemAction(itemId: string): Promise<MenuActionResult> {
   try {
-    const restaurantId = await getRestaurantIdOrThrow();
+    const restaurantId = await getRestaurantIdFromSession();
     const infra = getCatalogInfrastructure();
 
 
