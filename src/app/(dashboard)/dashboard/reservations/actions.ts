@@ -146,7 +146,6 @@ export async function createReservationAction(formData: FormData): Promise<Creat
       };
     }
 
-    console.error("[action:createReservation] ERROR inesperado:", error);
     return { success: false, error: "Error inesperado al crear la reserva." };
   }
 }
@@ -234,7 +233,6 @@ export async function updateReservationAction(
     if (err instanceof Error && err.name === "ReservationValidationError") {
       return { success: false, error: "No se puede modificar una reserva en ese estado." };
     }
-    console.error("[action:updateReservation] ERROR inesperado:", err);
     return { success: false, error: "Error inesperado al actualizar la reserva." };
   }
 }

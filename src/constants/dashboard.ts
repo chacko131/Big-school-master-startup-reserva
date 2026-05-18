@@ -192,7 +192,14 @@ export function getDashboardActiveNavigationDefinition(pathname: string): Dashbo
   const dashboardSegment = pathname.split("/")[2] ?? "";
   const activeNavigationDefinition = dashboardNavigationDefinitions.find((navigationDefinition) => navigationDefinition.key === dashboardSegment);
 
-  return activeNavigationDefinition ?? dashboardNavigationDefinitions[0];
+  const fallback: DashboardNavigationDefinition = {
+    key: "home",
+    label: "Inicio",
+    href: "/dashboard",
+    icon: "restaurant",
+  };
+
+  return activeNavigationDefinition ?? dashboardNavigationDefinitions[0] ?? fallback;
 }
 //-aqui termina funcion getDashboardActiveNavigationDefinition-//
 

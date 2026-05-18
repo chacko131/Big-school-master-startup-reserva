@@ -27,20 +27,9 @@ export class RevokeMembership {
    * @sideEffect
    */
   async execute({ requesterId, membershipId }: RevokeMembershipInput): Promise<void> {
-    console.log("[RevokeMembership] inicio", { requesterId, membershipId });
-
     const target = await this.membershipRepository.findById(membershipId);
-    console.log("[RevokeMembership] target cargado", {
-      found: target !== null,
-      targetId: target?.id ?? null,
-      targetUserId: target?.userId ?? null,
-      targetRestaurantId: target?.restaurantId ?? null,
-      targetRole: target?.role ?? null,
-      targetStatus: target?.status ?? null,
-    });
 
     if (target === null) {
-      console.warn("[RevokeMembership] abortado: membership no encontrada", { membershipId });
       throw new UserValidationError("membershipId", "El miembro no existe.");
     }
 
@@ -48,40 +37,21 @@ export class RevokeMembership {
       requesterId,
       target.restaurantId
     );
-    console.log("[RevokeMembership] requester cargado", {
-      requesterFound: requester !== null,
-      requesterId,
-      requesterRestaurantId: target.restaurantId,
-      requesterRole: requester?.role ?? null,
-      requesterStatus: requester?.status ?? null,
-    });
 
     if (requester === null || !requester.isOwner()) {
-      console.warn("[RevokeMembership] abortado: requester sin permisos", { requesterId, membershipId });
       throw new UserValidationError("requesterId", "Solo el propietario puede eliminar miembros.");
     }
 
     if (target.userId === requesterId) {
-      console.warn("[RevokeMembership] abortado: intento de autoeliminación", { requesterId, membershipId });
       throw new UserValidationError("membershipId", "No puedes eliminarte a ti mismo del equipo.");
     }
 
     if (target.role === "RESTAURANT_OWNER") {
-      console.warn("[RevokeMembership] abortado: no se puede eliminar al owner", { requesterId, membershipId });
       throw new UserValidationError("membershipId", "No se puede eliminar al propietario del restaurante.");
     }
 
     const revoked = target.revoke();
-    console.log("[RevokeMembership] guardando membership revocada", {
-      membershipId: revoked.id,
-      userId: revoked.userId,
-      restaurantId: revoked.restaurantId,
-      status: revoked.status,
-      updatedAt: revoked.updatedAt,
-    });
-
     await this.membershipRepository.save(revoked);
-    console.log("[RevokeMembership] persistencia completada", { membershipId: revoked.id });
   }
   //-aqui termina funcion execute-//
 
@@ -91,17 +61,7 @@ export class RevokeMembership {
    * @sideEffect
    */
   async reactivate({ requesterId, membershipId }: RevokeMembershipInput): Promise<void> {
-    console.log("[RevokeMembership.reactivate] inicio", { requesterId, membershipId });
-
     const target = await this.membershipRepository.findById(membershipId);
-    console.log("[RevokeMembership.reactivate] target cargado", {
-      found: target !== null,
-      targetId: target?.id ?? null,
-      targetUserId: target?.userId ?? null,
-      targetRestaurantId: target?.restaurantId ?? null,
-      targetRole: target?.role ?? null,
-      targetStatus: target?.status ?? null,
-    });
 
     if (target === null) {
       throw new UserValidationError("membershipId", "El miembro no existe.");
@@ -129,16 +89,7 @@ export class RevokeMembership {
     }
 
     const reactivated = target.activate();
-    console.log("[RevokeMembership.reactivate] guardando membership reactivada", {
-      membershipId: reactivated.id,
-      userId: reactivated.userId,
-      restaurantId: reactivated.restaurantId,
-      status: reactivated.status,
-      updatedAt: reactivated.updatedAt,
-    });
-
     await this.membershipRepository.save(reactivated);
-    console.log("[RevokeMembership.reactivate] persistencia completada", { membershipId: reactivated.id });
   }
   //-aqui termina funcion reactivate-//
 
@@ -148,17 +99,7 @@ export class RevokeMembership {
    * @sideEffect
    */
   async deletePermanently({ requesterId, membershipId }: RevokeMembershipInput): Promise<void> {
-    console.log("[RevokeMembership.deletePermanently] inicio", { requesterId, membershipId });
-
     const target = await this.membershipRepository.findById(membershipId);
-    console.log("[RevokeMembership.deletePermanently] target cargado", {
-      found: target !== null,
-      targetId: target?.id ?? null,
-      targetUserId: target?.userId ?? null,
-      targetRestaurantId: target?.restaurantId ?? null,
-      targetRole: target?.role ?? null,
-      targetStatus: target?.status ?? null,
-    });
 
     if (target === null) {
       throw new UserValidationError("membershipId", "El miembro no existe.");
@@ -186,7 +127,6 @@ export class RevokeMembership {
     }
 
     await this.membershipRepository.deleteById(target.id);
-    console.log("[RevokeMembership.deletePermanently] borrado completado", { membershipId: target.id });
   }
   //-aqui termina funcion deletePermanently-//
 }

@@ -1,8 +1,7 @@
 /**
  * Archivo: page.tsx
- * Responsabilidad: Componer la vista de equipo del dashboard con datos reales de memberships.
- *   Las métricas, invitaciones y actividad siguen siendo mock hasta que se implemente
- *   el dominio de invitaciones.
+ * Responsabilidad: Componer la vista de equipo del dashboard con datos reales de memberships,
+ *   permisos por rol y gestión de invitaciones.
  * Tipo: UI
  */
 
@@ -13,11 +12,13 @@ import { TeamToolbar } from "@/components/team/TeamToolbar";
 import { TeamMetricsGrid, type TeamMetric } from "@/components/team/TeamMetricsGrid";
 import { TeamMembersPanel } from "@/components/team/TeamMembersPanel";
 import { TeamInvitationPanel } from "@/components/team/TeamInvitationPanel";
-import { TeamActivityRail, type TeamActivity } from "@/components/team/TeamActivityRail";
+import { TeamPermissionsPanel, type PermissionRowView } from "@/components/team/TeamPermissionsPanel";
 import { TeamInviteModal } from "@/components/team/TeamInviteModal";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { requireCurrentUser } from "@/modules/auth/get-current-user";
 import { GetRestaurantTeam } from "@/modules/users/application/use-cases/GetRestaurantTeam/get-restaurant-team.use-case";
+import { GetRolePagePermissions } from "@/modules/users/application/use-cases/GetRolePagePermissions/get-role-page-permissions.use-case";
+import { UpsertRolePagePermission } from "@/modules/users/application/use-cases/UpsertRolePagePermission/upsert-role-page-permission.use-case";
 import { UpdateMemberRole } from "@/modules/users/application/use-cases/UpdateMemberRole/update-member-role.use-case";
 import { InviteTeamMember } from "@/modules/users/application/use-cases/InviteTeamMember/invite-team-member.use-case";
 import { RevokeMembership } from "@/modules/users/application/use-cases/RevokeMembership/revoke-membership.use-case";
@@ -26,6 +27,7 @@ import { type PendingTeamInvitationView } from "@/modules/users/application/use-
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { type MembershipRole } from "@/modules/users/domain/entities/user-restaurant-membership.entity";
+import { dashboardNavigationDefinitions, type DashboardSectionKey } from "@/constants/dashboard";
 
 const VALID_ROLES: ReadonlyArray<MembershipRole> = [
   "MANAGER",
@@ -58,6 +60,38 @@ async function updateMemberRoleAction(formData: FormData): Promise<void> {
 }
 //-aqui termina funcion updateMemberRoleAction-//
 
+//-aqui empieza funcion upsertPermissionAction y es para que el owner actualice permisos de pagina por rol-//
+/**
+ * Server action que delega en UpsertRolePagePermission.
+ * @sideEffect
+ */
+async function upsertPermissionAction(formData: FormData): Promise<void> {
+  "use server";
+
+  const restaurantId = String(formData.get("restaurantId") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim() as MembershipRole;
+  const pageKey = String(formData.get("pageKey") ?? "").trim() as DashboardSectionKey;
+  const canView = formData.get("canView") === "true";
+  const canEdit = formData.get("canEdit") === "true";
+
+  if (!restaurantId || !role || !pageKey) return;
+
+  const currentUser = await requireCurrentUser();
+  const { membershipRepository, rolePagePermissionRepository } = getUsersInfrastructure();
+
+  await new UpsertRolePagePermission(membershipRepository, rolePagePermissionRepository).execute({
+    requesterId: currentUser.id,
+    restaurantId,
+    role,
+    pageKey,
+    canView,
+    canEdit,
+  });
+
+  revalidatePath("/dashboard/team");
+}
+//-aqui termina funcion upsertPermissionAction-//
+
 //-aqui empieza funcion inviteMemberAction y es para invitar a un miembro al equipo por email-//
 /**
  * Server action que delega en InviteTeamMember.
@@ -80,11 +114,12 @@ async function inviteMemberAction(formData: FormData): Promise<{ error?: string 
     const { membershipRepository, invitationTokenRepository, userRepository } = getUsersInfrastructure();
     const { restaurantRepository } = getCatalogInfrastructure();
     const restaurant = await restaurantRepository.findById(restaurantId);
+    if (restaurant === null) return { error: "Restaurante no encontrado" };
 
     await new InviteTeamMember(membershipRepository, invitationTokenRepository, userRepository).execute({
       requesterId: currentUser.id,
       restaurantId,
-      restaurantName: restaurant?.name ?? "el restaurante",
+      restaurantName: restaurant.name,
       inviterName: currentUser.fullName ?? currentUser.email,
       email,
       role,
@@ -108,28 +143,12 @@ async function revokeMemberAction(formData: FormData): Promise<void> {
   "use server";
 
   const membershipId = String(formData.get("membershipId") ?? "").trim();
-  console.log("[team/revokeMemberAction] recibida solicitud", {
-    membershipId,
-    hasMembershipId: membershipId.length > 0,
-  });
-
   if (membershipId.length === 0) return;
 
   const currentUser = await requireCurrentUser();
-  console.log("[team/revokeMemberAction] usuario autenticado", {
-    currentUserId: currentUser.id,
-    currentUserEmail: currentUser.email,
-  });
-
   const { membershipRepository } = getUsersInfrastructure();
-  const useCase = new RevokeMembership(membershipRepository);
-
-  console.log("[team/revokeMemberAction] ejecutando use case", { membershipId });
-  await useCase.execute({ requesterId: currentUser.id, membershipId });
-  console.log("[team/revokeMemberAction] use case completado", { membershipId });
-
+  await new RevokeMembership(membershipRepository).execute({ requesterId: currentUser.id, membershipId });
   revalidatePath("/dashboard/team");
-  console.log("[team/revokeMemberAction] revalidatePath ejecutado", { path: "/dashboard/team" });
 }
 //-aqui termina funcion revokeMemberAction-//
 
@@ -142,28 +161,12 @@ async function reactivateMemberAction(formData: FormData): Promise<void> {
   "use server";
 
   const membershipId = String(formData.get("membershipId") ?? "").trim();
-  console.log("[team/reactivateMemberAction] recibida solicitud", {
-    membershipId,
-    hasMembershipId: membershipId.length > 0,
-  });
-
   if (membershipId.length === 0) return;
 
   const currentUser = await requireCurrentUser();
-  console.log("[team/reactivateMemberAction] usuario autenticado", {
-    currentUserId: currentUser.id,
-    currentUserEmail: currentUser.email,
-  });
-
   const { membershipRepository } = getUsersInfrastructure();
-  const useCase = new RevokeMembership(membershipRepository);
-
-  console.log("[team/reactivateMemberAction] ejecutando use case", { membershipId });
-  await useCase.reactivate({ requesterId: currentUser.id, membershipId });
-  console.log("[team/reactivateMemberAction] use case completado", { membershipId });
-
+  await new RevokeMembership(membershipRepository).reactivate({ requesterId: currentUser.id, membershipId });
   revalidatePath("/dashboard/team");
-  console.log("[team/reactivateMemberAction] revalidatePath ejecutado", { path: "/dashboard/team" });
 }
 //-aqui termina funcion reactivateMemberAction-//
 
@@ -176,36 +179,14 @@ async function deleteMemberPermanentlyAction(formData: FormData): Promise<void> 
   "use server";
 
   const membershipId = String(formData.get("membershipId") ?? "").trim();
-  console.log("[team/deleteMemberPermanentlyAction] recibida solicitud", {
-    membershipId,
-    hasMembershipId: membershipId.length > 0,
-  });
-
   if (membershipId.length === 0) return;
 
   const currentUser = await requireCurrentUser();
-  console.log("[team/deleteMemberPermanentlyAction] usuario autenticado", {
-    currentUserId: currentUser.id,
-    currentUserEmail: currentUser.email,
-  });
-
   const { membershipRepository } = getUsersInfrastructure();
-  const useCase = new RevokeMembership(membershipRepository);
-
-  console.log("[team/deleteMemberPermanentlyAction] ejecutando use case", { membershipId });
-  await useCase.deletePermanently({ requesterId: currentUser.id, membershipId });
-  console.log("[team/deleteMemberPermanentlyAction] use case completado", { membershipId });
-
+  await new RevokeMembership(membershipRepository).deletePermanently({ requesterId: currentUser.id, membershipId });
   revalidatePath("/dashboard/team");
-  console.log("[team/deleteMemberPermanentlyAction] revalidatePath ejecutado", { path: "/dashboard/team" });
 }
 //-aqui termina funcion deleteMemberPermanentlyAction-//
-
-const mockActivities: ReadonlyArray<TeamActivity> = [
-  { time: "08:30", title: "Rol actualizado",    description: "La cuenta de sala quedó limitada a reservas y seguimiento de invitados." },
-  { time: "11:20", title: "Invitación enviada", description: "Se remitió un acceso nuevo para un apoyo de fin de semana."             },
-  { time: "14:15", title: "Permiso revisado",   description: "Se confirmó que facturación seguirá reservada para el propietario."     },
-] as const;
 
 //-aqui empieza pagina TeamPage y es para mostrar los accesos del equipo-//
 /**
@@ -217,7 +198,7 @@ export default async function TeamPage() {
     getRestaurantIdFromSession(),
   ]);
 
-  const { membershipRepository, userRepository, invitationTokenRepository } = getUsersInfrastructure();
+  const { membershipRepository, userRepository, invitationTokenRepository, rolePagePermissionRepository } = getUsersInfrastructure();
 
   const [members, currentMembership] = await Promise.all([
     new GetRestaurantTeam(membershipRepository, userRepository).execute({ restaurantId }),
@@ -225,8 +206,20 @@ export default async function TeamPage() {
   ]);
 
   const isOwner = currentMembership?.isOwner() ?? false;
+  const PERMISSION_PAGE_KEYS: ReadonlyArray<DashboardSectionKey> = [
+    "reservations", "tables", "schedule", "guests",
+    "billing", "analytics", "integrations", "notifications",
+  ];
+
   const pendingInvitations: ReadonlyArray<PendingTeamInvitationView> = isOwner
     ? await new GetPendingTeamInvitations(invitationTokenRepository).execute({ restaurantId })
+    : [];
+
+  const permissionRows: ReadonlyArray<PermissionRowView> = isOwner
+    ? await new GetRolePagePermissions(rolePagePermissionRepository).execute({
+        restaurantId,
+        pageKeys: PERMISSION_PAGE_KEYS,
+      })
     : [];
 
   const activeCount  = members.filter((m) => m.status === "ACTIVE").length;
@@ -259,9 +252,18 @@ export default async function TeamPage() {
           {isOwner ? <TeamInvitationPanel invitations={pendingInvitations} /> : null}
         </div>
 
-        <div className="xl:col-span-4">
-          <TeamActivityRail activities={mockActivities} />
-        </div>
+        {isOwner ? (
+          <div className="xl:col-span-4">
+            <TeamPermissionsPanel
+              restaurantId={restaurantId}
+              rows={permissionRows as PermissionRowView[]}
+              pageKeys={dashboardNavigationDefinitions
+                .filter((n) => PERMISSION_PAGE_KEYS.includes(n.key as DashboardSectionKey))
+                .map((n) => ({ key: n.key as DashboardSectionKey, label: n.label }))}
+              upsertAction={upsertPermissionAction}
+            />
+          </div>
+        ) : null}
       </section>
     </>
   );

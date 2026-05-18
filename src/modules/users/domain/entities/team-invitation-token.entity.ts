@@ -49,6 +49,7 @@ export class TeamInvitationToken {
 
     return new TeamInvitationToken({
       ...props,
+      email: props.email.trim().toLowerCase(),
       usedAt: null,
       createdAt: new Date(),
     });

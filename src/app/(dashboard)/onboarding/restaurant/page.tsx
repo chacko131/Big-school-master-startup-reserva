@@ -132,8 +132,7 @@ async function createRestaurantOnboardingAction(formData: FormData) {
   if (imageFile && imageFile.size > 0) {
     try {
       heroImage = await cloudinaryService.uploadImage(imageFile, "reserva-latina/restaurants");
-    } catch (error) {
-      console.error("[Onboarding] Error al subir imagen a Cloudinary:", error);
+    } catch {
     }
   }
 

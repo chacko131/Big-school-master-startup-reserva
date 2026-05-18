@@ -78,8 +78,7 @@ export const cloudinaryService = {
       const result = await cloudinary.uploader.destroy(publicId);
       // result.result suele ser "ok" si se eliminó correctamente o "not found"
       return result.result === "ok";
-    } catch (error) {
-      console.error("Error al eliminar la imagen en Cloudinary:", error);
+    } catch {
       return false;
     }
   },

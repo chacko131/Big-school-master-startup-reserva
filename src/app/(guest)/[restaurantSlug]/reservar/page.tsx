@@ -82,8 +82,7 @@ export default async function ReservationFlowPage({ params, searchParams }: Rese
     const slotsResult = await fetchAvailableSlots(restaurantSlug, effectiveDateStr, defaultPartySize);
     availableSlots = slotsResult.slots;
     closedDays = slotsResult.closedDays;
-  } catch (err) {
-    console.error("[ReservationFlowPage] fetchAvailableSlots falló:", err);
+  } catch {
   }
 
   return (

@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
@@ -50,16 +50,6 @@ export function RestaurantHeroImagePicker({
   const resolvedInitialSrc = initialImageUrl ?? DEFAULT_HERO_SRC;
   const hasPersistedImage = Boolean(initialImageUrl);
 
-  // Log solo en el primer render (mount) para confirmar hidratación desde BD.
-  useEffect(() => {
-    if (hasPersistedImage && initialImageUrl) {
-      console.log("[HeroImagePicker] Imagen persistida cargada desde BD:", initialImageUrl);
-    } else {
-      console.log("[HeroImagePicker] Sin imagen persistida — mostrando por defecto.");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   //-aqui empieza funcion handleFileChange y es para leer el archivo seleccionado y generar preview-//
   /**
    * Lee el archivo seleccionado con FileReader para mostrar un preview inmediato.
@@ -70,15 +60,8 @@ export function RestaurantHeroImagePicker({
       const file = event.target.files?.[0];
 
       if (!file) {
-        console.log("[HeroImagePicker] No se seleccionó ningún archivo.");
         return;
       }
-
-      console.log("[HeroImagePicker] Archivo seleccionado:", {
-        name: file.name,
-        type: file.type,
-        sizeKB: (file.size / 1024).toFixed(2),
-      });
 
       if (!file.type.startsWith("image/")) {
         console.warn(
@@ -95,10 +78,6 @@ export function RestaurantHeroImagePicker({
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setPreviewSrc(result);
-        console.log(
-          "[HeroImagePicker] Preview generado correctamente para:",
-          file.name
-        );
       };
 
       reader.onerror = () => {

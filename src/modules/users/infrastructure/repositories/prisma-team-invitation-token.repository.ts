@@ -45,11 +45,6 @@ export class PrismaTeamInvitationTokenRepository implements TeamInvitationTokenR
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("[PrismaTeamInvitationTokenRepository.findPendingByRestaurantId] tokens encontrados", {
-      restaurantId,
-      count: records.length,
-    });
-
     return records.map(mapRecordToEntity);
   }
   //-aqui termina funcion findPendingByRestaurantId-//
@@ -88,9 +83,10 @@ export class PrismaTeamInvitationTokenRepository implements TeamInvitationTokenR
    * @sideEffect
    */
   async invalidatePendingForEmailAndRestaurant(email: string, restaurantId: string): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
     await this.prismaClient.teamInvitationToken.updateMany({
       where: {
-        email,
+        email: normalizedEmail,
         restaurantId,
         usedAt: null,
       },

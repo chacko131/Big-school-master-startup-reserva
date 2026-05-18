@@ -617,8 +617,7 @@ export function FloorPlanEditor({
 
         setZones((prev) => [...prev, newZone]);
         setActiveZoneId(newZone.id);
-      } catch (error) {
-        console.error("Error al crear la zona:", error);
+      } catch {
       }
     });
   };
@@ -646,8 +645,7 @@ export function FloorPlanEditor({
 
         // Activar otra zona o null si no quedan
         setActiveZoneId(remaining.length > 0 ? remaining[0].id : null);
-      } catch (error) {
-        console.error("Error al eliminar la zona:", error);
+      } catch {
       }
     });
   };
@@ -792,8 +790,7 @@ export function FloorPlanEditor({
                   description: `"${selectedTable.name}" ha sido eliminada del plano.`,
                   key: Date.now(),
                 });
-              } catch (error) {
-                console.error("Error al eliminar la mesa:", error);
+              } catch {
                 setNotification({
                   tone: "error",
                   title: "Error al eliminar",

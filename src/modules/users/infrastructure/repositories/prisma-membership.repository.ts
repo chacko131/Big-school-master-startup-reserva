@@ -87,16 +87,6 @@ export class PrismaMembershipRepository implements MembershipRepository {
   async save(membership: UserRestaurantMembership): Promise<void> {
     const p = membership.toPrimitives();
 
-    console.log("[PrismaMembershipRepository.save] persistiendo membership", {
-      id: p.id,
-      userId: p.userId,
-      restaurantId: p.restaurantId,
-      role: p.role,
-      status: p.status,
-      invitedById: p.invitedById,
-      updatedAt: p.updatedAt,
-    });
-
     await this.prismaClient.userRestaurantMembership.upsert({
       where: { id: p.id },
       create: {
@@ -117,11 +107,6 @@ export class PrismaMembershipRepository implements MembershipRepository {
       },
     });
 
-    console.log("[PrismaMembershipRepository.save] upsert completado", {
-      id: p.id,
-      status: p.status,
-      restaurantId: p.restaurantId,
-    });
   }
   //-aqui termina funcion save-//
 
@@ -131,13 +116,10 @@ export class PrismaMembershipRepository implements MembershipRepository {
    * @sideEffect
    */
   async deleteById(id: string): Promise<void> {
-    console.log("[PrismaMembershipRepository.deleteById] borrando membership", { id });
-
     await this.prismaClient.userRestaurantMembership.delete({
       where: { id },
     });
 
-    console.log("[PrismaMembershipRepository.deleteById] borrado completado", { id });
   }
   //-aqui termina funcion deleteById-//
 }

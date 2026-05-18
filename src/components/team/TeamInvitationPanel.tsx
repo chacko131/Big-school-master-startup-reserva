@@ -5,7 +5,6 @@
  */
 
 import { T } from "@/components/T";
-import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
 import { type PendingTeamInvitationView } from "@/modules/users/application/use-cases/GetPendingTeamInvitations/get-pending-team-invitations.use-case";
 
 interface TeamInvitationPanelProps {
@@ -44,11 +43,11 @@ export function TeamInvitationPanel({ invitations }: TeamInvitationPanelProps) {
                 </p>
                 <p className="mt-1 text-[11px] text-on-surface-variant/80">
                   <T>Expira el</T>{" "}
-                  {invitation.expiresAt.toLocaleDateString("es-ES", {
+                  {new Intl.DateTimeFormat("es", {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
-                  })}
+                  }).format(invitation.expiresAt)}
                 </p>
               </div>
               <span className="inline-flex rounded-full bg-tertiary-fixed px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-on-tertiary-fixed">
@@ -62,14 +61,6 @@ export function TeamInvitationPanel({ invitations }: TeamInvitationPanelProps) {
           </div>
         )}
       </div>
-
-      <button
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-on-primary transition-opacity hover:opacity-90"
-        type="button"
-      >
-        <OnboardingIcon name="arrowForward" className="h-4 w-4" />
-        <T>Enviar invitación</T>
-      </button>
     </section>
   );
 }

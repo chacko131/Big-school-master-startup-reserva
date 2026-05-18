@@ -10,7 +10,7 @@ import { useRef, useState, useTransition } from "react";
 import { T } from "@/components/T";
 
 const ASSIGNABLE_ROLES = [
-  { value: "MANAGER",       label: "Manager"  },
+  { value: "MANAGER",       label: "Gerente"  },
   { value: "STAFF_WAITER",  label: "Camarero" },
   { value: "STAFF_KITCHEN", label: "Cocina"   },
   { value: "STAFF_BAR",     label: "Barra"    },

@@ -7,6 +7,7 @@
 import { T } from "@/components/T";
 
 export interface TeamActivity {
+  id: string;
   time: string;
   title: string;
   description: string;
@@ -39,7 +40,7 @@ export function TeamActivityRail({ activities }: TeamActivityRailProps) {
 
       <div className="mt-6 space-y-4 rounded-[24px] bg-white/10 p-5 backdrop-blur-sm">
         {activities.map((activity) => (
-          <div className="flex gap-4" key={`${activity.time}-${activity.title}`}>
+          <div className="flex gap-4" key={activity.id}>
             <div className="w-16 shrink-0 rounded-full bg-white/10 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">
               {activity.time}
             </div>

@@ -36,26 +36,12 @@ export function TeamMemberRevokeButton({
    * @sideEffect
    */
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    console.log("[TeamMemberRevokeButton] submit iniciado", {
-      membershipId,
-      memberName,
-      memberStatus,
-    });
-
     const confirmed = confirm(`¿Eliminar a ${memberName} del equipo? Esta acción revocará su acceso al restaurante.`);
-
-    console.log("[TeamMemberRevokeButton] confirmación del usuario", {
-      confirmed,
-      membershipId,
-    });
 
     if (!confirmed) {
       event.preventDefault();
       return;
     }
-    console.log("[TeamMemberRevokeButton] el formulario continuará hacia el Server Action", {
-      membershipId,
-    });
   }
   //-aqui termina funcion handleSubmit-//
 

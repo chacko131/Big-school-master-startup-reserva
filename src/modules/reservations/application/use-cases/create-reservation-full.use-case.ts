@@ -173,7 +173,6 @@ export class CreateReservationFull {
     try {
       await this.reservationTableRepository.save(reservationTableEntity);
     } catch (tableAssignError) {
-      console.error("[CreateReservationFull] ROLLBACK → fallo al asignar mesa, eliminando reserva huérfana", persisted.id, tableAssignError);
       await this.reservationRepository.delete(persisted.id);
       throw tableAssignError;
     }

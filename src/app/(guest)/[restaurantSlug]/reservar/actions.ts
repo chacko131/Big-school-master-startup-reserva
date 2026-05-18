@@ -69,8 +69,7 @@ export async function fetchAvailableSlots(
       date: parsedDate,
       partySize,
     });
-  } catch (err) {
-    console.error("[fetchAvailableSlots] useCase.execute falló:", err);
+  } catch {
     return { slots: [], closedDays, error: "No se pudieron obtener los horarios disponibles." };
   }
 
@@ -185,7 +184,6 @@ export async function createGuestReservationAction(
     if (error instanceof DuplicateReservationError) {
       return { success: false, error: "Ya tienes una reserva activa en esa franja horaria." };
     }
-    console.error("[createGuestReservationAction] ERROR:", error);
     return { success: false, error: "Error inesperado al crear la reserva." };
   }
 }

@@ -189,7 +189,6 @@ async function saveCatalogProfileAction(formData: FormData) {
   const parsedInput = settingsCatalogFormSchema.safeParse(draftInput);
 
   if (!parsedInput.success) {
-    console.error("[Settings] Catálogo inválido:", parsedInput.error.flatten());
     redirect("/dashboard/settings?catalogError=invalidCatalog");
   }
 
@@ -287,8 +286,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 
   // Eliminamos de Cloudinary las imágenes marcadas para borrar
   for (const pid of payload.removedGalleryIds) {
-    const ok = await cloudinaryService.deleteImage(pid);
-    console.log(`[Photos] Cloudinary delete ${pid}:`, ok ? "✅" : "⚠️ no encontrado");
+    await cloudinaryService.deleteImage(pid);
   }
 
   // Galería final = existentes conservadas + nuevas subidas por el cliente

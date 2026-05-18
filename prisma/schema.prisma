@@ -101,6 +101,7 @@ model Restaurant {
   menuCategories MenuCategory[]
   memberships        UserRestaurantMembership[]
   invitationTokens   TeamInvitationToken[]
+  rolePagePermissions RolePagePermission[]
 
   @@index([isActive])
   @@index([slug])
@@ -373,6 +374,23 @@ model UserRestaurantMembership {
   @@unique([userId, restaurantId]) /// Un user solo puede tener un rol por restaurante.
   @@index([userId, status])
   @@index([restaurantId, role, status])
+}
+
+/// Permiso de una sección del dashboard para un rol concreto dentro de un restaurante.
+/// Permite al propietario controlar qué roles pueden ver o editar cada página del sidebar.
+model RolePagePermission {
+  id           String         @id @default(cuid())
+  restaurantId String
+  role         MembershipRole
+  pageKey      String         /// Clave de la sección del dashboard (e.g. "reservations", "tables").
+  canView      Boolean        @default(false)
+  canEdit      Boolean        @default(false)
+  updatedAt    DateTime       @updatedAt
+
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, role, pageKey])
+  @@index([restaurantId, role])
 }
 
 /// Token de un solo uso para invitar a un miembro al equipo por email.

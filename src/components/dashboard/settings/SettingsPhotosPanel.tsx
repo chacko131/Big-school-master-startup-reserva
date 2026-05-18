@@ -69,7 +69,6 @@ function HeroPicker({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     if (!file) return;
-    console.log("[Photos] Hero seleccionado:", { name: file.name, sizeKB: (file.size / 1024).toFixed(2) });
     setPreviewUrl(URL.createObjectURL(file));
     onFileChange(file);
   }
@@ -137,7 +136,6 @@ function GalleryManager({
     const files = Array.from(e.target.files ?? []);
     const available = MAX_GALLERY_IMAGES - totalCount;
     const toAdd = files.slice(0, available);
-    console.log("[Photos] Fotos de galería seleccionadas:", toAdd.map((f) => f.name));
     const nextFiles = [...newFilesLocal, ...toAdd];
     setNewFilesLocal(nextFiles);
     setNewPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
@@ -261,7 +259,6 @@ export function SettingsPhotosPanel({
     const hasRemovals = removedIdsRef.current.length > 0;
 
     if (!hasHeroChange && !hasNewGallery && !hasRemovals) {
-      console.log("[Photos] Sin cambios que guardar");
       return;
     }
 
@@ -275,39 +272,31 @@ export function SettingsPhotosPanel({
         // ── 1. Subir hero si cambió ──────────────────────────────────────────
         if (hasHeroChange && heroFileRef.current) {
           setUploadStatus("Subiendo foto de portada...");
-          console.log("[Photos] Solicitando firma para hero...");
           const heroSig = await generateSignatureAction(HERO_FOLDER);
-          console.log("[Photos] Firma obtenida. Subiendo a Cloudinary...");
           const heroResult = await uploadFileToCloudinary(heroFileRef.current, heroSig);
-          console.log("[Photos] ✅ Hero subida:", heroResult.url);
           payload.heroImage = heroResult;
         }
 
         // ── 2. Subir fotos nuevas de galería ─────────────────────────────────
         if (hasNewGallery) {
           const totalGallery = newGalleryFilesRef.current.length;
-          console.log("[Photos] Solicitando firma para galería...");
           const gallerySig = await generateSignatureAction(GALLERY_FOLDER);
 
           for (let i = 0; i < newGalleryFilesRef.current.length; i++) {
             const file = newGalleryFilesRef.current[i];
             setUploadStatus(`Subiendo foto ${i + 1} de ${totalGallery}...`);
-            console.log(`[Photos] Subiendo galería ${i + 1}/${totalGallery}:`, file.name);
             const result = await uploadFileToCloudinary(file, gallerySig);
-            console.log(`[Photos] ✅ Galería ${i + 1} subida:`, result.url);
             payload.newGalleryImages.push(result);
           }
         }
 
         // ── 3. Persistir solo URLs en BD ─────────────────────────────────────
         setUploadStatus("Guardando en base de datos...");
-        console.log("[Photos] Persistiendo URLs en BD:", payload);
         await savePhotoUrlsAction(payload);
 
         // ── 4. Navegar — el server action NO hace redirect (para evitar que
         //    el catch lo interprete como error). Navegamos desde el cliente
         //    con recarga completa para limpiar todo el estado. ────────────────
-        console.log("[Photos] ✅ Todo guardado. Navegando...");
         window.location.href = "/dashboard/settings?photosSaved=photos";
 
       } catch (err) {

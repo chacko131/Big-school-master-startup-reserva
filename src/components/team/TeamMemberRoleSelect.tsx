@@ -7,6 +7,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { T } from "@/components/T";
 
 export type MembershipRoleOption = {
   value: string;
@@ -63,7 +64,7 @@ export function TeamMemberRoleSelect({
         ))}
       </select>
       {isPending && (
-        <span className="ml-2 text-[10px] text-on-surface-variant">Guardando…</span>
+        <span className="ml-2 text-[10px] text-on-surface-variant"><T>Guardando…</T></span>
       )}
     </form>
   );

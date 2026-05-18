@@ -11,7 +11,7 @@ import { TeamMemberRoleSelect, type MembershipRoleOption } from "@/components/te
 import { TeamMemberRevokeButton } from "@/components/team/TeamMemberRevokeButton";
 
 const ASSIGNABLE_ROLES: ReadonlyArray<MembershipRoleOption> = [
-  { value: "MANAGER",       label: "Manager"   },
+  { value: "MANAGER",       label: "Gerente"   },
   { value: "STAFF_WAITER",  label: "Camarero"  },
   { value: "STAFF_KITCHEN", label: "Cocina"    },
   { value: "STAFF_BAR",     label: "Barra"     },
@@ -35,12 +35,15 @@ interface TeamMembersPanelProps {
  * @pure
  */
 function getMemberInitials(fullName: string | null, email: string): string {
-  const source = fullName ?? email;
-  return source
+  const trimmed = (fullName ?? "").trim();
+  const source = trimmed.length > 0 ? trimmed : email;
+  const initials = source
     .split(" ")
+    .filter((word) => word.length > 0)
     .slice(0, 2)
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
+  return initials.length > 0 ? initials : "?";
 }
 //-aqui termina funcion getMemberInitials-//
 
@@ -53,7 +56,7 @@ function getMemberInitials(fullName: string | null, email: string): string {
 function getRoleLabel(role: TeamMemberView["role"]): string {
   const labels: Record<TeamMemberView["role"], string> = {
     RESTAURANT_OWNER: "Propietario",
-    MANAGER: "Manager",
+    MANAGER: "Gerente",
     STAFF_WAITER: "Camarero",
     STAFF_KITCHEN: "Cocina",
     STAFF_BAR: "Barra",

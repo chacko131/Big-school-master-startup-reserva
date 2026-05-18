@@ -23,8 +23,7 @@ export async function toggleRestaurantStatusAction(restaurantId: string) {
     await useCase.execute(restaurantId);
 
     revalidatePath("/admin/restaurants");
-  } catch (error) {
-    console.error("Error toggling restaurant status:", error);
+  } catch {
     throw new Error("No se pudo cambiar el estado del restaurante.");
   }
 }

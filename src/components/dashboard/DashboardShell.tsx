@@ -18,10 +18,13 @@ import {
   dashboardNavigationDefinitions,
   getDashboardActiveNavigationDefinition,
   getDashboardSectionLabel,
+  type DashboardSectionKey,
 } from "@/constants/dashboard";
 
+/** Secciones que el usuario actual puede ver. null = propietario (acceso total). */
 interface DashboardShellProps {
   children: ReactNode;
+  allowedKeys: ReadonlySet<DashboardSectionKey> | null;
 }
 
 interface DashboardSidebarLinkProps {
@@ -35,6 +38,7 @@ interface DashboardSidebarLinkProps {
 interface DashboardSidebarProps {
   activePathname: string;
   sectionLabel: string;
+  allowedKeys: ReadonlySet<DashboardSectionKey> | null;
 }
 
 interface DashboardSidebarContentProps extends DashboardSidebarProps {
@@ -82,10 +86,10 @@ const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-co
  *
  * @pure
  */
-function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProps) {
+function DashboardSidebar({ activePathname, sectionLabel, allowedKeys }: DashboardSidebarProps) {
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block">
-      <DashboardSidebarContent activePathname={activePathname} className="w-72 border-r border-outline-variant/20" sectionLabel={sectionLabel} />
+      <DashboardSidebarContent activePathname={activePathname} allowedKeys={allowedKeys} className="w-72 border-r border-outline-variant/20" sectionLabel={sectionLabel} />
     </aside>
   );
 }
@@ -97,10 +101,16 @@ function DashboardSidebar({ activePathname, sectionLabel }: DashboardSidebarProp
  *
  * @pure
  */
-function DashboardSidebarContent({ activePathname, sectionLabel, className = "", onNavigate }: DashboardSidebarContentProps) {
+function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, className = "", onNavigate }: DashboardSidebarContentProps) {
   const activeNavigationKey = getDashboardActiveNavigationDefinition(activePathname).key;
   const { user } = useUser();
   const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "";
+
+  //-aqui empieza filteredNav y es para mostrar solo las secciones que el rol puede ver-//
+  const filteredNav = dashboardNavigationDefinitions.filter((nav) =>
+    allowedKeys === null || allowedKeys.has(nav.key)
+  );
+  //-aqui termina filteredNav-//
 
   return (
     <div className={`${sidebarBaseClassName} ${className}`}>
@@ -126,7 +136,7 @@ function DashboardSidebarContent({ activePathname, sectionLabel, className = "",
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
-        {dashboardNavigationDefinitions.map((navigationDefinition) => {
+        {filteredNav.map((navigationDefinition) => {
           const isActive = activeNavigationKey === navigationDefinition.key;
 
           return (
@@ -161,7 +171,7 @@ function DashboardSidebarContent({ activePathname, sectionLabel, className = "",
  *
  * @pure
  */
-function DashboardMobileSidebar({ activePathname, sectionLabel, isOpen, onClose }: DashboardMobileSidebarProps) {
+function DashboardMobileSidebar({ activePathname, sectionLabel, allowedKeys, isOpen, onClose }: DashboardMobileSidebarProps) {
   if (!isOpen) {
     return null;
   }
@@ -174,7 +184,7 @@ function DashboardMobileSidebar({ activePathname, sectionLabel, isOpen, onClose 
           <OnboardingIcon name="close" className="h-4 w-4" />
         </button>
 
-        <DashboardSidebarContent activePathname={activePathname} className="w-full border-none pt-10" onNavigate={onClose} sectionLabel={sectionLabel} />
+        <DashboardSidebarContent activePathname={activePathname} allowedKeys={allowedKeys} className="w-full border-none pt-10" onNavigate={onClose} sectionLabel={sectionLabel} />
       </aside>
     </div>
   );
@@ -240,7 +250,7 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
 /**
  * Renderiza la estructura compartida del dashboard con navegación activa.
  */
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, allowedKeys }: DashboardShellProps) {
   const pathname = usePathname();
   const activeNavigationDefinition = getDashboardActiveNavigationDefinition(pathname);
   const sectionLabel = getDashboardSectionLabel(pathname);
@@ -270,8 +280,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface">
-      <DashboardSidebar activePathname={pathname} sectionLabel={sectionLabel} />
-      <DashboardMobileSidebar activePathname={pathname} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
+      <DashboardSidebar activePathname={pathname} allowedKeys={allowedKeys} sectionLabel={sectionLabel} />
+      <DashboardMobileSidebar activePathname={pathname} allowedKeys={allowedKeys} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
       <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
         <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
         <main className="flex-1 bg-surface-container-low px-6 py-8 md:px-8 lg:px-10">

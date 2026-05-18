@@ -6,12 +6,14 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { notFound, redirect, unstable_rethrow } from "next/navigation";
+import { headers } from "next/headers";
 import { T } from "@/components/T";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { getCurrentUser } from "@/modules/auth/get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { type DashboardSectionKey, getDashboardActiveNavigationDefinition } from "@/constants/dashboard";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -100,6 +102,52 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     );
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  //-aqui empieza calculo de allowedKeys y es para filtrar el sidebar segun permisos del usuario-//
+  /**
+   * Calcula las secciones visibles para el usuario actual.
+   * - Propietario (RESTAURANT_OWNER): null → acceso total sin filtrado.
+   * - Resto de roles: Set con las pageKeys donde canView=true + "home" siempre incluida.
+   * @sideEffect
+   */
+  const allowedKeys = await (async (): Promise<ReadonlySet<DashboardSectionKey> | null> => {
+    const user = await getCurrentUser();
+    if (user === null) return null;
+
+    const { membershipRepository, rolePagePermissionRepository } = getUsersInfrastructure();
+    const memberships = await membershipRepository.findActiveByUserId(user.id);
+    if (memberships.length === 0) return null;
+
+    const membership = memberships[0]!.toPrimitives();
+
+    if (membership.role === "RESTAURANT_OWNER") return null;
+
+    const permissions = await rolePagePermissionRepository.findByRestaurant(membership.restaurantId);
+    const visible = new Set<DashboardSectionKey>(["home"]);
+    for (const p of permissions) {
+      if (p.role === membership.role && p.canView) {
+        visible.add(p.pageKey as DashboardSectionKey);
+      }
+    }
+    return visible;
+  })();
+  //-aqui termina calculo de allowedKeys-//
+
+  //-aqui empieza guard de ruta y es para bloquear acceso directo por URL a secciones sin permiso-//
+  /**
+   * Si el usuario tiene un set restringido de claves, verifica que la sección
+   * que está intentando visitar esté incluida. De lo contrario, devuelve 404.
+   * @sideEffect
+   */
+  if (allowedKeys !== null) {
+    const requestHeaders = await headers();
+    const pathname = requestHeaders.get("x-pathname") ?? requestHeaders.get("x-invoke-path") ?? "";
+    const activeKey = getDashboardActiveNavigationDefinition(pathname).key;
+    if (!allowedKeys.has(activeKey)) {
+      notFound();
+    }
+  }
+  //-aqui termina guard de ruta-//
+
+  return <DashboardShell allowedKeys={allowedKeys}>{children}</DashboardShell>;
 }
 //-aqui termina pagina DashboardLayout-//

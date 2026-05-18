@@ -48,7 +48,8 @@ export class AcceptTeamInvitation {
     if (!invitationToken.isValid()) {
       throw new UserValidationError("token", "Esta invitación ha expirado o ya fue utilizada. Pide al propietario que te envíe una nueva.");
     }
-    if (invitationToken.email !== acceptingUserEmail.toLowerCase().trim()) {
+    const normalizedAcceptingEmail = acceptingUserEmail.trim().toLowerCase();
+    if (invitationToken.email !== normalizedAcceptingEmail) {
       throw new UserValidationError("token", "Este enlace de invitación no corresponde a tu cuenta. Asegúrate de haber iniciado sesión con el email correcto.");
     }
 
