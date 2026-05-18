@@ -8,12 +8,15 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { getPrismaClient } from "@/services/prisma.service";
 import { type UserRepository } from "../domain/ports/user.repository.port";
 import { type MembershipRepository } from "../domain/ports/membership.repository.port";
+import { type TeamInvitationTokenRepository } from "../domain/ports/team-invitation-token.repository.port";
 import { PrismaUserRepository } from "./repositories/prisma-user.repository";
 import { PrismaMembershipRepository } from "./repositories/prisma-membership.repository";
+import { PrismaTeamInvitationTokenRepository } from "./repositories/prisma-team-invitation-token.repository";
 
 export interface UsersInfrastructure {
   userRepository: UserRepository;
   membershipRepository: MembershipRepository;
+  invitationTokenRepository: TeamInvitationTokenRepository;
 }
 
 //-aqui empieza funcion createUsersInfrastructure y es para ensamblar la infraestructura del modulo users-//
@@ -26,6 +29,7 @@ export function createUsersInfrastructure(prismaClient: PrismaClient): UsersInfr
   return {
     userRepository: new PrismaUserRepository(prismaClient),
     membershipRepository: new PrismaMembershipRepository(prismaClient),
+    invitationTokenRepository: new PrismaTeamInvitationTokenRepository(prismaClient),
   };
 }
 //-aqui termina funcion createUsersInfrastructure-//

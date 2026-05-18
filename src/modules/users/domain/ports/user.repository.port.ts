@@ -34,6 +34,13 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
+   * Busca varios usuarios por sus IDs internos en una sola consulta.
+   * Los IDs no encontrados se omiten silenciosamente.
+   * @sideEffect
+   */
+  findManyByIds(ids: string[]): Promise<User[]>;
+
+  /**
    * Persiste un User (insert si es nuevo, update si ya existe).
    * @sideEffect
    */

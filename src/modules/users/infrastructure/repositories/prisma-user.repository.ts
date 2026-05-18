@@ -50,6 +50,21 @@ export class PrismaUserRepository implements UserRepository {
   }
   //-aqui termina funcion findByEmail-//
 
+  //-aqui empieza funcion findManyByIds y es para recuperar varios usuarios en una sola query-//
+  /**
+   * Devuelve todos los usuarios cuyos IDs están en el array.
+   * Una sola query Prisma — evita N llamadas a findById.
+   * @sideEffect
+   */
+  async findManyByIds(ids: string[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    const records = await this.prismaClient.user.findMany({
+      where: { id: { in: ids } },
+    });
+    return records.map(mapRecordToEntity);
+  }
+  //-aqui termina funcion findManyByIds-//
+
   //-aqui empieza funcion save y es para persistir un user con upsert-//
   /**
    * Guarda un User en la base de datos mediante upsert.
@@ -60,7 +75,7 @@ export class PrismaUserRepository implements UserRepository {
     const p = user.toPrimitives();
 
     await this.prismaClient.user.upsert({
-      where: { id: p.id },
+      where: { clerkId: p.clerkId },
       create: {
         id: p.id,
         clerkId: p.clerkId,

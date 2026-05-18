@@ -148,6 +148,21 @@ export class UserRestaurantMembership {
   }
   //-aqui termina funcion activate-//
 
+  //-aqui empieza funcion withRole y es para devolver una nueva membership con el rol cambiado-//
+  /**
+   * Devuelve una nueva membership con el rol actualizado.
+   * Solo el owner puede invocar este método; la validación ocurre en el use-case.
+   * @pure
+   */
+  withRole(newRole: MembershipRole): UserRestaurantMembership {
+    return new UserRestaurantMembership({
+      ...this.props,
+      role: newRole,
+      updatedAt: new Date(),
+    });
+  }
+  //-aqui termina funcion withRole-//
+
   //-aqui empieza funcion revoke y es para revocar el acceso de un usuario a un restaurante-//
   /**
    * Devuelve una nueva membership con estado REVOKED.

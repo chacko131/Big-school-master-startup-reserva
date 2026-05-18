@@ -13,6 +13,13 @@ import { UserRestaurantMembership } from "../entities/user-restaurant-membership
  */
 export interface MembershipRepository {
   /**
+   * Busca una membership por su ID interno.
+   * Devuelve null si no existe.
+   * @sideEffect
+   */
+  findById(id: string): Promise<UserRestaurantMembership | null>;
+
+  /**
    * Busca la membership activa de un usuario en un restaurante concreto.
    * Devuelve null si no existe o si está revocada/pendiente.
    * @sideEffect
@@ -41,5 +48,11 @@ export interface MembershipRepository {
    * @sideEffect
    */
   save(membership: UserRestaurantMembership): Promise<void>;
+
+  /**
+   * Elimina permanentemente una membership por su ID.
+   * @sideEffect
+   */
+  deleteById(id: string): Promise<void>;
 }
 //-aqui termina interfaz MembershipRepository-//

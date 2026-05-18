@@ -12,8 +12,8 @@
 export class UserValidationError extends Error {
   readonly field: string;
 
-  constructor(field: string) {
-    super(`User validation failed: "${field}" is required and cannot be empty.`);
+  constructor(field: string, message?: string) {
+    super(message ?? `"${field}" es un campo obligatorio y no puede estar vacío.`);
     this.name = "UserValidationError";
     this.field = field;
   }

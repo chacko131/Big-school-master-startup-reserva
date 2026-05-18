@@ -19,6 +19,18 @@ import { type MembershipRepository } from "../../domain/ports/membership.reposit
 export class PrismaMembershipRepository implements MembershipRepository {
   constructor(private readonly prismaClient: PrismaClient) {}
 
+  //-aqui empieza funcion findById y es para buscar una membership por su id interno-//
+  /**
+   * Busca una membership por su ID interno.
+   * @sideEffect
+   */
+  async findById(id: string): Promise<UserRestaurantMembership | null> {
+    const record = await this.prismaClient.userRestaurantMembership.findUnique({ where: { id } });
+    if (record === null) return null;
+    return mapRecordToEntity(record);
+  }
+  //-aqui termina funcion findById-//
+
   //-aqui empieza funcion findActiveByUserAndRestaurant y es para buscar la membership activa de un user en un restaurante-//
   /**
    * Busca la membership activa de un usuario en un restaurante concreto.
@@ -75,6 +87,16 @@ export class PrismaMembershipRepository implements MembershipRepository {
   async save(membership: UserRestaurantMembership): Promise<void> {
     const p = membership.toPrimitives();
 
+    console.log("[PrismaMembershipRepository.save] persistiendo membership", {
+      id: p.id,
+      userId: p.userId,
+      restaurantId: p.restaurantId,
+      role: p.role,
+      status: p.status,
+      invitedById: p.invitedById,
+      updatedAt: p.updatedAt,
+    });
+
     await this.prismaClient.userRestaurantMembership.upsert({
       where: { id: p.id },
       create: {
@@ -94,8 +116,30 @@ export class PrismaMembershipRepository implements MembershipRepository {
         updatedAt: p.updatedAt,
       },
     });
+
+    console.log("[PrismaMembershipRepository.save] upsert completado", {
+      id: p.id,
+      status: p.status,
+      restaurantId: p.restaurantId,
+    });
   }
   //-aqui termina funcion save-//
+
+  //-aqui empieza funcion deleteById y es para borrar permanentemente una membership-//
+  /**
+   * Elimina permanentemente una membership por su ID.
+   * @sideEffect
+   */
+  async deleteById(id: string): Promise<void> {
+    console.log("[PrismaMembershipRepository.deleteById] borrando membership", { id });
+
+    await this.prismaClient.userRestaurantMembership.delete({
+      where: { id },
+    });
+
+    console.log("[PrismaMembershipRepository.deleteById] borrado completado", { id });
+  }
+  //-aqui termina funcion deleteById-//
 }
 
 //-aqui empieza funcion mapRecordToEntity y es para convertir un registro Prisma en entidad Membership-//

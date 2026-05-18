@@ -7,6 +7,12 @@
 import Link from "next/link";
 import { T } from "@/components/T";
 
+interface DashboardHomePageProps {
+  searchParams: Promise<{
+    inviteAccepted?: string | string[];
+  }>;
+}
+
 interface DashboardMetricDefinition {
   label: string;
   value: string;
@@ -338,6 +344,35 @@ function DashboardAlertStack() {
 }
 //-aqui termina componente DashboardAlertStack-//
 
+//-aqui empieza componente DashboardSuccessBanner y es para confirmar acciones exitosas-//
+/**
+ * Muestra un aviso de éxito cuando una invitación acaba de aceptarse.
+ * @pure
+ */
+function DashboardSuccessBanner() {
+  return (
+    <section className="rounded-[28px] border border-secondary-container bg-secondary-container px-6 py-5 text-on-secondary-container shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-on-secondary-container/70">
+            <T>Acceso activado</T>
+          </p>
+          <h3 className="mt-2 text-lg font-black tracking-tight">
+            <T>La invitación se aceptó correctamente.</T>
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-on-secondary-container/80">
+            <T>Ya formas parte del equipo y puedes seguir trabajando desde el dashboard.</T>
+          </p>
+        </div>
+        <Link className="inline-flex items-center justify-center rounded-lg bg-on-secondary-container px-5 py-2.5 text-sm font-bold text-secondary-container transition-colors hover:opacity-90" href="/dashboard/team">
+          <T>Ir al equipo</T>
+        </Link>
+      </div>
+    </section>
+  );
+}
+//-aqui termina componente DashboardSuccessBanner-//
+
 //-aqui empieza componente DashboardPromoCard y es para resaltar el especial de cocina-//
 /**
  * Renderiza la tarjeta promocional de cocina del día.
@@ -369,9 +404,16 @@ function DashboardPromoCard() {
 /**
  * Presenta el reporte diario del restaurante dentro del dashboard.
  */
-export default function DashboardHomePage() {
+export default async function DashboardHomePage({ searchParams }: DashboardHomePageProps) {
+  const resolvedSearchParams = await searchParams;
+  const inviteAcceptedValue = resolvedSearchParams.inviteAccepted;
+  const inviteAcceptedKey = Array.isArray(inviteAcceptedValue) ? inviteAcceptedValue[0] ?? "" : inviteAcceptedValue ?? "";
+  const showInviteSuccess = inviteAcceptedKey === "1";
+
   return (
     <>
+      {showInviteSuccess ? <DashboardSuccessBanner /> : null}
+
       <section className="flex flex-col gap-6 rounded-[28px] bg-surface-container-lowest p-8 shadow-sm md:flex-row md:items-end md:justify-between md:p-10">
         <div className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-on-surface-variant">

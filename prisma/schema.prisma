@@ -99,7 +99,8 @@ model Restaurant {
   reservations  Reservation[]
   businessHours BusinessHours[]
   menuCategories MenuCategory[]
-  memberships   UserRestaurantMembership[]
+  memberships        UserRestaurantMembership[]
+  invitationTokens   TeamInvitationToken[]
 
   @@index([isActive])
   @@index([slug])
@@ -346,6 +347,7 @@ model User {
 
   memberships           UserRestaurantMembership[] @relation("UserMemberships")
   sentInvitations       UserRestaurantMembership[] @relation("InvitedByUser")
+  sentInvitationTokens  TeamInvitationToken[]      @relation("SentInvitationTokens")
 
   @@index([email])
   @@index([clerkId])
@@ -371,4 +373,27 @@ model UserRestaurantMembership {
   @@unique([userId, restaurantId]) /// Un user solo puede tener un rol por restaurante.
   @@index([userId, status])
   @@index([restaurantId, role, status])
+}
+
+/// Token de un solo uso para invitar a un miembro al equipo por email.
+/// El owner genera el token → se envía por email → el invitado hace click → se activa la membership.
+/// TODO: cuando se implemente multi-restaurante, un usuario podrá aceptar invitaciones
+///       de distintos restaurantes sin que la primera borre a las demás.
+model TeamInvitationToken {
+  id           String           @id @default(cuid())
+  token        String           @unique /// UUID v4 seguro generado en el servidor.
+  email        String           /// Email al que se envió la invitación.
+  restaurantId String
+  role         MembershipRole
+  invitedById  String           /// FK al owner que generó la invitación.
+  expiresAt    DateTime         /// Normalmente now() + 48 horas.
+  usedAt       DateTime?        /// null = pendiente, non-null = ya aceptado.
+  createdAt    DateTime         @default(now())
+
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  invitedBy    User             @relation("SentInvitationTokens", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email, restaurantId])
+  @@index([restaurantId])
 }
