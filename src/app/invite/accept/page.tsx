@@ -9,6 +9,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireCurrentUser } from "@/modules/auth/get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { getNotificationsInfrastructure } from "@/modules/notifications/infrastructure/notifications-infrastructure";
 import { AcceptTeamInvitation } from "@/modules/users/application/use-cases/AcceptTeamInvitation/accept-team-invitation.use-case";
 import { UserValidationError } from "@/modules/users/domain/errors/user-validation.error";
 
@@ -35,8 +37,17 @@ export default async function AcceptInvitePage({ searchParams }: AcceptInvitePag
     redirect(`/sign-in?redirect_url=/invite/accept?token=${token}`);
   }
 
-  const { membershipRepository, invitationTokenRepository } = getUsersInfrastructure();
-  const useCase = new AcceptTeamInvitation(membershipRepository, invitationTokenRepository);
+  const { membershipRepository, invitationTokenRepository, userRepository } = getUsersInfrastructure();
+  const { restaurantRepository } = getCatalogInfrastructure();
+  const { notificationProvider } = getNotificationsInfrastructure();
+
+  const useCase = new AcceptTeamInvitation({
+    membershipRepository,
+    invitationTokenRepository,
+    userRepository,
+    restaurantRepository,
+    notificationProvider,
+  });
 
   try {
     await useCase.execute({

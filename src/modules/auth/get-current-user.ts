@@ -7,6 +7,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { getNotificationsInfrastructure } from "@/modules/notifications/infrastructure/notifications-infrastructure";
 import { SyncUserFromClerk } from "@/modules/users/application/use-cases/SyncUserFromClerk/sync-user-from-clerk.use-case";
 import { type User } from "@/modules/users/domain/entities/user.entity";
 
@@ -29,11 +30,13 @@ export async function getCurrentUser(): Promise<User | null> {
   const { userRepository } = getUsersInfrastructure();
 
   const existingUser = await userRepository.findByClerkId(clerkId);
-  if (existingUser !== null) {
+
+  // Usuario ya en DB y ya sincronizado con Novu → ruta rápida sin llamadas externas
+  if (existingUser !== null && existingUser.novuSyncedAt !== null) {
     return existingUser;
   }
 
-  // Lazy sync: primera vez que este usuario autenticado toca la app
+  // Usuario nuevo o existente sin sync en Novu → necesitamos datos de Clerk
   const clerkUser = await currentUser();
   if (!clerkUser) {
     return null;
@@ -52,7 +55,8 @@ export async function getCurrentUser(): Promise<User | null> {
     .join(" ")
     .trim() || null;
 
-  const useCase = new SyncUserFromClerk(userRepository);
+  const { notificationProvider } = getNotificationsInfrastructure();
+  const useCase = new SyncUserFromClerk(userRepository, notificationProvider);
   const { userId } = await useCase.execute({
     clerkId,
     email: primaryEmail.emailAddress,

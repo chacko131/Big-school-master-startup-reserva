@@ -16,3 +16,11 @@ Valida el token de invitación y activa la membership del usuario en el restaura
 
 ## Salida
 - `{ restaurantId: string }` — para redirigir al dashboard correcto
+
+## Changelog
+
+### 2026-05-21 17:30
+- Refactorizado constructor a patrón `AcceptTeamInvitationDeps` para admitir dependencias opcionales sin romper el contrato.
+- Añadidas dependencias opcionales: `UserRepository`, `RestaurantRepository`, `NotificationProvider`.
+- Al activar la membership, si `membershipWasJustActivated === true` y `invitedById` existe, dispara `NotifyMemberAccepted` al owner.
+- Método privado `notifyOwner()` resuelve los datos en paralelo (`Promise.all`) y construye el payload de notificación.

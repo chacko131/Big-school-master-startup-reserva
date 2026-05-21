@@ -17,6 +17,7 @@ export interface UserPrimitives {
   email: string;
   fullName: string | null;
   globalRole: GlobalRole;
+  novuSyncedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ export interface CreateUserProps {
   email: string;
   fullName?: string | null;
   globalRole?: GlobalRole;
+  novuSyncedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -68,6 +70,7 @@ export class User {
       email: props.email.trim().toLowerCase(),
       fullName: normalizeOptionalText(props.fullName),
       globalRole,
+      novuSyncedAt: props.novuSyncedAt ?? null,
       createdAt: props.createdAt ?? now,
       updatedAt: props.updatedAt ?? now,
     });
@@ -112,6 +115,24 @@ export class User {
     return this.props.updatedAt;
   }
 
+  get novuSyncedAt(): Date | null {
+    return this.props.novuSyncedAt;
+  }
+
+  //-aqui empieza funcion markNovuSynced y es para marcar al usuario como registrado en Novu-//
+  /**
+   * Devuelve una nueva entidad User con novuSyncedAt establecido a la fecha actual.
+   * @pure
+   */
+  markNovuSynced(): User {
+    return new User({
+      ...this.props,
+      novuSyncedAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+  //-aqui termina funcion markNovuSynced-//
+
   //-aqui empieza funcion isSuperAdmin y es para verificar si el usuario tiene privilegios globales-//
   /**
    * Indica si el usuario tiene rol de superadmin de la plataforma.
@@ -144,7 +165,16 @@ export class User {
    * @pure
    */
   toPrimitives(): UserPrimitives {
-    return { ...this.props };
+    return {
+      id: this.props.id,
+      clerkId: this.props.clerkId,
+      email: this.props.email,
+      fullName: this.props.fullName,
+      globalRole: this.props.globalRole,
+      novuSyncedAt: this.props.novuSyncedAt,
+      createdAt: this.props.createdAt,
+      updatedAt: this.props.updatedAt,
+    };
   }
   //-aqui termina funcion toPrimitives y se va autilizar en infrastructure y testing-//
 }

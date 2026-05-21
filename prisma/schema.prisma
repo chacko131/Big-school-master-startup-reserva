@@ -338,13 +338,14 @@ enum MembershipStatus {
 /// La identidad real la gestiona Clerk; aquí guardamos la representación de negocio.
 /// clerkId es el "sub" que devuelve Clerk en cada sesión.
 model User {
-  id          String       @id @default(cuid())
-  clerkId     String       @unique /// Identificador único de Clerk (sub del JWT).
-  email       String       @unique
-  fullName    String?
-  globalRole  GlobalRole   @default(USER)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  clerkId        String       @unique /// Identificador único de Clerk (sub del JWT).
+  email          String       @unique
+  fullName       String?
+  globalRole     GlobalRole   @default(USER)
+  novuSyncedAt   DateTime?    /// Fecha en que se registró el subscriber en Novu. null = pendiente.
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   memberships           UserRestaurantMembership[] @relation("UserMemberships")
   sentInvitations       UserRestaurantMembership[] @relation("InvitedByUser")

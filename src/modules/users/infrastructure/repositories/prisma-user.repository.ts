@@ -82,6 +82,7 @@ export class PrismaUserRepository implements UserRepository {
         email: p.email,
         fullName: p.fullName,
         globalRole: p.globalRole,
+        novuSyncedAt: p.novuSyncedAt,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       },
@@ -89,6 +90,7 @@ export class PrismaUserRepository implements UserRepository {
         email: p.email,
         fullName: p.fullName,
         globalRole: p.globalRole,
+        novuSyncedAt: p.novuSyncedAt,
         updatedAt: p.updatedAt,
       },
     });
@@ -108,6 +110,7 @@ function mapRecordToEntity(record: PrismaUserRecord): User {
     email: record.email,
     fullName: record.fullName,
     globalRole: record.globalRole as GlobalRole,
+    novuSyncedAt: record.novuSyncedAt,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   };

@@ -15,3 +15,10 @@ Desde el webhook de Clerk (`/api/webhooks/clerk`) ante los eventos `user.created
 ## Nota sobre el SUPER_ADMIN
 
 La asignación del rol `SUPER_ADMIN` al email `jesusnodarse7@gmail.com` ocurre automáticamente dentro de `User.create()` en el dominio. Este caso de uso no necesita saberlo.
+
+## Changelog
+
+### 2026-05-21 17:30
+- Añadido `NotificationProvider` opcional como segunda dependencia del constructor.
+- Tras crear o actualizar el usuario, si `novuSyncedAt === null`, llama a `notificationProvider.identifySubscriber()` y persiste `user.markNovuSynced()` para que no vuelva a llamar a Novu en futuros logins.
+- La verificación es idempotente: una sola llamada a Novu por usuario en toda su vida en la plataforma.
