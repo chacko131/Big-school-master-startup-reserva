@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import NotificationInbox from "./NotificationInbox";
 import type { OnboardingIconName } from "@/types/onboarding";
 import {
   dashboardNavigationDefinitions,
@@ -238,6 +239,7 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
           <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Ayuda">
             <OnboardingIcon name="help" className="h-5 w-5" />
           </button>
+          <NotificationInbox />
           <UserButton />
         </div>
       </div>

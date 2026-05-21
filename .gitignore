@@ -44,3 +44,7 @@ next-env.d.ts
 
 #styles
 /stitch_reserva_latina_saas_design_framework
+
+#agentes
+.agents
+
