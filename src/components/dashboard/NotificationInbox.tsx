@@ -1,7 +1,14 @@
+/**
+ * Archivo: src/components/dashboard/NotificationInbox.tsx
+ * Responsabilidad: Renderizar la bandeja de entrada de notificaciones de Novu y sincronizar el sonido de alerta al recibir nuevas notificaciones.
+ * Tipo: UI
+ */
+
 'use client';
 
-import { Inbox } from '@novu/nextjs';
+import { Inbox, NovuProvider } from '@novu/nextjs';
 import { useUser } from '@clerk/nextjs';
+import { useNotificationSound } from '../../hooks/useNotificationSound';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_NOVU_BACKEND_URL;
 const SOCKET_URL = process.env.NEXT_PUBLIC_NOVU_SOCKET_URL;
@@ -31,7 +38,25 @@ const INBOX_APPEARANCE = {
   },
 } as const;
 
+//-aqui empieza componente NotificationSoundTrigger y es para disparar la alerta de sonido-//
+/**
+ * Componente funcional auxiliar para ejecutar el hook useNotificationSound bajo el contexto de NovuProvider.
+ * 
+ * @sideEffect - Registra callbacks de websocket y reproduce audio.
+ */
+function NotificationSoundTrigger() {
+  useNotificationSound();
+  return null;
+}
+//-aqui termina componente NotificationSoundTrigger-//
+
 //-aqui empieza componente NotificationInbox y es para mostrar el inbox de Novu en el dashboard-//
+/**
+ * Componente principal que envuelve el Inbox de Novu en un NovuProvider
+ * e incluye el disparador de sonido para notificaciones en vivo.
+ * 
+ * @pure - No, depende de variables globales, del contexto del usuario de Clerk y de NovuProvider.
+ */
 export default function NotificationInbox() {
   const { user, isLoaded } = useUser();
   const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
@@ -49,13 +74,17 @@ export default function NotificationInbox() {
   }
 
   return (
-    <Inbox
+    <NovuProvider
       applicationIdentifier={applicationIdentifier}
       subscriberId={user.id}
       backendUrl={BACKEND_URL}
       socketUrl={SOCKET_URL}
-      appearance={INBOX_APPEARANCE}
-    />
+    >
+      <Inbox
+        appearance={INBOX_APPEARANCE}
+      />
+      <NotificationSoundTrigger />
+    </NovuProvider>
   );
 }
 //-aqui termina componente NotificationInbox-//

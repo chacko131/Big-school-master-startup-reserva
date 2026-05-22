@@ -68,9 +68,6 @@ export class AcceptTeamInvitation {
     if (invitationToken === null) {
       throw new UserValidationError("token", "Esta invitación no existe o el enlace no es válido.");
     }
-    if (!invitationToken.isValid()) {
-      throw new UserValidationError("token", "Esta invitación ha expirado o ya fue utilizada. Pide al propietario que te envíe una nueva.");
-    }
     const normalizedAcceptingEmail = acceptingUserEmail.trim().toLowerCase();
     if (invitationToken.email !== normalizedAcceptingEmail) {
       throw new UserValidationError("token", "Este enlace de invitación no corresponde a tu cuenta. Asegúrate de haber iniciado sesión con el email correcto.");
@@ -83,6 +80,14 @@ export class AcceptTeamInvitation {
       acceptingUserId,
       restaurantId
     );
+
+    if (existing !== null) {
+      return { restaurantId };
+    }
+
+    if (!invitationToken.isValid()) {
+      throw new UserValidationError("token", "Esta invitación ha expirado o ya fue utilizada. Pide al propietario que te envíe una nueva.");
+    }
 
     let membershipWasJustActivated = false;
 

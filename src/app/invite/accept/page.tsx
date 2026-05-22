@@ -22,6 +22,7 @@ interface AcceptInvitePageProps {
 /**
  * Página server que acepta el token, activa la membership y redirige al dashboard.
  * Si el usuario no está autenticado, Clerk lo redirige a /sign-in con redirect_url de vuelta aquí.
+ * @sideEffect
  */
 export default async function AcceptInvitePage({ searchParams }: AcceptInvitePageProps) {
   const { token } = await searchParams;
@@ -49,13 +50,14 @@ export default async function AcceptInvitePage({ searchParams }: AcceptInvitePag
     notificationProvider,
   });
 
+  let success = false;
   try {
     await useCase.execute({
       token,
       acceptingUserId: currentUser.id,
       acceptingUserEmail: currentUser.email,
     });
-    redirect("/dashboard?inviteAccepted=1");
+    success = true;
   } catch (error) {
     const message =
       error instanceof UserValidationError
@@ -79,6 +81,10 @@ export default async function AcceptInvitePage({ searchParams }: AcceptInvitePag
         </div>
       </main>
     );
+  }
+
+  if (success) {
+    redirect("/dashboard?inviteAccepted=1");
   }
 }
 //-aqui termina pagina AcceptInvitePage-//
