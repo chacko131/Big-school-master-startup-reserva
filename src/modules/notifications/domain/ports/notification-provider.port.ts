@@ -17,9 +17,20 @@ export interface IdentifySubscriberPayload {
   fullName: string | null;
 }
 
+export interface NewReservationPayload {
+  staffSubscriberIds: string[];
+  guestName: string;
+  partySize: number;
+  date: string;
+  time: string;
+  restaurantName: string;
+  specialRequests: string;
+}
+
 //-aqui empieza interface NotificationProvider y es para abstraer el proveedor de notificaciones-//
 export interface NotificationProvider {
   identifySubscriber(payload: IdentifySubscriberPayload): Promise<void>;
   notifyMemberAccepted(payload: MemberAcceptedPayload): Promise<void>;
+  notifyNewReservation(payload: NewReservationPayload): Promise<void>;
 }
 //-aqui termina interface NotificationProvider-//

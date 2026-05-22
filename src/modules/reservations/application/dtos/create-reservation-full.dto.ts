@@ -12,6 +12,7 @@ export interface CreateReservationFullInput {
   partySize: number;
   startAt: Date;
   specialRequests?: string | null;
+  origin?: "PUBLIC" | "DASHBOARD";
 }
 
 export interface CreateReservationFullOutput {

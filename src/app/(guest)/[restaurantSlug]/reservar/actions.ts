@@ -9,6 +9,8 @@
 
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { getNotificationsInfrastructure } from "@/modules/notifications/infrastructure/notifications-infrastructure";
 import { GetAvailableSlots } from "@/modules/reservations/application/use-cases/get-available-slots.use-case";
 import { CreateReservationFull } from "@/modules/reservations/application/use-cases/create-reservation-full.use-case";
 import { DuplicateReservationError } from "@/modules/reservations/application/errors/duplicate-reservation.error";
@@ -31,7 +33,7 @@ export async function fetchAvailableSlots(
   date: string,
   partySize: number
 ): Promise<FetchAvailableSlotsResult> {
-  const parsedDate = new Date(`${date}T00:00:00Z`);
+  const parsedDate = new Date(`${date}T00:00:00`);
   if (isNaN(parsedDate.getTime())) {
     return { slots: [], closedDays: [], error: "Fecha inválida." };
   }
@@ -123,7 +125,7 @@ export async function createGuestReservationAction(
     return { success: false, error: `Máximo ${MAX_PARTY_SIZE} personas por reserva online.` };
   }
 
-  const startAt = new Date(`${dateRaw}T${timeRaw}:00Z`);
+  const startAt = new Date(`${dateRaw}T${timeRaw}:00`);
   if (isNaN(startAt.getTime())) {
     return { success: false, error: "La fecha y hora no son válidas." };
   }
@@ -148,13 +150,20 @@ export async function createGuestReservationAction(
       businessHoursRepository,
     } = getReservationsInfrastructure();
 
+    const { membershipRepository, userRepository } = getUsersInfrastructure();
+    const { notificationProvider } = getNotificationsInfrastructure();
+
     const useCase = new CreateReservationFull(
       reservationRepository,
       guestRepository,
       restaurantSettingsRepository,
       diningTableRepository,
       businessHoursRepository,
-      reservationTableRepository
+      reservationTableRepository,
+      restaurantRepository,
+      membershipRepository,
+      userRepository,
+      notificationProvider
     );
 
     const result = await useCase.execute({
@@ -165,6 +174,7 @@ export async function createGuestReservationAction(
       partySize,
       startAt,
       specialRequests,
+      origin: "PUBLIC",
     });
 
     return { success: true, reservationId: result.reservationId };

@@ -5,7 +5,7 @@
  */
 
 import { Novu } from '@novu/node';
-import { type NotificationProvider, type MemberAcceptedPayload, type IdentifySubscriberPayload } from "@/modules/notifications/domain/ports/notification-provider.port";
+import { type NotificationProvider, type MemberAcceptedPayload, type IdentifySubscriberPayload, type NewReservationPayload } from "@/modules/notifications/domain/ports/notification-provider.port";
 
 //-aqui empieza clase NovuNotificationAdapter y es para traducir los puertos al SDK de Novu-//
 export class NovuNotificationAdapter implements NotificationProvider {
@@ -75,5 +75,31 @@ export class NovuNotificationAdapter implements NotificationProvider {
     }
   }
   //-aqui termina funcion notifyMemberAccepted-//
+
+  //-aqui empieza funcion notifyNewReservation y es para disparar la notificacion de nueva reserva en Novu-//
+  /**
+   * @sideEffect
+   */
+  async notifyNewReservation(payload: NewReservationPayload): Promise<void> {
+    console.log("[Novu Adapter Debug] notifyNewReservation invocado con payload:", JSON.stringify(payload, null, 2));
+    try {
+      const response = await this.client.trigger('new-reservation-dashboard', {
+        to: payload.staffSubscriberIds.map((id) => ({ subscriberId: id })),
+        payload: {
+          guestName: payload.guestName,
+          partySize: payload.partySize,
+          date: payload.date,
+          time: payload.time,
+          restaurantName: payload.restaurantName,
+          specialRequests: payload.specialRequests,
+        },
+      });
+      console.log("[Novu Adapter Debug] Trigger de Novu completado exitosamente. Respuesta:", JSON.stringify(response.data, null, 2));
+    } catch (error: unknown) {
+      this.logger.error('[Novu Adapter Debug] Error al disparar trigger de Novu:', error);
+      throw error;
+    }
+  }
+  //-aqui termina funcion notifyNewReservation-//
 }
 //-aqui termina clase NovuNotificationAdapter-//

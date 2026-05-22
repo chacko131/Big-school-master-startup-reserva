@@ -44,3 +44,7 @@ La carpeta está preparada para los primeros casos de uso del flujo de reservas.
 
 - **`get-available-slots.use-case.ts`**: nuevo use case que calcula slots horarios disponibles cruzando horarios de apertura, mesas activas, reservas existentes y configuración del restaurante (duración, buffer, combinación de mesas).
 - **`create-reservation-full.use-case.ts`**: nuevo use case que orquesta el flujo completo de creación de reserva desde el lado público: find-or-create guest → validar disponibilidad → crear reserva → auto-confirmar si `approvalMode === AUTO` → calcular deadline de cancelación.
+
+### 2026-05-22 (UTC+02:00)
+
+- **`create-reservation-full.use-case.ts`**: añadido `UserRepository` al constructor. Tras filtrar los owners/managers activos del restaurante, el use case ahora resuelve sus `clerkId` vía `findManyByIds` antes de disparar el trigger de Novu, corrigiendo el mismatch entre el UUID interno de Prisma y el identificador de subscriber registrado en Novu.

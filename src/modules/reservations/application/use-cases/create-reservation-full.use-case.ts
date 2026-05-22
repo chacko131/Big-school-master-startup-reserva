@@ -21,6 +21,10 @@ import {
 import { DuplicateReservationError } from "../errors/duplicate-reservation.error";
 import { NoAvailabilityError } from "../errors/no-availability.error";
 import { OutsideBusinessHoursError } from "../errors/outside-business-hours.error";
+import { type RestaurantRepository } from "@/modules/catalog/application/ports/restaurant-repository.port";
+import { type MembershipRepository } from "@/modules/users/domain/ports/membership.repository.port";
+import { type UserRepository } from "@/modules/users/domain/ports/user.repository.port";
+import { type NotificationProvider } from "@/modules/notifications/domain/ports/notification-provider.port";
 
 const ALTERNATIVE_SLOTS_COUNT = 3;
 const ALTERNATIVE_SLOT_STEP_MINUTES = 30;
@@ -57,7 +61,11 @@ export class CreateReservationFull {
     private readonly restaurantSettingsRepository: RestaurantSettingsRepository,
     private readonly diningTableRepository: DiningTableRepository,
     private readonly businessHoursRepository: BusinessHoursRepository,
-    private readonly reservationTableRepository: ReservationTableRepository
+    private readonly reservationTableRepository: ReservationTableRepository,
+    private readonly restaurantRepository: RestaurantRepository,
+    private readonly membershipRepository: MembershipRepository,
+    private readonly userRepository: UserRepository,
+    private readonly notificationProvider: NotificationProvider
   ) {}
 
   //-aqui empieza funcion execute y es para orquestar la creación completa de una reserva-//
@@ -176,6 +184,78 @@ export class CreateReservationFull {
       await this.reservationRepository.delete(persisted.id);
       throw tableAssignError;
     }
+
+    //-aqui empieza notificacion de nueva reserva y es para disparar la notificacion Novu si la reserva viene del publico-//
+    // Si la reserva se genera desde la ruta publica, notifica a los owners y managers activos del restaurante
+    console.log("[Notification Debug] Iniciando flujo de notificación. Origin:", input.origin, "RestaurantId:", input.restaurantId);
+    if (input.origin === "PUBLIC") {
+      try {
+        const restaurant = await this.restaurantRepository.findById(input.restaurantId);
+        console.log("[Notification Debug] Restaurante encontrado:", restaurant ? restaurant.name : "null", "Timezone:", restaurant?.timezone);
+        if (restaurant !== null) {
+          const memberships = await this.membershipRepository.findByRestaurantId(input.restaurantId);
+          console.log("[Notification Debug] Total memberships encontradas:", memberships.length);
+          memberships.forEach(m => {
+            console.log(`[Notification Debug] Member: userId=${m.userId}, role=${m.role}, isActive=${m.isActive()}`);
+          });
+          const activeStaffUserIds = memberships
+            .filter((m) => m.isActive() && (m.role === "RESTAURANT_OWNER" || m.role === "MANAGER"))
+            .map((m) => m.userId);
+
+          console.log("[Notification Debug] activeStaffUserIds filtrados (Owners/Managers activos):", activeStaffUserIds);
+
+          const staffUsers = await this.userRepository.findManyByIds(activeStaffUserIds);
+          const activeStaffIds = staffUsers.map((u) => u.clerkId);
+
+          console.log("[Notification Debug] activeStaffIds (clerkIds para Novu):", activeStaffIds);
+
+          if (activeStaffIds.length > 0) {
+            const timezone = restaurant.timezone;
+            const dateStr = input.startAt.toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              timeZone: timezone,
+            });
+            const timeStr = input.startAt.toLocaleTimeString("es-ES", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: timezone,
+            });
+
+            const specialRequestsStr = input.specialRequests && input.specialRequests.trim() !== ""
+              ? `\n📝 Notas: ${input.specialRequests}`
+              : "";
+
+            console.log("[Notification Debug] Llamando a notifyNewReservation con payload:", {
+              staffSubscriberIds: activeStaffIds,
+              guestName: input.guestFullName,
+              partySize: input.partySize,
+              date: dateStr,
+              time: timeStr,
+              restaurantName: restaurant.name,
+              specialRequests: specialRequestsStr,
+            });
+
+            await this.notificationProvider.notifyNewReservation({
+              staffSubscriberIds: activeStaffIds,
+              guestName: input.guestFullName,
+              partySize: input.partySize,
+              date: dateStr,
+              time: timeStr,
+              restaurantName: restaurant.name,
+              specialRequests: specialRequestsStr,
+            });
+            console.log("[Notification Debug] Llamada a notifyNewReservation completada exitosamente.");
+          } else {
+            console.log("[Notification Debug] No se enviará notificación porque no hay activeStaffIds (Owners o Managers activos).");
+          }
+        }
+      } catch (notificationError) {
+        console.error("[Notification Debug] Error en flujo de notificación:", notificationError);
+      }
+    }
+    //-aqui termina notificacion de nueva reserva-//
 
     return {
       reservationId: persisted.id,

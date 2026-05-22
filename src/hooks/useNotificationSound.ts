@@ -60,6 +60,7 @@ export function useNotificationSound(): void {
       setTimeout(() => {
         try {
           localStorage.removeItem(storageKey);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           // Ignorar errores de almacenamiento
         }

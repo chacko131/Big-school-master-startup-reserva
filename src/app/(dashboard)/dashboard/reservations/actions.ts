@@ -8,7 +8,10 @@
 
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { revalidatePath } from "next/cache";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
+import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { getNotificationsInfrastructure } from "@/modules/notifications/infrastructure/notifications-infrastructure";
 import { GetTodayReservations } from "@/modules/reservations/application/use-cases/get-today-reservations.use-case";
 import { CreateReservationFull } from "@/modules/reservations/application/use-cases/create-reservation-full.use-case";
 import { type GetTodayReservationsOutput } from "@/modules/reservations/application/dtos/get-today-reservations.dto";
@@ -105,7 +108,22 @@ export async function createReservationAction(formData: FormData): Promise<Creat
 
   try {
     const { reservationRepository, reservationTableRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository } = getReservationsInfrastructure();
-    const useCase = new CreateReservationFull(reservationRepository, guestRepository, restaurantSettingsRepository, diningTableRepository, businessHoursRepository, reservationTableRepository);
+    const { restaurantRepository } = getCatalogInfrastructure();
+    const { membershipRepository, userRepository } = getUsersInfrastructure();
+    const { notificationProvider } = getNotificationsInfrastructure();
+
+    const useCase = new CreateReservationFull(
+      reservationRepository,
+      guestRepository,
+      restaurantSettingsRepository,
+      diningTableRepository,
+      businessHoursRepository,
+      reservationTableRepository,
+      restaurantRepository,
+      membershipRepository,
+      userRepository,
+      notificationProvider
+    );
 
     const result = await useCase.execute({
       restaurantId,
@@ -115,6 +133,7 @@ export async function createReservationAction(formData: FormData): Promise<Creat
       partySize,
       startAt,
       specialRequests,
+      origin: "DASHBOARD",
     });
 
     revalidatePath("/dashboard/reservations");
