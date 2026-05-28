@@ -12,6 +12,9 @@ import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catal
 import { ListRestaurantsUseCase } from "@/modules/catalog/application/use-cases/list-restaurants.use-case";
 
 
+import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billing-infrastructure";
+import { GetCurrentPlanForRestaurant } from "@/modules/billing/application/use-cases/GetCurrentPlanForRestaurant/get-current-plan-for-restaurant.use-case";
+
 /**
  * Renderiza la vista de listado de restaurantes del panel admin.
  */
@@ -19,6 +22,42 @@ export default async function AdminRestaurantsPage() {
   const catalogInfrastructure = getCatalogInfrastructure();
   const listRestaurants = new ListRestaurantsUseCase(catalogInfrastructure.restaurantRepository);
   const restaurants = await listRestaurants.execute();
+
+  const billingInfrastructure = getBillingInfrastructure();
+  const getCurrentPlan = new GetCurrentPlanForRestaurant(billingInfrastructure.subscriptionRepository);
+
+  const settledPlans = await Promise.allSettled(
+    restaurants.map((r) => getCurrentPlan.execute({ restaurantId: r.id }))
+  );
+
+  const restaurantsWithPlans = restaurants.map((r, index) => {
+    const settled = settledPlans[index];
+    const subscription = settled.status === "fulfilled"
+      ? {
+          planId: settled.value.planId,
+          status: settled.value.status,
+          isTrial: settled.value.isTrial,
+          remainingTrialDays: settled.value.remainingTrialDays,
+          currentPeriodEnd: settled.value.currentPeriodEnd,
+        }
+      : {
+          planId: "none" as const,
+          status: "unknown",
+          isTrial: false,
+          remainingTrialDays: 0,
+          currentPeriodEnd: null,
+        };
+
+    return {
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      email: r.email,
+      phone: r.phone,
+      isActive: r.isActive,
+      subscription,
+    };
+  });
   return (
     <>
       <section className="rounded-[28px] bg-secondary-container px-6 py-8 shadow-sm md:px-8 md:py-10">
@@ -63,7 +102,7 @@ export default async function AdminRestaurantsPage() {
 
       <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.45fr_0.9fr]">
         <div className="space-y-4">
-          {restaurants.map((tenantDefinition) => (
+          {restaurantsWithPlans.map((tenantDefinition) => (
             <RestaurantTenantRow key={tenantDefinition.id} tenantDefinition={tenantDefinition} />
           ))}
         </div>

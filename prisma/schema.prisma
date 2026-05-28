@@ -102,6 +102,7 @@ model Restaurant {
   memberships        UserRestaurantMembership[]
   invitationTokens   TeamInvitationToken[]
   rolePagePermissions RolePagePermission[]
+  subscription        Subscription?
 
   @@index([isActive])
   @@index([slug])
@@ -415,4 +416,27 @@ model TeamInvitationToken {
   @@index([token])
   @@index([email, restaurantId])
   @@index([restaurantId])
+}
+
+// ---------------------------------------------------------------------------
+// MÓDULO: BILLING
+// ---------------------------------------------------------------------------
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  restaurantId         String    @unique
+  stripeCustomerId     String?   @unique // Opcional para trial local
+  stripeSubscriptionId String?   @unique // Opcional para trial local
+  status               String    // active, trialing, canceled, past_due, incomplete
+  planId               String    // basic, pro
+  priceId              String?   // ID de precio de Stripe
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  trialEndsAt          DateTime? // Fecha de fin del trial de 60 días
+  cancelAtPeriodEnd    Boolean   @default(false)
+  version              Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  restaurant           Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }

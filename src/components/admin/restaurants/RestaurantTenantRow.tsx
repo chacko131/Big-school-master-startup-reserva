@@ -15,6 +15,13 @@ export interface RestaurantTenantDefinition {
   email: string | null;
   phone: string | null;
   isActive: boolean;
+  subscription?: {
+    planId: "basic" | "pro" | "none";
+    status: string;
+    isTrial: boolean;
+    remainingTrialDays: number;
+    currentPeriodEnd: Date | null;
+  };
 }
 
 export interface RestaurantTenantRowProps {
@@ -29,8 +36,86 @@ export interface RestaurantTenantRowProps {
  * @pure
  */
 export function RestaurantTenantRow({ tenantDefinition }: RestaurantTenantRowProps) {
+  const sub = tenantDefinition.subscription;
+
+  // Renderizador estético del badge del plan
+  const renderPlanBadge = () => {
+    if (!sub || sub.planId === "none") {
+      return (
+        <span className="inline-flex items-center rounded-full border border-zinc-500/20 bg-zinc-500/10 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:text-zinc-400">
+          <T>Sin Plan</T>
+        </span>
+      );
+    }
+
+    if (sub.isTrial) {
+      return (
+        <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+          <T>{`Trial Pro (${sub.remainingTrialDays}d)`}</T>
+        </span>
+      );
+    }
+
+    if (sub.planId === "pro") {
+      return (
+        <span className="inline-flex items-center rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+          <T>Plan Pro</T>
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2 py-0.5 text-xs font-bold text-sky-600 dark:text-sky-400">
+        <T>Plan Básico</T>
+      </span>
+    );
+  };
+
+  // Renderizador del estado del periodo de facturación
+  const renderPeriodInfo = () => {
+    if (!sub || sub.planId === "none") return null;
+
+    if (sub.isTrial) {
+      return (
+        <span className="mt-1 text-xs text-emerald-600 dark:text-emerald-500">
+          <T>Expira pronto</T>
+        </span>
+      );
+    }
+
+    if (sub.status === "past_due") {
+      return (
+        <span className="mt-1 text-xs font-bold text-red-500">
+          <T>Pago pendiente</T>
+        </span>
+      );
+    }
+
+    if (sub.status === "canceled") {
+      return (
+        <span className="mt-1 text-xs text-red-400">
+          <T>Cancela al final</T>
+        </span>
+      );
+    }
+
+    if (sub.currentPeriodEnd) {
+      const dateStr = new Date(sub.currentPeriodEnd).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+      return (
+        <span className="mt-1 text-xs text-on-surface-variant">
+          <T>{`Cobra el ${dateStr}`}</T>
+        </span>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <article className="grid grid-cols-1 gap-4 rounded-[24px] border border-outline-variant/20 bg-surface-container-low p-5 lg:grid-cols-[1.6fr_1.6fr_0.8fr_auto] lg:items-center">
+    <article className="grid grid-cols-1 gap-4 rounded-[24px] border border-outline-variant/20 bg-surface-container-low p-5 lg:grid-cols-[1.4fr_1.2fr_1.3fr_0.6fr_auto] lg:items-center">
       <div>
         <p className="text-lg font-black tracking-tight text-primary">
           <T>{tenantDefinition.name}</T>
@@ -50,6 +135,15 @@ export function RestaurantTenantRow({ tenantDefinition }: RestaurantTenantRowPro
           <span className="text-xs text-on-surface-variant">
             {tenantDefinition.phone || <T>Sin teléfono</T>}
           </span>
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+          <T>Suscripción y Vigencia</T>
+        </p>
+        <div className="mt-1 flex flex-col items-start">
+          {renderPlanBadge()}
+          {renderPeriodInfo()}
         </div>
       </div>
       <div className="flex items-center gap-4">
