@@ -1,11 +1,23 @@
 /**
  * Archivo: page.tsx
- * Responsabilidad: Renderizar el reporte diario operativo del restaurante dentro del dashboard.
- * Tipo: UI
+ * Responsabilidad: Orquestar la obtención de datos y renderizar el reporte diario del dashboard importando componentes puros.
+ * Tipo: UI (Server Component)
  */
 
 import Link from "next/link";
 import { T } from "@/components/T";
+import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
+import { requireCurrentUser } from "@/modules/auth/get-current-user";
+import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { GetTodayReservations } from "@/modules/reservations/application/use-cases/get-today-reservations.use-case";
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
+import { DashboardReservationsTable } from "@/components/dashboard/DashboardReservationsTable";
+import { DashboardFloorSummary, type DashboardFloorZoneDefinition } from "@/components/dashboard/DashboardFloorSummary";
+import { DashboardAlertStack, type DashboardAlertDefinition } from "@/components/dashboard/DashboardAlertStack";
+import { DashboardSuccessBanner } from "@/components/dashboard/DashboardSuccessBanner";
+
+export const dynamic = "force-dynamic";
 
 interface DashboardHomePageProps {
   searchParams: Promise<{
@@ -21,394 +33,152 @@ interface DashboardMetricDefinition {
   progress?: number;
 }
 
-interface DashboardReservationDefinition {
-  guest: string;
-  time: string;
-  covers: string;
-  status: string;
-  statusTone: "confirmed" | "warning" | "pending";
-}
-
-interface DashboardFloorZoneDefinition {
-  label: string;
-  occupancy: string;
-}
-
-interface DashboardAlertDefinition {
-  title: string;
-  description: string;
-  tone: "warning" | "success";
-}
-
-const dashboardMetricDefinitions: ReadonlyArray<DashboardMetricDefinition> = [
-  {
-    label: "Reservas hoy",
-    value: "48",
-    caption: "+12% vs viernes pasado",
-    tone: "primary",
-  },
-  {
-    label: "Mesas activas",
-    value: "14 / 24",
-    caption: "58% de ocupación",
-    tone: "surface",
-    progress: 58,
-  },
-  {
-    label: "Clientes previstos",
-    value: "164",
-    caption: "pico estimado 20:00",
-    tone: "secondary",
-  },
-  {
-    label: "No-shows",
-    value: "3",
-    caption: "marcados para revisión",
-    tone: "warning",
-  },
-] as const;
-
-const dashboardReservationDefinitions: ReadonlyArray<DashboardReservationDefinition> = [
-  {
-    guest: "Ricardo Montaner",
-    time: "19:30",
-    covers: "4",
-    status: "Confirmada",
-    statusTone: "confirmed",
-  },
-  {
-    guest: "Sofía Castillo",
-    time: "19:45",
-    covers: "2",
-    status: "Llegando pronto",
-    statusTone: "warning",
-  },
-  {
-    guest: "Elena López",
-    time: "20:00",
-    covers: "8",
-    status: "Confirmada",
-    statusTone: "confirmed",
-  },
-  {
-    guest: "Juan Pablo",
-    time: "20:15",
-    covers: "4",
-    status: "Pendiente",
-    statusTone: "pending",
-  },
-] as const;
-
-const dashboardFloorZoneDefinitions: ReadonlyArray<DashboardFloorZoneDefinition> = [
-  {
-    label: "Salón principal",
-    occupancy: "10 / 12",
-  },
-  {
-    label: "Terraza",
-    occupancy: "4 / 8",
-  },
-  {
-    label: "Lounge privado",
-    occupancy: "0 / 4",
-  },
-] as const;
-
-const dashboardAlertDefinitions: ReadonlyArray<DashboardAlertDefinition> = [
-  {
-    title: "Grupos grandes esta noche",
-    description: "2 grupos de 10+ personas están programados para las 20:30. Conviene reforzar el servicio.",
-    tone: "warning",
-  },
-  {
-    title: "Cumpleaños VIP",
-    description: "La mesa 12 celebra aniversario y ya quedó preparada la atención especial.",
-    tone: "success",
-  },
-] as const;
-
-//-aqui empieza componente DashboardMetricCard y es para presentar los indicadores diarios del panel-//
-/**
- * Renderiza una tarjeta de métrica del reporte diario.
- *
- * @pure
- */
-function DashboardMetricCard({ label, value, caption, tone, progress }: DashboardMetricDefinition) {
-  const containerClassName =
-    tone === "primary"
-      ? "bg-primary text-on-primary"
-      : tone === "secondary"
-        ? "bg-secondary-container text-on-secondary-container"
-        : tone === "warning"
-          ? "bg-tertiary-fixed text-on-tertiary-fixed"
-          : "bg-surface-container-lowest text-on-surface";
-  const labelClassName = tone === "primary" ? "text-white/70" : tone === "secondary" ? "text-on-secondary-container/75" : tone === "warning" ? "text-on-tertiary-fixed/75" : "text-on-surface-variant";
-  const progressTrackClassName = tone === "primary" ? "bg-white/20" : tone === "secondary" ? "bg-on-secondary-container/10" : tone === "warning" ? "bg-on-tertiary-fixed/10" : "bg-outline-variant/30";
-  const progressFillClassName = tone === "primary" ? "bg-white" : tone === "secondary" ? "bg-on-secondary-container" : tone === "warning" ? "bg-on-tertiary-fixed" : "bg-primary";
-  const clampedProgress = typeof progress === "number" ? Math.min(100, Math.max(0, Number(progress))) : null;
-
-  return (
-    <article className={`rounded-[24px] p-6 shadow-sm ${containerClassName}`}>
-      <p className={`text-xs font-bold uppercase tracking-[0.22em] ${labelClassName}`}>
-        <T>{label}</T>
-      </p>
-      <p className="mt-4 text-4xl font-black tracking-tight">
-        <T>{value}</T>
-      </p>
-      <p className={`mt-2 text-sm leading-6 ${labelClassName}`}>
-        <T>{caption}</T>
-      </p>
-      {clampedProgress !== null ? (
-        <div className={`mt-5 h-1.5 w-full overflow-hidden rounded-full ${progressTrackClassName}`} role="progressbar" aria-valuenow={clampedProgress} aria-valuemin={0} aria-valuemax={100} aria-label={`${clampedProgress}%`}>
-          <div className={`h-full rounded-full ${progressFillClassName}`} style={{ width: `${clampedProgress}%` }} />
-        </div>
-      ) : null}
-    </article>
-  );
-}
-//-aqui termina componente DashboardMetricCard-//
-
-//-aqui empieza componente DashboardReservationsTable y es para mostrar la agenda del servicio-//
-/**
- * Renderiza la tabla de reservas próximas.
- *
- * @pure
- */
-function DashboardReservationsTable() {
-  return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between gap-4 px-2">
-        <h3 className="text-xl font-bold tracking-tight text-primary md:text-2xl">
-          <T>Próximas reservas</T>
-        </h3>
-        <Link className="inline-flex items-center gap-1 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary" href="/dashboard/reservations">
-          <T>Ver todo</T>
-          <span aria-hidden="true">›</span>
-        </Link>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-sm">
-        <table className="w-full border-collapse text-left">
-          <thead className="bg-surface-container-low">
-            <tr>
-              <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                <T>Invitado</T>
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                <T>Hora</T>
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                <T>Comensales</T>
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                <T>Estado</T>
-              </th>
-              <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-                <T>Acción</T>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-50">
-            {dashboardReservationDefinitions.map((reservationDefinition) => {
-              const statusClassName =
-                reservationDefinition.statusTone === "confirmed"
-                  ? "bg-secondary-container text-on-secondary-container"
-                  : reservationDefinition.statusTone === "warning"
-                    ? "bg-tertiary-fixed text-on-tertiary-fixed"
-                    : "bg-surface-container-highest text-on-surface-variant";
-
-              return (
-                <tr className="transition-colors hover:bg-surface-container-high" key={`${reservationDefinition.guest}-${reservationDefinition.time}`}>
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-high text-[10px] font-black text-on-surface-variant">
-                        {reservationDefinition.guest
-                          .split(" ")
-                          .slice(0, 2)
-                          .map((word) => word.charAt(0))
-                          .join("")}
-                      </div>
-                      <p className="text-sm font-bold text-on-surface">
-                        <T>{reservationDefinition.guest}</T>
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 text-sm font-medium text-on-surface">
-                    <T>{reservationDefinition.time}</T>
-                  </td>
-                  <td className="px-6 py-5 text-sm font-medium text-on-surface">
-                    <T>{reservationDefinition.covers}</T>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${statusClassName}`}>
-                      <T>{reservationDefinition.status}</T>
-                    </span>
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    <button className="text-xl leading-none text-on-surface-variant transition-colors hover:text-primary" type="button" aria-label="Más acciones">
-                      ⋯
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-//-aqui termina componente DashboardReservationsTable-//
-
-//-aqui empieza componente DashboardFloorSummary y es para mostrar el estado de la sala-//
-/**
- * Renderiza el resumen operativo de la sala.
- *
- * @pure
- */
-function DashboardFloorSummary() {
-  return (
-    <section className="relative overflow-hidden rounded-2xl bg-primary p-8 text-on-primary shadow-sm">
-      <div className="relative z-10">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/60">
-          <T>Sala activa</T>
-        </p>
-        <div className="mt-8 flex items-baseline">
-          <span className="text-6xl font-black tracking-tight">58%</span>
-          <span className="ml-3 text-sm font-bold uppercase tracking-[0.2em] text-white/60">
-            <T>Capacidad</T>
-          </span>
-        </div>
-
-        <div className="mt-8 space-y-4">
-          {dashboardFloorZoneDefinitions.map((zoneDefinition) => (
-            <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3 last:border-b-0 last:pb-0" key={zoneDefinition.label}>
-              <span className="text-sm text-white/85">
-                <T>{zoneDefinition.label}</T>
-              </span>
-              <span className="text-sm font-bold text-white">
-                <T>{zoneDefinition.occupancy}</T>
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
-    </section>
-  );
-}
-//-aqui termina componente DashboardFloorSummary-//
-
-//-aqui empieza componente DashboardAlertStack y es para advertencias operativas del dia-//
-/**
- * Renderiza el bloque de alertas operativas.
- *
- * @pure
- */
-function DashboardAlertStack() {
-  return (
-    <section className="space-y-4">
-      <h3 className="px-2 text-xs font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-        <T>Alertas operativas</T>
-      </h3>
-
-      {dashboardAlertDefinitions.map((alertDefinition) => {
-        const alertClassName =
-          alertDefinition.tone === "warning"
-            ? "bg-tertiary-fixed text-on-tertiary-fixed"
-            : "bg-secondary-fixed text-on-secondary-fixed";
-        const titleClassName = alertDefinition.tone === "warning" ? "text-on-tertiary-fixed" : "text-on-secondary-fixed";
-        const descriptionClassName = alertDefinition.tone === "warning" ? "text-on-tertiary-fixed-variant" : "text-on-secondary-fixed-variant";
-
-        return (
-          <article className={`rounded-xl border-l-4 p-5 shadow-sm ${alertClassName}`} key={alertDefinition.title}>
-            <div className="flex gap-4">
-              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/40 text-sm font-black">
-                {alertDefinition.tone === "warning" ? "!" : "✓"}
-              </div>
-              <div>
-                <p className={`text-sm font-bold ${titleClassName}`}>
-                  <T>{alertDefinition.title}</T>
-                </p>
-                <p className={`mt-1 text-xs leading-relaxed ${descriptionClassName}`}>
-                  <T>{alertDefinition.description}</T>
-                </p>
-              </div>
-            </div>
-          </article>
-        );
-      })}
-    </section>
-  );
-}
-//-aqui termina componente DashboardAlertStack-//
-
-//-aqui empieza componente DashboardSuccessBanner y es para confirmar acciones exitosas-//
-/**
- * Muestra un aviso de éxito cuando una invitación acaba de aceptarse.
- * @pure
- */
-function DashboardSuccessBanner() {
-  return (
-    <section className="rounded-[28px] border border-secondary-container bg-secondary-container px-6 py-5 text-on-secondary-container shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-on-secondary-container/70">
-            <T>Acceso activado</T>
-          </p>
-          <h3 className="mt-2 text-lg font-black tracking-tight">
-            <T>La invitación se aceptó correctamente.</T>
-          </h3>
-          <p className="mt-1 text-sm leading-6 text-on-secondary-container/80">
-            <T>Ya formas parte del equipo y puedes seguir trabajando desde el dashboard.</T>
-          </p>
-        </div>
-        <Link className="inline-flex items-center justify-center rounded-lg bg-on-secondary-container px-5 py-2.5 text-sm font-bold text-secondary-container transition-colors hover:opacity-90" href="/dashboard/team">
-          <T>Ir al equipo</T>
-        </Link>
-      </div>
-    </section>
-  );
-}
-//-aqui termina componente DashboardSuccessBanner-//
-
-//-aqui empieza componente DashboardPromoCard y es para resaltar el especial de cocina-//
-/**
- * Renderiza la tarjeta promocional de cocina del día.
- *
- * @pure
- */
-function DashboardPromoCard() {
-  return (
-    <section className="relative flex h-48 items-end overflow-hidden rounded-2xl shadow-lg">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.25),transparent_45%),linear-gradient(135deg,#121212_0%,#000000_60%,#1f1f1f_100%)]" />
-      <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
-      <div className="relative z-10 w-full border-t border-white/20 bg-white/10 p-6 backdrop-blur-sm">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.22em] text-white/70">
-          <T>Especial de cocina</T>
-        </p>
-        <h4 className="text-lg font-bold text-white">
-          <T>Tomahawk madurado</T>
-        </h4>
-        <p className="mt-1 text-xs text-white/70">
-          <T>8 porciones restantes para el servicio</T>
-        </p>
-      </div>
-    </section>
-  );
-}
-//-aqui termina componente DashboardPromoCard-//
-
 //-aqui empieza pagina DashboardHomePage y es para mostrar el reporte diario del restaurante-//
 /**
- * Presenta el reporte diario del restaurante dentro del dashboard.
+ * Presenta el reporte diario del restaurante dentro del dashboard conectándose al backend real.
+ *
+ * @sideEffect
  */
 export default async function DashboardHomePage({ searchParams }: DashboardHomePageProps) {
   const resolvedSearchParams = await searchParams;
   const inviteAcceptedValue = resolvedSearchParams.inviteAccepted;
   const inviteAcceptedKey = Array.isArray(inviteAcceptedValue) ? inviteAcceptedValue[0] ?? "" : inviteAcceptedValue ?? "";
   const showInviteSuccess = inviteAcceptedKey === "1";
+
+  // 1. Obtener usuario en sesión y restauranteId
+  const user = await requireCurrentUser();
+  const restaurantId = await getRestaurantIdFromSession();
+  const firstName = user.fullName ? user.fullName.split(" ")[0] : "";
+
+  // 2. Resolver dependencias a través de la infraestructura
+  const { diningTableRepository, zoneRepository } = getCatalogInfrastructure();
+  const { reservationRepository, guestRepository, reservationTableRepository } = getReservationsInfrastructure();
+
+  // 3. Ejecutar caso de uso para obtener las reservas del día
+  const getTodayReservations = new GetTodayReservations(reservationRepository, guestRepository);
+  const todayReservationsResult = await getTodayReservations.execute({
+    restaurantId,
+    date: new Date(),
+  });
+  const todayReservations = todayReservationsResult.reservations;
+
+  // Ordenar cronológicamente por hora de inicio
+  const sortedReservations = [...todayReservations].sort(
+    (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+  );
+
+  // 4. Calcular métricas reales del panel
+  const totalReservations = todayReservations.length;
+  
+  // Clientes previstos: suma partySize de reservas no canceladas
+  const activeReservations = todayReservations.filter((r) => r.status !== "CANCELLED");
+  const totalCovers = activeReservations.reduce((acc, r) => acc + r.partySize, 0);
+
+  // No-shows
+  const noShowsCount = todayReservations.filter((r) => r.status === "NO_SHOW").length;
+
+  // 5. Cargar mesas y calcular ocupación
+  const allTables = await diningTableRepository.findByRestaurantId(restaurantId);
+  const activeTables = allTables.filter((t) => t.isActive);
+  const activeTablesCount = activeTables.length;
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const occupiedTableIds = await reservationTableRepository.findOccupiedTableIds(restaurantId, startOfDay, endOfDay);
+
+  const occupiedActiveTables = activeTables.filter((t) => occupiedTableIds.includes(t.id));
+  const occupiedTablesCount = occupiedActiveTables.length;
+
+  const occupancyPercent = activeTablesCount > 0 ? Math.round((occupiedTablesCount / activeTablesCount) * 100) : 0;
+
+  // 6. Cargar zonas y desglosar ocupación por zona
+  const zones = await zoneRepository.findByRestaurantId(restaurantId);
+  const floorZones: DashboardFloorZoneDefinition[] = zones.map((zone) => {
+    const tablesInZone = activeTables.filter((t) => t.toPrimitives().zoneId === zone.id);
+    const occupiedInZone = tablesInZone.filter((t) => occupiedTableIds.includes(t.id));
+    return {
+      label: zone.name,
+      occupancy: `${occupiedInZone.length} / ${tablesInZone.length}`,
+    };
+  });
+
+  // 7. Generar alertas operativas
+  const alerts: DashboardAlertDefinition[] = [];
+
+  const largeGroups = activeReservations.filter((r) => r.partySize >= 8);
+  if (largeGroups.length > 0) {
+    alerts.push({
+      title: "Grupos grandes hoy",
+      description: `Hay ${largeGroups.length} grupo(s) de 8 o más personas programados para hoy. Conviene reforzar el servicio.`,
+      tone: "warning",
+    });
+  }
+
+  const withSpecialRequests = activeReservations.filter(
+    (r) => r.specialRequests && r.specialRequests.trim().length > 0
+  );
+  if (withSpecialRequests.length > 0) {
+    alerts.push({
+      title: "Peticiones especiales",
+      description: `${withSpecialRequests.length} reserva(s) tienen requerimientos especiales o notas. Revisa los detalles en la agenda.`,
+      tone: "success",
+    });
+  }
+
+  if (noShowsCount > 0) {
+    alerts.push({
+      title: "Inasistencias (No-shows)",
+      description: `Se han registrado ${noShowsCount} inasistencia(s) hoy. Revisa el estado de sus mesas asignadas.`,
+      tone: "warning",
+    });
+  }
+
+  if (alerts.length === 0) {
+    alerts.push({
+      title: "Servicio al día",
+      description: "No se registran alertas operativas especiales para el día de hoy. Todo marcha en orden.",
+      tone: "success",
+    });
+  }
+
+  // 8. Definición de métricas del panel
+  const metrics: ReadonlyArray<DashboardMetricDefinition> = [
+    {
+      label: "Reservas hoy",
+      value: totalReservations.toString(),
+      caption: totalReservations === 1 ? "1 reserva programada" : `${totalReservations} reservas programadas`,
+      tone: "primary",
+    },
+    {
+      label: "Mesas activas",
+      value: `${occupiedTablesCount} / ${activeTablesCount}`,
+      caption: `${occupancyPercent}% de ocupación`,
+      tone: "surface",
+      progress: occupancyPercent,
+    },
+    {
+      label: "Clientes previstos",
+      value: totalCovers.toString(),
+      caption: totalCovers === 1 ? "1 comensal esperado" : `${totalCovers} comensales esperados`,
+      tone: "secondary",
+    },
+    {
+      label: "No-shows",
+      value: noShowsCount.toString(),
+      caption: noShowsCount === 1 ? "1 inasistencia registrada" : `${noShowsCount} inasistencias registradas`,
+      tone: "warning",
+    },
+  ];
+
+  const welcomeGreeting = firstName ? `Buenos días, ${firstName}.` : "Buenos días.";
+  const summaryParagraph =
+    totalReservations === 0
+      ? "La sala no tiene reservas programadas para hoy por el momento. Buen momento para preparar las mesas."
+      : `La sala tiene ${totalReservations} ${
+          totalReservations === 1 ? "reserva" : "reservas"
+        } por atender durante el día de hoy. La cocina se mantiene estable y el ritmo operativo va por buen camino.`;
 
   return (
     <>
@@ -417,22 +187,17 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
       <section className="flex flex-col gap-6 rounded-[28px] bg-surface-container-lowest p-8 shadow-sm md:flex-row md:items-end md:justify-between md:p-10">
         <div className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-            <T>Buenos días, Mateo.</T>
+            <T>{welcomeGreeting}</T>
           </p>
           <h2 className="mt-4 text-5xl font-black tracking-tighter text-primary md:text-6xl">
             <T>El servicio de hoy está en marcha.</T>
           </h2>
           <p className="mt-4 max-w-xl text-on-surface-variant md:text-lg md:leading-8">
-            <T>
-              La sala tiene 12 reservas por atender durante el almuerzo. La cocina se mantiene estable y el ritmo operativo va por buen camino.
-            </T>
+            <T>{summaryParagraph}</T>
           </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <button className="inline-flex items-center justify-center rounded-lg bg-surface-container-highest px-6 py-2.5 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container-high" type="button">
-            <T>Exportar reporte</T>
-          </button>
           <Link className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition-colors hover:opacity-90" href="/dashboard/tables">
             <T>Vista de sala</T>
           </Link>
@@ -440,7 +205,7 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardMetricDefinitions.map((metricDefinition) => (
+        {metrics.map((metricDefinition) => (
           <DashboardMetricCard
             caption={metricDefinition.caption}
             key={metricDefinition.label}
@@ -454,21 +219,15 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
 
       <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <DashboardReservationsTable />
+          <DashboardReservationsTable reservations={sortedReservations} />
         </div>
 
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <DashboardFloorSummary />
-          <DashboardAlertStack />
-          <DashboardPromoCard />
+          <DashboardFloorSummary floorZones={floorZones} occupancyPercent={occupancyPercent} />
+          <DashboardAlertStack alerts={alerts} />
         </div>
       </section>
-
-      <button className="fixed bottom-8 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-3xl font-black text-on-primary shadow-2xl transition-transform hover:scale-105" type="button" aria-label="Nueva acción">
-        +
-      </button>
     </>
   );
 }
-//-aqui termina pagina DashboardHomePage-
-//
+//-aqui termina pagina DashboardHomePage-//
