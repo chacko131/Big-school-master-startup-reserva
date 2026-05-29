@@ -7,6 +7,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
+import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { z } from "zod";
 import { v2 as cloudinary } from "cloudinary";
 import { SettingsCatalogPanel } from "@/components/dashboard/settings/SettingsCatalogPanel";
@@ -113,7 +114,7 @@ const settingsRulesFormSchema = z.object({
 async function saveRestaurantProfileAction(formData: FormData) {
   "use server";
 
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const draftInput = {
     name: String(formData.get("name") ?? "").trim(),
@@ -167,7 +168,7 @@ async function saveRestaurantProfileAction(formData: FormData) {
 async function saveCatalogProfileAction(formData: FormData) {
   "use server";
 
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   // Normaliza cadenas vacías a null para no guardar strings vacíos en BD
   const normalize = (val: FormDataEntryValue | null): string | null => {
@@ -228,8 +229,8 @@ async function generateCloudinarySignatureAction(
 ): Promise<CloudinaryUploadSignature> {
   "use server";
 
-  // Verificamos sesión antes de emitir la firma
-  await getRestaurantIdFromSession();
+  // Verificamos sesión y permisos de escritura antes de emitir la firma
+  await assertCanWrite();
 
   // Configura el SDK (usa CLOUDINARY_URL del entorno automáticamente)
   cloudinary.config({ secure: true });
@@ -271,7 +272,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 
   const MAX_GALLERY_SERVER = 6;
 
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
 
 
@@ -323,7 +324,7 @@ async function savePhotoUrlsAction(payload: PhotoUrlsPayload): Promise<void> {
 async function saveRestaurantSettingsAction(formData: FormData) {
   "use server";
 
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const draftInput = {
     reservationApprovalMode: String(formData.get("reservationApprovalMode") ?? "AUTO") as "AUTO" | "MANUAL",
@@ -375,7 +376,7 @@ async function saveRestaurantSettingsAction(formData: FormData) {
 async function saveBusinessHoursAction(formData: FormData) {
   "use server";
 
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const validDays: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 

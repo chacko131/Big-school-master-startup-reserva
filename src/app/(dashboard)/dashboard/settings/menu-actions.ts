@@ -9,6 +9,7 @@
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { revalidatePath } from "next/cache";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { AddMenuCategory } from "@/modules/catalog/application/use-cases/add-menu-category.use-case";
 import { UpdateMenuCategory } from "@/modules/catalog/application/use-cases/update-menu-category.use-case";
 import { DeleteMenuCategory } from "@/modules/catalog/application/use-cases/delete-menu-category.use-case";
@@ -80,7 +81,7 @@ export async function addMenuCategoryAction(
   description?: string,
 ): Promise<MenuActionResult<MenuCategoryPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 
@@ -116,7 +117,7 @@ export async function updateMenuCategoryAction(
   fields: { name?: string; description?: string | null; sortOrder?: number; isActive?: boolean },
 ): Promise<MenuActionResult<MenuCategoryPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 
@@ -148,7 +149,7 @@ export async function updateMenuCategoryAction(
  */
 export async function deleteMenuCategoryAction(categoryId: string): Promise<MenuActionResult> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 
@@ -192,7 +193,7 @@ export async function addMenuItemAction(
   fields?: { description?: string; price?: number | null; imageUrl?: string; imagePublicId?: string; allergens?: string[] },
 ): Promise<MenuActionResult<MenuItemPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 
@@ -242,7 +243,7 @@ export async function updateMenuItemAction(
   },
 ): Promise<MenuActionResult<MenuItemPrimitives>> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 
@@ -284,7 +285,7 @@ export async function updateMenuItemAction(
  */
 export async function deleteMenuItemAction(itemId: string): Promise<MenuActionResult> {
   try {
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
     const infra = getCatalogInfrastructure();
 
 

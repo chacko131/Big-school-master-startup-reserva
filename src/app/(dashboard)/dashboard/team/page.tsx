@@ -15,6 +15,7 @@ import { TeamInvitationPanel } from "@/components/team/TeamInvitationPanel";
 import { TeamPermissionsPanel, type PermissionRowView } from "@/components/team/TeamPermissionsPanel";
 import { TeamInviteModal } from "@/components/team/TeamInviteModal";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
+import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { requireCurrentUser } from "@/modules/auth/get-current-user";
 import { GetRestaurantTeam } from "@/modules/users/application/use-cases/GetRestaurantTeam/get-restaurant-team.use-case";
 import { GetRolePagePermissions } from "@/modules/users/application/use-cases/GetRolePagePermissions/get-role-page-permissions.use-case";
@@ -45,6 +46,8 @@ const VALID_ROLES: ReadonlyArray<MembershipRole> = [
 async function updateMemberRoleAction(formData: FormData): Promise<void> {
   "use server";
 
+  await assertCanWrite();
+
   const membershipId = String(formData.get("membershipId") ?? "").trim();
   const newRole = String(formData.get("newRole") ?? "").trim() as MembershipRole;
 
@@ -69,6 +72,8 @@ async function upsertPermissionAction(formData: FormData): Promise<void> {
   "use server";
 
   const restaurantId = String(formData.get("restaurantId") ?? "").trim();
+  await assertCanWrite(restaurantId);
+
   const role = String(formData.get("role") ?? "").trim() as MembershipRole;
   const pageKey = String(formData.get("pageKey") ?? "").trim() as DashboardSectionKey;
   const canView = formData.get("canView") === "true";
@@ -109,7 +114,7 @@ async function inviteMemberAction(formData: FormData): Promise<{ error?: string 
 
   try {
     const currentUser = await requireCurrentUser();
-    const restaurantId = await getRestaurantIdFromSession();
+    const restaurantId = await assertCanWrite();
 
     const { membershipRepository, invitationTokenRepository, userRepository } = getUsersInfrastructure();
     const { restaurantRepository } = getCatalogInfrastructure();
@@ -142,6 +147,8 @@ async function inviteMemberAction(formData: FormData): Promise<{ error?: string 
 async function revokeMemberAction(formData: FormData): Promise<void> {
   "use server";
 
+  await assertCanWrite();
+
   const membershipId = String(formData.get("membershipId") ?? "").trim();
   if (membershipId.length === 0) return;
 
@@ -160,6 +167,8 @@ async function revokeMemberAction(formData: FormData): Promise<void> {
 async function reactivateMemberAction(formData: FormData): Promise<void> {
   "use server";
 
+  await assertCanWrite();
+
   const membershipId = String(formData.get("membershipId") ?? "").trim();
   if (membershipId.length === 0) return;
 
@@ -177,6 +186,8 @@ async function reactivateMemberAction(formData: FormData): Promise<void> {
  */
 async function deleteMemberPermanentlyAction(formData: FormData): Promise<void> {
   "use server";
+
+  await assertCanWrite();
 
   const membershipId = String(formData.get("membershipId") ?? "").trim();
   if (membershipId.length === 0) return;

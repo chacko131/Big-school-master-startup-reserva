@@ -9,6 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { UpdateFloorPlanUseCase } from "@/modules/catalog/application/use-cases/update-floor-plan.use-case";
 import { GetZonesByRestaurant } from "@/modules/catalog/application/use-cases/get-zones-by-restaurant.use-case";
 import { CreateZone } from "@/modules/catalog/application/use-cases/create-zone.use-case";
@@ -27,7 +28,7 @@ import { type DiningTablePrimitives } from "@/modules/catalog/domain/entities/di
  * @sideEffect
  */
 export async function ensureDefaultZoneAction(): Promise<void> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
   const { zoneRepository, diningTableRepository } = getCatalogInfrastructure();
   const useCase = new EnsureDefaultZone(zoneRepository, diningTableRepository);
 
@@ -58,7 +59,7 @@ export async function createZoneAction(
   name: string,
   color?: string,
 ): Promise<RestaurantZonePrimitives> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
   const { zoneRepository } = getCatalogInfrastructure();
   const useCase = new CreateZone(zoneRepository);
 
@@ -76,6 +77,7 @@ export async function createZoneAction(
  * @sideEffect
  */
 export async function deleteZoneAction(zoneId: string): Promise<void> {
+  await assertCanWrite();
   const { zoneRepository } = getCatalogInfrastructure();
   const useCase = new DeleteZone(zoneRepository);
 
@@ -95,7 +97,7 @@ export async function saveFloorPlanAction(
   tables: FloorPlanTable[],
   elements: FloorPlanElementPrimitives[] = [],
 ) {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
   const catalogInfrastructure = getCatalogInfrastructure();
 
   // Cargamos zonas y mesas existentes en paralelo para el merge
@@ -171,7 +173,7 @@ export async function assignTableToReservationAction(
   reservationId: string,
   tableId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
   const prisma = (await import("@/services/prisma.service")).getPrismaClient();
 
   // Verificar que la reserva pertenece al restaurante
@@ -223,7 +225,7 @@ export async function unassignTableFromReservationAction(
   reservationId: string,
   tableId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
   const prisma = (await import("@/services/prisma.service")).getPrismaClient();
 
   const existing = await prisma.reservationTable.findUnique({

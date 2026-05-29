@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,18 @@ import {
   getDashboardSectionLabel,
   type DashboardSectionKey,
 } from "@/constants/dashboard";
+
+interface DashboardContextType {
+  canWrite: boolean;
+  accessLevel: "full" | "grace" | "read_only" | "suspended";
+}
+
+const DashboardContext = createContext<DashboardContextType>({
+  canWrite: true,
+  accessLevel: "full",
+});
+
+export const useDashboard = () => useContext(DashboardContext);
 
 /** Secciones que el usuario actual puede ver (filtrado por plan + rol). */
 interface DashboardShellProps {
@@ -306,7 +318,7 @@ function AccessLevelBanner({ level, message, daysUntilNextPhase }: { level: stri
 /**
  * Renderiza la estructura compartida del dashboard con navegación activa.
  */
-export function DashboardShell({ children, allowedKeys, accessLevel, accessMessage, canWrite: _canWrite, isTrialActive, remainingTrialDays, daysUntilNextPhase }: DashboardShellProps) {
+export function DashboardShell({ children, allowedKeys, accessLevel, accessMessage, canWrite, isTrialActive, remainingTrialDays, daysUntilNextPhase }: DashboardShellProps) {
   const pathname = usePathname();
   const activeNavigationDefinition = getDashboardActiveNavigationDefinition(pathname);
   const sectionLabel = getDashboardSectionLabel(pathname);
@@ -335,33 +347,35 @@ export function DashboardShell({ children, allowedKeys, accessLevel, accessMessa
   }, [isMobileSidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <DashboardSidebar activePathname={pathname} allowedKeys={allowedKeys} sectionLabel={sectionLabel} />
-      <DashboardMobileSidebar activePathname={pathname} allowedKeys={allowedKeys} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
-      <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
-        <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
-        <AccessLevelBanner level={accessLevel} message={accessMessage} daysUntilNextPhase={daysUntilNextPhase} />
-        {isTrialActive && remainingTrialDays <= 15 && remainingTrialDays > 7 && (
-          <div className="mx-6 mt-4 rounded-2xl border border-blue-500/20 bg-blue-50 px-5 py-4 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 md:mx-8 lg:mx-10">
-            <div className="flex items-center gap-3">
-              <span role="img" aria-hidden="true">💡</span>
-              <p className="font-semibold">
-                <T>{`Tu periodo de prueba termina en ${remainingTrialDays} días. Elige un plan para no perder continuidad.`}</T>
-              </p>
+    <DashboardContext.Provider value={{ canWrite, accessLevel }}>
+      <div className="min-h-screen bg-surface text-on-surface">
+        <DashboardSidebar activePathname={pathname} allowedKeys={allowedKeys} sectionLabel={sectionLabel} />
+        <DashboardMobileSidebar activePathname={pathname} allowedKeys={allowedKeys} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
+        <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
+          <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
+          <AccessLevelBanner level={accessLevel} message={accessMessage} daysUntilNextPhase={daysUntilNextPhase} />
+          {isTrialActive && remainingTrialDays <= 15 && remainingTrialDays > 7 && (
+            <div className="mx-6 mt-4 rounded-2xl border border-blue-500/20 bg-blue-50 px-5 py-4 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 md:mx-8 lg:mx-10">
+              <div className="flex items-center gap-3">
+                <span role="img" aria-hidden="true">💡</span>
+                <p className="font-semibold">
+                  <T>{`Tu periodo de prueba termina en ${remainingTrialDays} días. Elige un plan para no perder continuidad.`}</T>
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-        <main className="flex-1 bg-surface-container-low px-6 py-8 md:px-8 lg:px-10">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-            <div className="rounded-[20px] border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-xs font-semibold text-on-surface-variant lg:hidden">
-              <T>Ruta activa: </T>
-              <span>{activeNavigationDefinition.label}</span>
+          )}
+          <main className="flex-1 bg-surface-container-low px-6 py-8 md:px-8 lg:px-10">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+              <div className="rounded-[20px] border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-xs font-semibold text-on-surface-variant lg:hidden">
+                <T>Ruta activa: </T>
+                <span>{activeNavigationDefinition.label}</span>
+              </div>
+              {children}
             </div>
-            {children}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </DashboardContext.Provider>
   );
 }
 //-aqui termina componente DashboardShell-//

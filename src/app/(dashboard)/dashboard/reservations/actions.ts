@@ -8,6 +8,7 @@
 
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { revalidatePath } from "next/cache";
+import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
@@ -71,7 +72,7 @@ export interface CreateReservationActionResult {
 const MAX_PARTY_SIZE = 20;
 
 export async function createReservationAction(formData: FormData): Promise<CreateReservationActionResult> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const guestFullName = (formData.get("guestFullName") as string)?.trim() ?? "";
   const guestPhone = (formData.get("guestPhone") as string)?.trim() ?? "";
@@ -187,7 +188,7 @@ export async function updateReservationAction(
   reservationId: string,
   formData: FormData
 ): Promise<UpdateReservationActionResult> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const partySizeRaw = (formData.get("partySize") as string)?.trim();
   const dateRaw = (formData.get("date") as string)?.trim();
@@ -302,7 +303,7 @@ export async function updateReservationStatusAction(
   reservationId: string,
   targetStatus: string
 ): Promise<UpdateStatusActionResult> {
-  const restaurantId = await getRestaurantIdFromSession();
+  const restaurantId = await assertCanWrite();
 
   const { reservationRepository } = getReservationsInfrastructure();
 
