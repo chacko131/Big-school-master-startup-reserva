@@ -65,7 +65,7 @@ function GuestTableRow({ guest, onReviewNotes }: GuestTableRowProps) {
     : "Sin visitas registradas";
 
   const hasNotes = (guest.notes && guest.notes.trim().length > 0) || guest.historicalNotes.length > 0;
-  const totalNotesCount = guest.historicalNotes.length + (guest.notes ? 1 : 0);
+  const totalNotesCount = guest.historicalNotes.length + (guest.notes && guest.notes.trim().length > 0 ? 1 : 0);
 
   return (
     <tr className="transition-colors hover:bg-surface-container-high/60">

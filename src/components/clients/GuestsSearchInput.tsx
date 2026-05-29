@@ -52,6 +52,7 @@ export function GuestsSearchInput() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Buscar cliente, email o teléfono..."
+          aria-label="Buscar cliente, email o teléfono"
           className="w-full bg-transparent text-sm font-semibold text-on-surface outline-none placeholder:text-on-surface-variant/60"
         />
       </div>

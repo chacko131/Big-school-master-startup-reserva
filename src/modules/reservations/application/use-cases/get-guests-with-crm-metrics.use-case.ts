@@ -39,8 +39,6 @@ export class GetGuestsWithCrmMetrics {
       );
       const lastVisitAt = completedOrCheckedIn.length > 0
         ? completedOrCheckedIn[0]!.startAt
-        : reservations.length > 0
-        ? reservations[0]!.startAt
         : null;
 
       const historicalNotes = reservations

@@ -9,3 +9,4 @@ Renderizar la información del CRM de clientes (CRM de Huéspedes) de forma inte
 - **`GuestMetricCard`**: Tarjetas visuales de métricas clave (clientes activos, VIPs identificados y ausencias recurrentes).
 - **`GuestsSearchInput`**: Campo de búsqueda reactivo con debounce de entrada que sincroniza el parámetro `q` en los search parameters de la URL.
 - **`GuestsTable`**: Tabla y filas dinámicas para listar a los comensales, mostrando sus iniciales, contacto, última visita, reservas registradas, no-shows reales y su segmento de lealtad.
+- **`NotesModal`**: Modal interactivo de revisión que despliega el historial completo de peticiones especiales de reservas previas y notas fijas de la ficha de un cliente.

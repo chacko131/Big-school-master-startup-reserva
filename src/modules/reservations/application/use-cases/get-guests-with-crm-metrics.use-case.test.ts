@@ -208,4 +208,29 @@ describe("GetGuestsWithCrmMetrics", () => {
     expect(guestResult.historicalNotes[0]!.specialRequests).toBe("Prefiere terraza si es posible");
     expect(guestResult.loyaltySegment).toBe("VIP");
   });
+
+  it("retorna null en lastVisitAt si no hay reservas completadas o checked-in", async () => {
+    const guest = Guest.create({
+      id: "g_8",
+      restaurantId: "rest_1",
+      fullName: "Sofia Lopez",
+      phone: "+34600000008",
+      email: "sofia@email.com",
+      notes: null,
+      noShowCount: 0,
+    });
+
+    const reservations = [
+      { status: "PENDING", startAt: new Date("2026-05-25T20:00:00.000Z"), specialRequests: null },
+      { status: "CANCELLED", startAt: new Date("2026-05-20T20:00:00.000Z"), specialRequests: null },
+    ];
+
+    const repository = new InMemoryGuestRepository([{ guest, reservations }]);
+    const useCase = new GetGuestsWithCrmMetrics(repository);
+
+    const result = await useCase.execute({ restaurantId: "rest_1" });
+
+    const guestResult = result.guests[0]!;
+    expect(guestResult.lastVisitAt).toBeNull();
+  });
 });
