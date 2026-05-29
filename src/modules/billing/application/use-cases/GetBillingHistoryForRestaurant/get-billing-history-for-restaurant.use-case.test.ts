@@ -44,6 +44,7 @@ describe("GetBillingHistoryForRestaurant Use Case", () => {
           },
         ];
       },
+      updateSubscriptionPlan: async () => ({ success: true }),
     };
   });
 

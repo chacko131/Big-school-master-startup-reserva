@@ -10,6 +10,7 @@ import {
   type CreateCustomerPortalSessionInput,
   type StripeWebhookEvent,
   type InvoiceInfo,
+  type UpdateSubscriptionPlanInput,
 } from "../modules/billing/domain/ports/billing.service.port";
 
 //-aqui empieza funcion getStripeClient y es para obtener el cliente oficial de Stripe con la clave secreta-//
@@ -151,3 +152,36 @@ export async function listStripeInvoices(stripeCustomerId: string): Promise<Invo
   }));
 }
 //-aqui termina funcion listStripeInvoices-//
+
+//-aqui empieza funcion updateStripeSubscriptionPlan y es para cambiar de plan una suscripcion existente en Stripe-//
+/**
+ * Actualiza la suscripción de Stripe al nuevo plan (precio) aplicando prorrateo inmediato.
+ * @sideEffect — realiza llamadas a la API de Stripe para recuperar y actualizar la suscripción.
+ */
+export async function updateStripeSubscriptionPlan(
+  input: UpdateSubscriptionPlanInput
+): Promise<{ success: boolean }> {
+  const stripe = getStripeClient();
+
+  // 1. Recuperamos la suscripción actual para obtener el id del item de suscripción a actualizar
+  const subscription = await stripe.subscriptions.retrieve(input.stripeSubscriptionId);
+  const subscriptionItemId = subscription.items.data[0]?.id;
+
+  if (!subscriptionItemId) {
+    throw new Error("No se pudo recuperar el ítem de suscripción de Stripe para actualizar.");
+  }
+
+  // 2. Modificamos el precio de la suscripción con prorrateo inmediato
+  await stripe.subscriptions.update(input.stripeSubscriptionId, {
+    items: [
+      {
+        id: subscriptionItemId,
+        price: input.newPriceId,
+      },
+    ],
+    proration_behavior: "always_invoice",
+  });
+
+  return { success: true };
+}
+//-aqui termina funcion updateStripeSubscriptionPlan-//

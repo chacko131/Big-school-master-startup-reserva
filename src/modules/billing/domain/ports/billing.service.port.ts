@@ -60,4 +60,15 @@ export interface BillingService {
    * @sideEffect — llamadas de red externas.
    */
   listInvoices(stripeCustomerId: string): Promise<InvoiceInfo[]>;
+
+  /**
+   * Actualiza el plan de una suscripción de Stripe activa usando prorrateo inmediato.
+   * @sideEffect — llamadas de red externas.
+   */
+  updateSubscriptionPlan(input: UpdateSubscriptionPlanInput): Promise<{ success: boolean }>;
+}
+
+export interface UpdateSubscriptionPlanInput {
+  stripeSubscriptionId: string;
+  newPriceId: string;
 }

@@ -45,6 +45,7 @@ export interface UpdateSubscriptionProps {
   status?: SubscriptionStatus;
   stripeSubscriptionId?: string | null;
   priceId?: string | null;
+  planId?: SubscriptionPlanId;
   currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   trialEndsAt?: Date | null;
@@ -222,6 +223,7 @@ export class Subscription {
           ? props.stripeSubscriptionId
           : this.props.stripeSubscriptionId,
       priceId: props.priceId !== undefined ? props.priceId : this.props.priceId,
+      planId: props.planId !== undefined ? props.planId : this.props.planId,
       currentPeriodStart: props.currentPeriodStart ?? this.props.currentPeriodStart,
       currentPeriodEnd: props.currentPeriodEnd ?? this.props.currentPeriodEnd,
       trialEndsAt: props.trialEndsAt !== undefined ? props.trialEndsAt : this.props.trialEndsAt,

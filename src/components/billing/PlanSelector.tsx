@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { T } from "@/components/T";
 import { PlanCard } from "./PlanCard";
 import { CurrentPlanBanner } from "./CurrentPlanBanner";
@@ -31,6 +32,8 @@ export interface PlanSelectorProps {
 export function PlanSelector({ subscription }: PlanSelectorProps) {
   const [loadingPlan, setLoadingPlan] = useState<"basic" | "pro" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const isSuccessUpgrade = searchParams.get("success") === "upgrade";
 
   const handleSelectPlan = async (planId: "basic" | "pro") => {
     setLoadingPlan(planId);
@@ -82,6 +85,12 @@ export function PlanSelector({ subscription }: PlanSelectorProps) {
       {errorMessage && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-xs font-bold text-red-600 dark:text-red-400">
           <T>{errorMessage}</T>
+        </div>
+      )}
+
+      {isSuccessUpgrade && (
+        <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-xs font-bold text-green-600 dark:text-green-400">
+          <T>¡El plan se ha actualizado correctamente!</T>
         </div>
       )}
 

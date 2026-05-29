@@ -8,7 +8,7 @@
  * Cuando exista billing real, se reemplaza por un adaptador que consulte el plan activo.
  */
 
-export type FeatureName = "menu_management" | "analytics" | "integrations";
+export type FeatureName = "menu_management" | "analytics" | "guests";
 
 export interface FeatureGatePort {
   /**

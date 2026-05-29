@@ -13,6 +13,10 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { getCurrentUser } from "@/modules/auth/get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
+import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billing-infrastructure";
+import { GetRestaurantAccessLevel } from "@/modules/billing/application/use-cases/GetRestaurantAccessLevel/get-restaurant-access-level.use-case";
+import { type AccessLevelResult } from "@/modules/billing/domain/value-objects/access-level";
+import { type PlanFeatureKey } from "@/modules/billing/domain/value-objects/plan-features";
 import { type DashboardSectionKey, getDashboardActiveNavigationDefinition } from "@/constants/dashboard";
 
 interface DashboardLayoutProps {
@@ -102,52 +106,119 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     );
   }
 
-  //-aqui empieza calculo de allowedKeys y es para filtrar el sidebar segun permisos del usuario-//
+  //-aqui empieza calculo del nivel de acceso y es para determinar que puede hacer el restaurante-//
   /**
-   * Calcula las secciones visibles para el usuario actual.
-   * - Propietario (RESTAURANT_OWNER): null → acceso total sin filtrado.
-   * - Resto de roles: Set con las pageKeys donde canView=true + "home" siempre incluida.
+   * Consulta la suscripción del restaurante y calcula el nivel de acceso.
+   * - FULL: acceso total según plan.
+   * - GRACE: funciona pero con aviso.
+   * - READ_ONLY: solo puede ver datos, no crear ni editar.
+   * - SUSPENDED: solo ve billing.
    * @sideEffect
    */
-  const allowedKeys = await (async (): Promise<ReadonlySet<DashboardSectionKey> | null> => {
+  const accessLevel: AccessLevelResult = await (async () => {
     const user = await getCurrentUser();
     if (user === null) return null;
 
-    const { membershipRepository, rolePagePermissionRepository } = getUsersInfrastructure();
+    const { membershipRepository } = getUsersInfrastructure();
     const memberships = await membershipRepository.findActiveByUserId(user.id);
     if (memberships.length === 0) return null;
 
+    const restaurantId = memberships[0]!.toPrimitives().restaurantId;
+    const { subscriptionRepository } = getBillingInfrastructure();
+    const useCase = new GetRestaurantAccessLevel(subscriptionRepository);
+    return await useCase.execute({ restaurantId });
+  })() ?? {
+    level: "suspended" as const,
+    planId: null,
+    allowedFeatures: new Set<PlanFeatureKey>(["home", "billing", "settings"]),
+    isTrialActive: false,
+    remainingTrialDays: 0,
+    daysUntilNextPhase: null,
+    canWrite: false,
+    message: "No se encontró una suscripción activa.",
+  };
+  //-aqui termina calculo del nivel de acceso-//
+
+  //-aqui empieza calculo de allowedKeys y es para filtrar el sidebar segun plan + permisos del usuario-//
+  /**
+   * Calcula las secciones visibles combinando dos filtros:
+   * 1. Filtro de plan: las secciones que incluye el plan contratado (access level).
+   * 2. Filtro de rol: las secciones que el owner ha habilitado para el rol del usuario.
+   *
+   * - Propietario (RESTAURANT_OWNER): solo se filtra por plan, no por permisos de rol.
+   * - Resto de roles: se aplica la intersección de ambos filtros.
+   * @sideEffect
+   */
+  const allowedKeys = await (async (): Promise<ReadonlySet<DashboardSectionKey>> => {
+    // Convertimos las features del plan (PlanFeatureKey) a DashboardSectionKey
+    // Son las mismas strings, pero los tipos son independientes por diseño.
+    const planKeys = new Set<DashboardSectionKey>();
+    for (const feature of accessLevel.allowedFeatures) {
+      planKeys.add(feature as DashboardSectionKey);
+    }
+
+    const user = await getCurrentUser();
+    if (user === null) return planKeys;
+
+    const { membershipRepository, rolePagePermissionRepository } = getUsersInfrastructure();
+    const memberships = await membershipRepository.findActiveByUserId(user.id);
+    if (memberships.length === 0) return planKeys;
+
     const membership = memberships[0]!.toPrimitives();
 
-    if (membership.role === "RESTAURANT_OWNER") return null;
+    // El propietario no tiene restricciones de rol, solo de plan
+    if (membership.role === "RESTAURANT_OWNER") {
+      planKeys.add("billing");
+      planKeys.add("settings");
+      return planKeys;
+    }
 
+    // Para otros roles, intersectamos las features del plan con los permisos del rol
     const permissions = await rolePagePermissionRepository.findByRestaurant(membership.restaurantId);
     const visible = new Set<DashboardSectionKey>(["home"]);
     for (const p of permissions) {
       if (p.role === membership.role && p.canView) {
-        visible.add(p.pageKey as DashboardSectionKey);
+        const pageKey = p.pageKey as DashboardSectionKey;
+        // Solo incluimos la sección si también está permitida por el plan
+        if (planKeys.has(pageKey)) {
+          visible.add(pageKey);
+        }
       }
     }
+    // Billing y settings siempre accesibles independientemente del rol
+    visible.add("billing");
+    visible.add("settings");
     return visible;
   })();
   //-aqui termina calculo de allowedKeys-//
 
   //-aqui empieza guard de ruta y es para bloquear acceso directo por URL a secciones sin permiso-//
   /**
-   * Si el usuario tiene un set restringido de claves, verifica que la sección
-   * que está intentando visitar esté incluida. De lo contrario, devuelve 404.
+   * Si el usuario intenta acceder por URL a una sección que no tiene permitida,
+   * y además no es una sección siempre accesible, devolvemos 404.
    * @sideEffect
    */
-  if (allowedKeys !== null) {
-    const requestHeaders = await headers();
-    const pathname = requestHeaders.get("x-pathname") ?? requestHeaders.get("x-invoke-path") ?? "";
-    const activeKey = getDashboardActiveNavigationDefinition(pathname).key;
-    if (!allowedKeys.has(activeKey)) {
-      notFound();
-    }
+  const requestHeaders = await headers();
+  const pathname = requestHeaders.get("x-pathname") ?? requestHeaders.get("x-invoke-path") ?? "";
+  const activeKey = getDashboardActiveNavigationDefinition(pathname).key;
+
+  if (!allowedKeys.has(activeKey)) {
+    notFound();
   }
   //-aqui termina guard de ruta-//
 
-  return <DashboardShell allowedKeys={allowedKeys}>{children}</DashboardShell>;
+  return (
+    <DashboardShell
+      allowedKeys={allowedKeys}
+      accessLevel={accessLevel.level}
+      accessMessage={accessLevel.message}
+      canWrite={accessLevel.canWrite}
+      isTrialActive={accessLevel.isTrialActive}
+      remainingTrialDays={accessLevel.remainingTrialDays}
+      daysUntilNextPhase={accessLevel.daysUntilNextPhase}
+    >
+      {children}
+    </DashboardShell>
+  );
 }
 //-aqui termina pagina DashboardLayout-//

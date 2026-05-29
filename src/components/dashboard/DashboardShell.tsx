@@ -22,10 +22,16 @@ import {
   type DashboardSectionKey,
 } from "@/constants/dashboard";
 
-/** Secciones que el usuario actual puede ver. null = propietario (acceso total). */
+/** Secciones que el usuario actual puede ver (filtrado por plan + rol). */
 interface DashboardShellProps {
   children: ReactNode;
-  allowedKeys: ReadonlySet<DashboardSectionKey> | null;
+  allowedKeys: ReadonlySet<DashboardSectionKey>;
+  accessLevel: "full" | "grace" | "read_only" | "suspended";
+  accessMessage: string;
+  canWrite: boolean;
+  isTrialActive: boolean;
+  remainingTrialDays: number;
+  daysUntilNextPhase: number | null;
 }
 
 interface DashboardSidebarLinkProps {
@@ -39,7 +45,7 @@ interface DashboardSidebarLinkProps {
 interface DashboardSidebarProps {
   activePathname: string;
   sectionLabel: string;
-  allowedKeys: ReadonlySet<DashboardSectionKey> | null;
+  allowedKeys: ReadonlySet<DashboardSectionKey>;
 }
 
 interface DashboardSidebarContentProps extends DashboardSidebarProps {
@@ -109,7 +115,7 @@ function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, cl
 
   //-aqui empieza filteredNav y es para mostrar solo las secciones que el rol puede ver-//
   const filteredNav = dashboardNavigationDefinitions.filter((nav) =>
-    allowedKeys === null || allowedKeys.has(nav.key)
+    allowedKeys.has(nav.key)
   );
   //-aqui termina filteredNav-//
 
@@ -248,11 +254,59 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
 }
 //-aqui termina componente DashboardHeader-//
 
+//-aqui empieza componente AccessLevelBanner y es para mostrar el estado de la suscripción-//
+/**
+ * Renderiza un banner contextual según el nivel de acceso del restaurante.
+ * Solo se muestra cuando el acceso no es FULL.
+ *
+ * @pure
+ */
+function AccessLevelBanner({ level, message, daysUntilNextPhase }: { level: string; message: string; daysUntilNextPhase: number | null }) {
+  if (level === "full") return null;
+
+  const bannerStyles: Record<string, string> = {
+    grace: "border-yellow-500/30 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200",
+    read_only: "border-orange-500/30 bg-orange-50 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200",
+    suspended: "border-red-500/30 bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200",
+  };
+
+  const bannerIcons: Record<string, string> = {
+    grace: "⏳",
+    read_only: "🔒",
+    suspended: "⚠️",
+  };
+
+  return (
+    <div className={`mx-6 mt-4 rounded-2xl border px-5 py-4 md:mx-8 lg:mx-10 ${bannerStyles[level] ?? ""}`}>
+      <div className="flex items-start gap-3">
+        <span className="text-lg" role="img" aria-hidden="true">{bannerIcons[level] ?? ""}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold"><T>{message}</T></p>
+          {level !== "suspended" && daysUntilNextPhase !== null && daysUntilNextPhase > 0 && (
+            <p className="mt-1 text-xs opacity-80">
+              <T>{`${daysUntilNextPhase} día${daysUntilNextPhase !== 1 ? "s" : ""} restantes antes del siguiente nivel de restricción.`}</T>
+            </p>
+          )}
+          {(level === "read_only" || level === "suspended") && (
+            <Link
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-on-primary transition-colors hover:opacity-90"
+              href="/dashboard/billing"
+            >
+              <T>Activar un plan</T>
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+//-aqui termina componente AccessLevelBanner-//
+
 //-aqui empieza componente DashboardShell y es para envolver el dashboard con navegación compartida-//
 /**
  * Renderiza la estructura compartida del dashboard con navegación activa.
  */
-export function DashboardShell({ children, allowedKeys }: DashboardShellProps) {
+export function DashboardShell({ children, allowedKeys, accessLevel, accessMessage, canWrite: _canWrite, isTrialActive, remainingTrialDays, daysUntilNextPhase }: DashboardShellProps) {
   const pathname = usePathname();
   const activeNavigationDefinition = getDashboardActiveNavigationDefinition(pathname);
   const sectionLabel = getDashboardSectionLabel(pathname);
@@ -286,6 +340,17 @@ export function DashboardShell({ children, allowedKeys }: DashboardShellProps) {
       <DashboardMobileSidebar activePathname={pathname} allowedKeys={allowedKeys} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
       <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
         <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
+        <AccessLevelBanner level={accessLevel} message={accessMessage} daysUntilNextPhase={daysUntilNextPhase} />
+        {isTrialActive && remainingTrialDays <= 15 && remainingTrialDays > 7 && (
+          <div className="mx-6 mt-4 rounded-2xl border border-blue-500/20 bg-blue-50 px-5 py-4 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 md:mx-8 lg:mx-10">
+            <div className="flex items-center gap-3">
+              <span role="img" aria-hidden="true">💡</span>
+              <p className="font-semibold">
+                <T>{`Tu periodo de prueba termina en ${remainingTrialDays} días. Elige un plan para no perder continuidad.`}</T>
+              </p>
+            </div>
+          </div>
+        )}
         <main className="flex-1 bg-surface-container-low px-6 py-8 md:px-8 lg:px-10">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
             <div className="rounded-[20px] border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-xs font-semibold text-on-surface-variant lg:hidden">

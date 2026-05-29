@@ -42,6 +42,13 @@ interface StripeSubscriptionMock {
   current_period_end: number;
   cancel_at_period_end: boolean;
   trial_end: number | null;
+  items?: {
+    data?: Array<{
+      price?: {
+        id?: string;
+      };
+    }>;
+  };
 }
 
 //-aqui empieza clase SyncStripeWebhook y es para sincronizar base de datos local con Stripe-//
@@ -125,11 +132,31 @@ export class SyncStripeWebhook {
         const currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
         const cancelAtPeriodEnd = stripeSubscription.cancel_at_period_end;
 
+        const priceId = stripeSubscription.items?.data?.[0]?.price?.id ?? null;
+        let planId = localSubscription.planId;
+
+        if (priceId !== null) {
+          if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+            planId = "pro";
+          } else if (priceId === process.env.STRIPE_BASIC_PRICE_ID) {
+            planId = "basic";
+          } else {
+            console.error(
+              `[SyncStripeWebhook] Error de configuración: Se recibió el priceId "${priceId}" de Stripe pero no coincide con las variables de entorno STRIPE_PRO_PRICE_ID o STRIPE_BASIC_PRICE_ID. Suscripción Stripe ID: "${stripeSubscriptionId}", Suscripción Local ID: "${localSubscription.id}".`
+            );
+            throw new Error(
+              `El priceId "${priceId}" recibido de Stripe no coincide con STRIPE_PRO_PRICE_ID ni con STRIPE_BASIC_PRICE_ID.`
+            );
+          }
+        }
+
         const updated = localSubscription.updateDetails({
           status: stripeStatus,
           currentPeriodStart,
           currentPeriodEnd,
           cancelAtPeriodEnd,
+          priceId,
+          planId,
           trialEndsAt: stripeSubscription.trial_end !== null
             ? new Date(stripeSubscription.trial_end * 1000)
             : localSubscription.trialEndsAt,

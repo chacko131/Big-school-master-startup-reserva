@@ -14,6 +14,7 @@ import {
   createStripeCustomerPortalSession,
   constructStripeEvent,
   listStripeInvoices,
+  updateStripeSubscriptionPlan,
 } from "@/services/stripe.service";
 
 export interface BillingInfrastructure {
@@ -35,6 +36,7 @@ export function createBillingInfrastructure(prismaClient: PrismaClient): Billing
       createCustomerPortalSession: createStripeCustomerPortalSession,
       constructEvent: constructStripeEvent,
       listInvoices: listStripeInvoices,
+      updateSubscriptionPlan: updateStripeSubscriptionPlan,
     },
   };
 }

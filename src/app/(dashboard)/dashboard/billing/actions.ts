@@ -7,10 +7,12 @@
  */
 
 import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billing-infrastructure";
 import { CreateCheckoutSession } from "@/modules/billing/application/use-cases/CreateCheckoutSession/create-checkout-session.use-case";
 import { CreateCustomerPortalSession } from "@/modules/billing/application/use-cases/CreateCustomerPortalSession/create-customer-portal-session.use-case";
+import { ChangeSubscriptionPlan } from "@/modules/billing/application/use-cases/ChangeSubscriptionPlan/change-subscription-plan.use-case";
 
 export interface SubscribeToPlanResult {
   success: boolean;
@@ -47,15 +49,34 @@ export async function subscribeToPlanAction(planId: "basic" | "pro"): Promise<Su
     console.log("[subscribeToPlanAction] Consultando suscripción existente en la base de datos...");
     const existingSub = await billingInfrastructure.subscriptionRepository.findByRestaurantId(restaurantId);
 
-    // Flujo para restaurante ya registrado en Stripe: Redirigimos al Customer Portal para gestionar cambio/tarjeta
+    // Flujo para restaurante ya registrado en Stripe:
+    // Si ya cuenta con una suscripción activa de Stripe, realizamos el cambio directo de plan
+    if (existingSub !== null && existingSub.stripeCustomerId !== null && existingSub.stripeSubscriptionId !== null) {
+      console.log(`[subscribeToPlanAction] Suscripción activa encontrada. Ejecutando cambio directo de plan a "${planId}"...`);
+      const useCase = new ChangeSubscriptionPlan(
+        billingInfrastructure.subscriptionRepository,
+        billingInfrastructure.billingService
+      );
+      await useCase.execute({
+        restaurantId,
+        newPlanId: planId,
+      });
+      console.log("[subscribeToPlanAction] Cambio de plan directo completado con éxito.");
+      return {
+        success: true,
+        url: "/dashboard/billing?success=upgrade",
+      };
+    }
+
+    // Si tiene cliente pero no suscripción de Stripe activa (ej. canceló antes de pagar su primer checkout)
+    // Redirigimos al Customer Portal para autogestión o Checkout
     if (existingSub !== null && existingSub.stripeCustomerId !== null) {
-      console.log(`[subscribeToPlanAction] Cliente Stripe existente encontrado (stripeCustomerId: "${existingSub.stripeCustomerId}"). Redirigiendo a Customer Portal...`);
+      console.log(`[subscribeToPlanAction] Cliente Stripe sin suscripción activa encontrado. Redirigiendo a Customer Portal...`);
       const useCase = new CreateCustomerPortalSession(
         billingInfrastructure.subscriptionRepository,
         billingInfrastructure.billingService
       );
       const result = await useCase.execute({ restaurantId });
-      console.log(`[subscribeToPlanAction] Redirección generada con éxito al Customer Portal. URL: "${result.portalUrl}"`);
       return {
         success: true,
         url: result.portalUrl,
@@ -99,3 +120,34 @@ export async function subscribeToPlanAction(planId: "basic" | "pro"): Promise<Su
   }
 }
 //-aqui termina funcion subscribeToPlanAction-//
+
+//-aqui empieza funcion redirectToCustomerPortalAction y es una Server Action para redirigir al portal de Stripe-//
+/**
+ * Crea una sesión de Stripe Customer Portal y devuelve la URL para redirigir al usuario a su panel de facturación y facturas.
+ * @sideEffect — realiza llamadas a la base de datos y peticiones de red a Stripe API.
+ */
+export async function redirectToCustomerPortalAction(): Promise<void> {
+  console.log("[redirectToCustomerPortalAction] Iniciando proceso de redirección al Customer Portal");
+  let portalUrl: string;
+  try {
+    const restaurantId = await getRestaurantIdFromSession();
+    if (!restaurantId) {
+      throw new Error("No se encontró un restaurante activo en la sesión.");
+    }
+
+    const billingInfrastructure = getBillingInfrastructure();
+    const useCase = new CreateCustomerPortalSession(
+      billingInfrastructure.subscriptionRepository,
+      billingInfrastructure.billingService
+    );
+    const result = await useCase.execute({ restaurantId });
+    portalUrl = result.portalUrl;
+  } catch (error) {
+    console.error("[redirectToCustomerPortalAction] Error al generar sesión del portal de Stripe:", error);
+    throw error;
+  }
+
+  // Redirigimos fuera del bloque try/catch para que Next.js procese correctamente la redirección
+  redirect(portalUrl);
+}
+//-aqui termina funcion redirectToCustomerPortalAction-//

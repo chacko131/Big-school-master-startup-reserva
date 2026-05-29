@@ -14,8 +14,6 @@ export type DashboardSectionKey =
   | "guests"
   | "billing"
   | "analytics"
-  | "integrations"
-  | "notifications"
   | "team"
   | "settings"
 
@@ -94,24 +92,12 @@ export const dashboardNavigationDefinitions: ReadonlyArray<DashboardNavigationDe
     icon: "gridView",
   },
   {
-    key: "integrations",
-    label: "Integraciones",
-    href: "/dashboard/integrations",
-    icon: "rocketLaunch",
-  },
-  {
-    key: "notifications",
-    label: "Notificaciones",
-    href: "/dashboard/notifications",
-    icon: "help",
-  },
-  {
     key: "team",
     label: "Equipo",
     href: "/dashboard/team",
     icon: "person",
   },
-    {
+  {
     key: "settings",
     label: "Configuración",
     href: "/dashboard/settings",

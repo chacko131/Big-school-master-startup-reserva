@@ -45,6 +45,7 @@ describe("SyncStripeWebhook Use Case", () => {
         return JSON.parse(body);
       },
       listInvoices: async () => [],
+      updateSubscriptionPlan: async () => ({ success: true }),
     };
   });
 

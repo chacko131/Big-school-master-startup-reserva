@@ -208,7 +208,7 @@ export default async function TeamPage() {
   const isOwner = currentMembership?.isOwner() ?? false;
   const PERMISSION_PAGE_KEYS: ReadonlyArray<DashboardSectionKey> = [
     "reservations", "tables", "schedule", "guests",
-    "billing", "analytics", "integrations", "notifications",
+    "billing", "analytics",
   ];
 
   const pendingInvitations: ReadonlyArray<PendingTeamInvitationView> = isOwner

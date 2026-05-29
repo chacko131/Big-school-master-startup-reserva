@@ -185,7 +185,7 @@ function AnalyticsToolbar() {
           <OnboardingIcon name="schedule" className="h-4 w-4" />
           <T>Ver reservas</T>
         </Link>
-        <Link className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition-colors hover:opacity-90" href="/dashboard/integrations">
+        <Link className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition-colors hover:opacity-90" href="/dashboard/settings">
           <OnboardingIcon name="rocketLaunch" className="h-4 w-4" />
           <T>Ver fuentes</T>
         </Link>

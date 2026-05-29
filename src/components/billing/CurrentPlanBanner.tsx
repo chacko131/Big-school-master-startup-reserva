@@ -6,6 +6,7 @@
 
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { redirectToCustomerPortalAction } from "@/app/(dashboard)/dashboard/billing/actions";
 
 export interface CurrentPlanBannerProps {
   planId: "basic" | "pro" | "none";
@@ -62,6 +63,23 @@ export function CurrentPlanBanner({
               <T>Tu plan está al día y sincronizado con tu cuenta de Stripe de forma segura.</T>
             )}
           </p>
+
+          {!isTrial && planId !== "none" && (
+            <form action={redirectToCustomerPortalAction} className="mt-5">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/60 bg-surface px-4 py-2.5 text-xs font-bold text-primary transition-all hover:bg-surface-container-low hover:text-primary-dark"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+                  <path d="M16 8H8" />
+                  <path d="M16 12H8" />
+                  <path d="M12 16H8" />
+                </svg>
+                <T>Gestionar facturas y métodos de pago</T>
+              </button>
+            </form>
+          )}
         </div>
 
         {planId !== "none" && (
