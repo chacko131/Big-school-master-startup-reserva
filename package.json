@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "db:reset": "tsx prisma/reset-data.ts"
+    "db:reset": "tsx prisma/reset-data.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.3",

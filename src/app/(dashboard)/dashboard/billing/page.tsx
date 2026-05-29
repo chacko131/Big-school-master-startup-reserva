@@ -10,6 +10,8 @@ import { GetCurrentPlanForRestaurant } from "@/modules/billing/application/use-c
 import { PlanSelector } from "@/components/billing/PlanSelector";
 import { T } from "@/components/T";
 
+export const dynamic = "force-dynamic";
+
 //-aqui empieza pagina BillingPage y es para mostrar la facturación del restaurante-//
 /**
  * Renderiza el dashboard de facturación del restaurante consultando su suscripción en tiempo real.
