@@ -76,6 +76,53 @@ export class PrismaGuestRepository implements GuestRepository {
     return mapGuestRecordToEntity(persistedGuest);
   }
   //-aqui termina funcion save y se va autilizar en application-//
+
+  //-aqui empieza funcion findGuestsWithReservations y es para buscar huespedes con su historial de reservas-//
+  /**
+   * Obtiene todos los huéspedes de un restaurante (opcionalmente filtrados por búsqueda parcial)
+   * junto con el estado y fecha de inicio de todas sus reservas.
+   * @sideEffect
+   */
+  async findGuestsWithReservations(
+    restaurantId: string,
+    query?: string
+  ): Promise<Array<{ guest: Guest; reservations: Array<{ status: string; startAt: Date; specialRequests: string | null }> }>> {
+    const cleanQuery = query?.trim();
+
+    const guestRecords = await this.prismaClient.guest.findMany({
+      where: {
+        restaurantId,
+        ...(cleanQuery ? {
+          OR: [
+            { fullName: { contains: cleanQuery, mode: "insensitive" } },
+            { phone: { contains: cleanQuery, mode: "insensitive" } },
+            { email: { contains: cleanQuery, mode: "insensitive" } },
+          ],
+        } : {}),
+      },
+      include: {
+        reservations: {
+          select: {
+            status: true,
+            startAt: true,
+            specialRequests: true,
+          },
+          orderBy: {
+            startAt: "desc",
+          },
+        },
+      },
+      orderBy: {
+        fullName: "asc",
+      },
+    });
+
+    return guestRecords.map((record) => ({
+      guest: mapGuestRecordToEntity(record),
+      reservations: record.reservations,
+    }));
+  }
+  //-aqui termina funcion findGuestsWithReservations y se va autilizar en casos de uso de CRM-//
 }
 
 //-aqui empieza funcion mapGuestRecordToEntity y es para rehidratar la entidad Guest-//

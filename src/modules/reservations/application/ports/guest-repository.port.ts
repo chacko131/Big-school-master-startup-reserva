@@ -10,4 +10,8 @@ export interface GuestRepository {
   findById(id: string): Promise<Guest | null>;
   findByRestaurantAndPhone(restaurantId: string, phone: string): Promise<Guest | null>;
   save(guest: Guest): Promise<Guest>;
+  findGuestsWithReservations(
+    restaurantId: string,
+    query?: string
+  ): Promise<Array<{ guest: Guest; reservations: Array<{ status: string; startAt: Date; specialRequests: string | null }> }>>;
 }

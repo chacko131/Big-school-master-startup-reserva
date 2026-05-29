@@ -48,3 +48,8 @@ La carpeta está preparada para los primeros casos de uso del flujo de reservas.
 ### 2026-05-22 (UTC+02:00)
 
 - **`create-reservation-full.use-case.ts`**: añadido `UserRepository` al constructor. Tras filtrar los owners/managers activos del restaurante, el use case ahora resuelve sus `clerkId` vía `findManyByIds` antes de disparar el trigger de Novu, corrigiendo el mismatch entre el UUID interno de Prisma y el identificador de subscriber registrado en Novu.
+
+### 2026-05-29 (UTC+02:00)
+
+- **`get-guests-with-crm-metrics.use-case.ts`**: nuevo caso de uso que orquesta la lectura de clientes de la base de datos de Prisma y procesa dinámicamente sus ausencias reales, total de reservas, fecha de última visita y determina su segmento de lealtad (`loyaltySegment`) en base a reglas de negocio del CRM.
+

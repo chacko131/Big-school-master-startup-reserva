@@ -30,3 +30,8 @@ La carpeta está lista para definir contratos de datos del flujo de reservas.
 
 - **`get-available-slots.dto.ts`**: nuevo DTO con `GetAvailableSlotsInput` (restaurantId, date, partySize), `AvailableSlot` (startAt, endAt, availableTables) y `GetAvailableSlotsOutput`.
 - **`create-reservation-full.dto.ts`**: nuevo DTO con `CreateReservationFullInput` (datos del guest + partySize + startAt + specialRequests) y `CreateReservationFullOutput` (reservationId, guestId, status, startAt, endAt, cancellationDeadlineAt).
+
+### 2026-05-29 (UTC+02:00)
+
+- **`guest-crm.dto.ts`**: nuevo DTO que introduce `GuestCrmPrimitives` (huésped con métricas de reservas, no-shows reales y segmento de fidelidad) y los contratos de entrada/salida para el listado enriquecido de clientes.
+

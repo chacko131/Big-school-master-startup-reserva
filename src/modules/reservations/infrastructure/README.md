@@ -39,3 +39,8 @@ Ya existe un primer bloque real de infraestructura.
 
 - **`reservations-infrastructure.ts`**: añadido `businessHoursRepository` a la interfaz `ReservationsInfrastructure` y a las funciones de composición.
 - **Repositorios actualizados**: `PrismaReservationRepository` (+2 queries), `PrismaGuestRepository` (+1 query). Nuevo `PrismaBusinessHoursRepository`.
+
+### 2026-05-29 (UTC+02:00)
+
+- **`prisma-guest.repository.ts`**: implementado el método `findGuestsWithReservations` para consultar de forma óptima a los comensales asociados a un inquilino de forma insensible a mayúsculas e incluyendo en una sola llamada el estado y la fecha de inicio de sus reservas.
+

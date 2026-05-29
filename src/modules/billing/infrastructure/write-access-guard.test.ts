@@ -4,7 +4,7 @@
  * Tipo: lógica
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { assertCanWrite } from "./write-access-guard";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { getBillingInfrastructure } from "./billing-infrastructure";
@@ -19,7 +19,9 @@ vi.mock("./billing-infrastructure", () => ({
 }));
 
 describe("write-access-guard test suite", () => {
-  let mockSubscriptionRepository: any;
+  let mockSubscriptionRepository: {
+    findByRestaurantId: Mock;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -28,11 +30,11 @@ describe("write-access-guard test suite", () => {
       findByRestaurantId: vi.fn(),
     };
 
-    (getBillingInfrastructure as any).mockReturnValue({
+    (getBillingInfrastructure as Mock).mockReturnValue({
       subscriptionRepository: mockSubscriptionRepository,
     });
 
-    (getRestaurantIdFromSession as any).mockResolvedValue("test-restaurant-id");
+    (getRestaurantIdFromSession as Mock).mockResolvedValue("test-restaurant-id");
   });
 
   //-aqui empieza test de acceso permitido y es para validar que se retorne el ID si la suscripción permite escritura-//
