@@ -4,9 +4,11 @@
  * Tipo: UI
  */
 
+
 import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
 import Link from "next/link";
+import { ContactForm } from "./ContactForm";
 
 //-aqui empieza seccion ContactInfo con datos de contacto-//
 interface ContactInfoProps {
@@ -31,75 +33,6 @@ function ContactInfo({ label, value, href }: ContactInfoProps) {
   return content;
 }
 
-
-//-aqui empieza seccion ContactForm con formulario reutilizable-//
-interface ContactFormProps {
-  className?: string;
-}
-
-function ContactForm({ className = "" }: ContactFormProps) {
-  return (
-    <div className={`relative overflow-hidden rounded-xl bg-surface-container-low p-8 md:p-12 ${className}`}>
-      {/* Accent decorativo */}
-      <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-secondary-container/20 blur-3xl"></div>
-
-      <form className="relative z-10 space-y-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-on-surface/70">
-              <T>Nombre completo</T>
-            </label>
-            <input
-              className="w-full rounded-lg border-none bg-surface-container-highest p-4 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary"
-              placeholder="Mateo Guerrero"
-              type="text"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-on-surface/70">
-              <T>Nombre del restaurante</T>
-            </label>
-            <input
-              className="w-full rounded-lg border-none bg-surface-container-highest p-4 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary"
-              placeholder="La Hacienda"
-              type="text"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-on-surface/70">
-            <T>Correo electrónico</T>
-          </label>
-          <input
-            className="w-full rounded-lg border-none bg-surface-container-highest p-4 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary"
-            placeholder="mateo@lahacienda.com"
-            type="email"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-on-surface/70">
-            <T>¿Cómo podemos ayudar?</T>
-          </label>
-          <textarea
-            className="w-full resize-none rounded-lg border-none bg-surface-container-highest p-4 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary"
-            placeholder="Cuéntanos sobre tu plano de planta y necesidades de reservas..."
-            rows={5}
-          />
-        </div>
-
-        <button
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-5 text-lg font-bold tracking-tight text-on-primary transition-all hover:opacity-90"
-          type="submit"
-        >
-          <T>Enviar consulta</T>
-          <PublicIcon name="arrowForward" />
-        </button>
-      </form>
-    </div>
-  );
-}
 
 //-aqui empieza seccion FAQCard para tarjetas de preguntas frecuentes-//
 interface FAQCardProps {
