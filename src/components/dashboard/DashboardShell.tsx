@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import NotificationInbox from "./NotificationInbox";
 import type { OnboardingIconName } from "@/types/onboarding";
 import {
@@ -58,6 +59,8 @@ interface DashboardSidebarProps {
   activePathname: string;
   sectionLabel: string;
   allowedKeys: ReadonlySet<DashboardSectionKey>;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 interface DashboardSidebarContentProps extends DashboardSidebarProps {
@@ -65,7 +68,7 @@ interface DashboardSidebarContentProps extends DashboardSidebarProps {
   onNavigate?: () => void;
 }
 
-interface DashboardMobileSidebarProps extends DashboardSidebarProps {
+interface DashboardMobileSidebarProps extends Omit<DashboardSidebarProps, "isCollapsed" | "onToggleCollapse"> {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -76,28 +79,35 @@ interface DashboardMobileSidebarProps extends DashboardSidebarProps {
  *
  * @pure
  */
-function DashboardSidebarLink({ href, label, icon, active, onNavigate }: DashboardSidebarLinkProps) {
+interface DashboardSidebarLinkCollapsedProps extends DashboardSidebarLinkProps {
+  isCollapsed?: boolean;
+}
+
+function DashboardSidebarLink({ href, label, icon, active, onNavigate, isCollapsed }: DashboardSidebarLinkCollapsedProps) {
   const linkClassName = active
     ? "bg-primary text-on-primary shadow-sm"
     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
 
   return (
     <Link
-      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${linkClassName}`}
+      className={`flex items-center rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${isCollapsed ? "justify-center gap-0" : "gap-3"} ${linkClassName}`}
       href={href}
       aria-current={active ? "page" : undefined}
+      title={isCollapsed ? label : undefined}
       onClick={onNavigate}
     >
       <OnboardingIcon name={icon} className="h-5 w-5 shrink-0" />
-      <span>
-        <T>{label}</T>
-      </span>
+      {!isCollapsed && (
+        <span>
+          <T>{label}</T>
+        </span>
+      )}
     </Link>
   );
 }
 //-aqui termina componente DashboardSidebarLink-//
 
-const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-container-lowest p-6";
+const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-container-lowest transition-all duration-300";
 
 //-aqui empieza componente DashboardSidebar y es para mostrar la navegación lateral del dashboard-//
 /**
@@ -105,10 +115,17 @@ const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-co
  *
  * @pure
  */
-function DashboardSidebar({ activePathname, sectionLabel, allowedKeys }: DashboardSidebarProps) {
+function DashboardSidebar({ activePathname, sectionLabel, allowedKeys, isCollapsed, onToggleCollapse }: DashboardSidebarProps) {
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block">
-      <DashboardSidebarContent activePathname={activePathname} allowedKeys={allowedKeys} className="w-72 border-r border-outline-variant/20" sectionLabel={sectionLabel} />
+    <aside className={`hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block ${isCollapsed ? "lg:w-16" : "lg:w-72"} transition-all duration-300`}>
+      <DashboardSidebarContent
+        activePathname={activePathname}
+        allowedKeys={allowedKeys}
+        className={`${isCollapsed ? "w-16" : "w-72"} border-r border-outline-variant/20`}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={onToggleCollapse}
+        sectionLabel={sectionLabel}
+      />
     </aside>
   );
 }
@@ -120,7 +137,7 @@ function DashboardSidebar({ activePathname, sectionLabel, allowedKeys }: Dashboa
  *
  * @pure
  */
-function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, className = "", onNavigate }: DashboardSidebarContentProps) {
+function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, className = "", onNavigate, isCollapsed = false, onToggleCollapse }: DashboardSidebarContentProps) {
   const activeNavigationKey = getDashboardActiveNavigationDefinition(activePathname).key;
   const { user } = useUser();
   const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "";
@@ -132,27 +149,52 @@ function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, cl
   //-aqui termina filteredNav-//
 
   return (
-    <div className={`${sidebarBaseClassName} ${className}`}>
-      <div className="mb-10">
-        <p className="text-lg font-black tracking-tight text-primary">
-          <T>Reserva Latina</T>
-        </p>
-        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
-          <T>Panel operativo</T>
-        </p>
+    <div className={`${sidebarBaseClassName} ${isCollapsed ? "p-3" : "p-6"} ${className}`}>
+      {/* Logo + botón toggle */}
+      <div className={`mb-6 flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+        {!isCollapsed && (
+          <Link href="/" className="flex-1 min-w-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logoHeader.png" alt="Full Haus" className="w-full object-contain" />
+          </Link>
+        )}
+        <button
+          type="button"
+          aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+          onClick={onToggleCollapse}
+          className="shrink-0 rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface"
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {isCollapsed ? (
+              <>
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h16" />
+              </>
+            ) : (
+              <>
+                <path d="M4 7h16" />
+                <path d="M4 12h10" />
+                <path d="M4 17h16" />
+              </>
+            )}
+          </svg>
+        </button>
       </div>
 
-      <div className="mb-8 rounded-[22px] bg-surface-container-low p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-          <T>Vista actual</T>
-        </p>
-        <p className="mt-2 text-xl font-black tracking-tight text-primary">
-          <T>{sectionLabel}</T>
-        </p>
-        <p className="mt-2 text-xs leading-5 text-on-surface-variant">
-          <T>Acceso rápido a la operación diaria del restaurante.</T>
-        </p>
-      </div>
+      {!isCollapsed && (
+        <div className="mb-8 rounded-[22px] bg-surface-container-low p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
+            <T>Vista actual</T>
+          </p>
+          <p className="mt-2 text-xl font-black tracking-tight text-primary">
+            <T>{sectionLabel}</T>
+          </p>
+          <p className="mt-2 text-xs leading-5 text-on-surface-variant">
+            <T>Acceso rápido a la operación diaria del restaurante.</T>
+          </p>
+        </div>
+      )}
 
       <nav className="flex flex-1 flex-col gap-1">
         {filteredNav.map((navigationDefinition) => {
@@ -164,6 +206,7 @@ function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, cl
               active={isActive}
               href={navigationDefinition.href}
               icon={navigationDefinition.icon}
+              isCollapsed={isCollapsed}
               label={navigationDefinition.label}
               onNavigate={onNavigate}
             />
@@ -171,9 +214,9 @@ function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, cl
         })}
       </nav>
 
-      <div className="mt-auto flex items-center gap-3 rounded-[20px] border border-outline-variant/20 bg-surface-container-low p-4">
+      <div className={`mt-auto flex items-center rounded-[20px] border border-outline-variant/20 bg-surface-container-low p-4 ${isCollapsed ? "justify-center" : "gap-3"}`}>
         <UserButton />
-        {displayName.length > 0 && (
+        {!isCollapsed && displayName.length > 0 && (
           <p className="min-w-0 truncate text-xs font-semibold text-on-surface">
             {displayName}
           </p>
@@ -203,7 +246,15 @@ function DashboardMobileSidebar({ activePathname, sectionLabel, allowedKeys, isO
           <OnboardingIcon name="close" className="h-4 w-4" />
         </button>
 
-        <DashboardSidebarContent activePathname={activePathname} allowedKeys={allowedKeys} className="w-full border-none pt-10" onNavigate={onClose} sectionLabel={sectionLabel} />
+        <DashboardSidebarContent
+          activePathname={activePathname}
+          allowedKeys={allowedKeys}
+          className="w-full border-none pt-10"
+          isCollapsed={false}
+          onNavigate={onClose}
+          onToggleCollapse={onClose}
+          sectionLabel={sectionLabel}
+        />
       </aside>
     </div>
   );
@@ -254,9 +305,7 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
         </div>
 
         <div className="flex items-center gap-2 text-on-surface-variant">
-          <button className="rounded-full p-2 transition-colors hover:bg-surface-container-low hover:text-on-surface" type="button" aria-label="Ayuda">
-            <OnboardingIcon name="help" className="h-5 w-5" />
-          </button>
+          <LanguageToggle />
           <NotificationInbox />
           <UserButton />
         </div>
@@ -323,6 +372,7 @@ export function DashboardShell({ children, allowedKeys, accessLevel, accessMessa
   const activeNavigationDefinition = getDashboardActiveNavigationDefinition(pathname);
   const sectionLabel = getDashboardSectionLabel(pathname);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     if (!isMobileSidebarOpen) {
@@ -349,9 +399,15 @@ export function DashboardShell({ children, allowedKeys, accessLevel, accessMessa
   return (
     <DashboardContext.Provider value={{ canWrite, accessLevel }}>
       <div className="min-h-screen bg-surface text-on-surface">
-        <DashboardSidebar activePathname={pathname} allowedKeys={allowedKeys} sectionLabel={sectionLabel} />
+        <DashboardSidebar
+          activePathname={pathname}
+          allowedKeys={allowedKeys}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+          sectionLabel={sectionLabel}
+        />
         <DashboardMobileSidebar activePathname={pathname} allowedKeys={allowedKeys} isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} sectionLabel={sectionLabel} />
-        <div className="flex min-h-screen min-w-0 flex-col lg:ml-72">
+        <div className={`flex min-h-screen min-w-0 flex-col transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-72"}`}>
           <DashboardHeader isMobileSidebarOpen={isMobileSidebarOpen} onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} sectionLabel={sectionLabel} />
           <AccessLevelBanner level={accessLevel} message={accessMessage} daysUntilNextPhase={daysUntilNextPhase} />
           {isTrialActive && remainingTrialDays <= 15 && remainingTrialDays > 7 && (

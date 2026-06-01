@@ -25,16 +25,16 @@ export default function HomePage() {
           <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-8 lg:grid-cols-12">
             <div className="z-10 lg:col-span-7">
               <h1 className="mb-8 text-5xl font-extrabold leading-[1.1] tracking-tighter text-primary md:text-7xl">
-                <T>Optimiza tu Restaurante Latino</T>
+                <T>Gestión de Restaurantes con Calidez Humana</T>
               </h1>
               <p className="mb-10 max-w-xl text-xl leading-relaxed text-on-surface-variant">
-                <T>La plataforma de gestión diseñada para el alma de la hospitalidad latina. Eficiencia brutal, calidez humana.</T>
+                <T>La plataforma diseñada para quienes entienden que la hospitalidad es lo primero. Eficiencia real, sin perder el alma del servicio.</T>
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link href="/demo" className="rounded-lg bg-primary px-8 py-4 text-center text-lg font-bold text-on-primary transition-all hover:bg-zinc-800">
                   <T>Solicitar Demo</T>
                 </Link>
-                <Link href="/sign-in" className="rounded-lg bg-surface-container-highest px-8 py-4 text-center text-lg font-bold text-primary transition-all hover:bg-surface-container-high">
+                <Link href="/dashboard" className="rounded-lg bg-surface-container-highest px-8 py-4 text-center text-lg font-bold text-primary transition-all hover:bg-surface-container-high">
                   <T>Acceder</T>
                 </Link>
               </div>
@@ -64,20 +64,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="border-y border-zinc-100 bg-surface-container-low py-16">
-          <div className="mx-auto max-w-7xl px-8">
-            <p className="mb-12 text-center text-sm font-bold uppercase tracking-widest text-zinc-400">
-              <T>CON LA CONFIANZA DE LOS MEJORES</T>
-            </p>
-            <div className="flex flex-wrap justify-center gap-12 opacity-60 grayscale transition-all duration-500 hover:grayscale-0 md:gap-24">
-              <div className="text-2xl font-black tracking-tighter">EL CIELO</div>
-              <div className="text-2xl font-black tracking-tighter italic">Pujol</div>
-              <div className="text-2xl font-black tracking-tighter uppercase">Astrid y Gastón</div>
-              <div className="font-serif text-2xl font-black tracking-tighter">Boragó</div>
-              <div className="text-2xl font-black tracking-tighter">CENTRAL</div>
-            </div>
-          </div>
-        </section>
 
         <section className="py-32">
           <div className="mx-auto max-w-7xl px-8">
@@ -119,7 +105,7 @@ export default function HomePage() {
 
               <div className="relative overflow-hidden rounded-2xl bg-primary p-12 text-on-primary shadow-2xl">
                 <span className="mb-6 inline-block rounded-full border border-secondary-fixed-dim/30 px-3 py-1 text-xs font-bold text-secondary-fixed-dim">
-                  <T>CON RESERVA LATINA</T>
+                  CON FULL HAUS
                 </span>
                 <h3 className="mb-8 text-2xl font-bold text-white!"><T>Experiencia Impecable</T></h3>
                 <ul className="space-y-6">
@@ -226,13 +212,13 @@ export default function HomePage() {
           <div className="mx-auto max-w-5xl px-8 text-center">
             <h2 className="mb-10 text-5xl font-extrabold leading-tight tracking-tighter md:text-7xl"><T>¿Listo para elevar tu estándar?</T></h2>
             <p className="mx-auto mb-12 max-w-2xl text-xl text-on-surface-variant">
-              <T>Únete a los restaurantes más exclusivos de Latinoamérica que ya están transformando su operación.</T>
+              <T>Únete a los restaurantes que ya están transformando su operación con Full Haus.</T>
             </p>
             <div className="flex flex-col justify-center gap-6 sm:flex-row">
               <Link href="/demo" className="rounded-lg bg-primary px-10 py-5 text-xl font-bold text-on-primary shadow-2xl transition-transform duration-150 hover:scale-105">
                 <T>Solicitar demo</T>
               </Link>
-              <Link href="/sign-in" className="rounded-lg border-2 border-primary bg-white px-10 py-5 text-center text-xl font-bold text-primary transition-colors duration-150 hover:bg-zinc-50">
+              <Link href="/dashboard" className="rounded-lg border-2 border-primary bg-white px-10 py-5 text-center text-xl font-bold text-primary transition-colors duration-150 hover:bg-zinc-50">
                 <T>Acceder</T>
               </Link>
             </div>

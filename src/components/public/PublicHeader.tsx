@@ -8,6 +8,7 @@ import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
 import Link from "next/link";
+import Image from "next/image";
 
 interface PublicNavigationItem {
   label: string;
@@ -23,9 +24,8 @@ interface PublicHeaderProps {
 const defaultNavigationItems: PublicNavigationItem[] = [
   { label: "Plataforma", href: "/" },
   { label: "Nosotros", href: "/about" },
-  { label: "Precios", href: "/pricing" },
   { label: "Contacto", href: "/contact" },
-  { label: "Acceso", href: "/sign-in" },
+  { label: "Acceso", href: "/dashboard" },
 ];
 
 //-aqui empieza componente PublicHeader y es para reutilizar el header público-//
@@ -40,7 +40,9 @@ export function PublicHeader({
   return (
     <nav className="sticky top-0 z-50 w-full bg-black text-white transition-all duration-150">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
-        <Link href="/" className="text-2xl font-bold tracking-tighter text-white">Reserva Latina</Link>
+        <Link href="/" className="flex items-center">
+          <Image src="/logoHeader.png" alt="Full Haus" width={180} height={56} style={{ objectFit: "contain" }} />
+        </Link>
 
         <div className="hidden items-center space-x-8 md:flex">
           {navigationItems.map((item) => (

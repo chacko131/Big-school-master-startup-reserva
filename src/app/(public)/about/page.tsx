@@ -1,6 +1,6 @@
 /**
  * Archivo: page.tsx (about)
- * Responsabilidad: Presentar la historia, misión, valores y equipo de Reserva Latina.
+ * Responsabilidad: Presentar la historia, misión, valores y equipo de Full Haus.
  * Tipo: UI
  */
 
@@ -70,8 +70,8 @@ export default function AboutPage() {
     },
     {
       icon: "handshake",
-      title: "Compromiso Local",
-      description: "Acompañamos el crecimiento del sector gastronómico latino con herramientas accesibles, potentes y cercanas.",
+      title: "Compromiso Real",
+      description: "Acompañamos el crecimiento de cada restaurante con herramientas accesibles, potentes y cercanas. Sin importar dónde estés.",
     },
   ];
 
@@ -87,7 +87,7 @@ export default function AboutPage() {
               <T>Nuestra Trayectoria</T>
             </p>
             <h1 className="mb-8 text-5xl font-extrabold leading-[1.05] tracking-tighter text-primary md:text-7xl">
-              <T>Modernizando la Hospitalidad Latina</T>
+              <T>Modernizando la Hospitalidad de los Restaurantes</T>
             </h1>
             <p className="max-w-2xl text-xl font-light leading-relaxed text-on-surface-variant md:text-2xl">
               <T>
@@ -120,7 +120,7 @@ export default function AboutPage() {
             <div className="min-w-0 space-y-6 text-lg leading-relaxed text-on-surface-variant lg:col-span-7">
               <p>
                 <T>
-                  Reserva Latina surge para cerrar esa brecha tecnológica. No somos solo un software de reservas; somos el sistema operativo de la hospitalidad moderna.
+                  Full Haus surge para cerrar esa brecha tecnológica. No somos solo un software de reservas; somos el sistema operativo de la hospitalidad moderna.
                 </T>
               </p>
               <p>
@@ -176,14 +176,14 @@ export default function AboutPage() {
                 <T>Impacto Real</T>
               </h2>
               <p className="text-lg font-light text-on-primary/70">
-                <T>Crecemos junto a la comunidad gastronómica latina y medimos el éxito con resultados concretos.</T>
+                <T>Construimos Full Haus para que cada restaurante tenga las herramientas que merecen sus comensales.</T>
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7">
-              <AboutMetricCard value="+450" label="Restaurantes" />
-              <AboutMetricCard value="1.2M" label="Comensales" />
-              <AboutMetricCard value="15" label="Ciudades" />
+              <AboutMetricCard value="60" label="Días de prueba gratis" />
+              <AboutMetricCard value="5 min" label="Para configurarte" />
+              <AboutMetricCard value="0€" label="Sin tarjeta de crédito" />
             </div>
           </div>
         </section>
@@ -194,14 +194,14 @@ export default function AboutPage() {
         <PublicSection
           eyebrow="Únete al movimiento"
           title="Estamos transformando la industria restaurante a restaurante"
-          description="Descubre cómo podemos elevar tu negocio con una plataforma pensada para la hospitalidad latina moderna."
+          description="Descubre cómo Full Haus puede elevar tu operación. 60 días gratis, sin compromisos."
           actions={
             <>
               <Link href="/demo" className="rounded-lg bg-primary px-8 py-4 font-bold text-on-primary transition-all hover:bg-zinc-800">
                 <T>Solicitar Demo</T>
               </Link>
-              <Link href="/pricing" className="rounded-lg bg-surface-container-highest px-8 py-4 font-bold text-primary transition-all hover:bg-surface-container-high">
-                <T>Ver Planes</T>
+              <Link href="/onboarding/restaurant" className="rounded-lg bg-surface-container-highest px-8 py-4 font-bold text-primary transition-all hover:bg-surface-container-high">
+                <T>Comenzar gratis</T>
               </Link>
             </>
           }

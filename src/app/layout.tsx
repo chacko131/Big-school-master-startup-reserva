@@ -15,8 +15,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Reserva Latina",
-  description: "SaaS modular para reservas y operación de restaurantes latinos.",
+  title: "Full Haus",
+  description: "La plataforma diseñada para quienes entienden que la hospitalidad es lo primero. Gestión de reservas, mesas y operación en tiempo real.",
 };
 
 export default function RootLayout({

@@ -31,33 +31,6 @@ function ContactInfo({ label, value, href }: ContactInfoProps) {
   return content;
 }
 
-//-aqui empieza seccion SocialLinks con iconos de redes-//
-function SocialLinks() {
-  const socials = [
-    { icon: "language" as const, href: "#", label: "Sitio Web" },
-    { icon: "share" as const, href: "#", label: "Compartir" },
-  ];
-
-  return (
-    <div className="space-y-4 pt-4">
-      <span className="text-xs font-bold uppercase tracking-widest text-on-primary-container">
-        <T>Redes Sociales</T>
-      </span>
-      <div className="flex gap-6">
-        {socials.map((social) => (
-          <a
-            key={social.label}
-            href={social.href}
-            className="transition-colors hover:text-secondary"
-            aria-label={social.label}
-          >
-            <PublicIcon name={social.icon} />
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 //-aqui empieza seccion ContactForm con formulario reutilizable-//
 interface ContactFormProps {
@@ -170,7 +143,7 @@ export default function ContactPage() {
     {
       icon: "devices",
       title: "Compatibilidad de Hardware",
-      description: "Reserva Latina funciona en cualquier tablet, escritorio o dispositivo móvil moderno. No se requiere compra de hardware propietario.",
+      description: "Full Haus funciona en cualquier tablet, escritorio o dispositivo móvil moderno. No se requiere compra de hardware propietario.",
     },
   ];
 
@@ -184,21 +157,20 @@ export default function ContactPage() {
               <T>Conecta con el Mánager.</T>
             </h1>
             <p className="max-w-md text-xl font-light leading-relaxed text-on-surface-variant">
-              <T>Traemos la calidez de la hospitalidad latina a la precisión digital. Nuestro equipo está listo para ayudar en la transformación digital de tu restaurante.</T>
+              <T>Nuestro equipo está listo para ayudarte en la configuración y puesta en marcha de Full Haus en tu restaurante.</T>
             </p>
 
             <div className="grid grid-cols-1 gap-12 pt-12">
               <ContactInfo
                 label="Soporte Principal"
-                value="hola@reservalatina.com"
-                href="mailto:hola@reservalatina.com"
+                value="info@fullhaus.es"
+                href="mailto:info@fullhaus.es"
               />
               <ContactInfo
                 label="Línea Concierge"
-                value="+52 (55) 8421-9900"
-                href="tel:+525584219900"
+                value="+34 623 25 75 92"
+                href="tel:+34623257592"
               />
-              <SocialLinks />
             </div>
           </div>
 
@@ -211,12 +183,6 @@ export default function ContactPage() {
             <h2 className="text-4xl font-extrabold tracking-tight md:text-5xl">
               <T>Preguntas comunes.</T>
             </h2>
-            <Link
-              href="#"
-              className="border-b-2 border-primary pb-1 font-bold text-primary transition-all hover:border-secondary hover:text-secondary"
-            >
-              <T>Ver todo el Centro de Ayuda</T>
-            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

@@ -4,8 +4,8 @@
  * Tipo: UI
  */
 
-import { PublicIcon } from "@/components/public/PublicIcon";
 import { T } from "@/components/T";
+import Link from "next/link";
 
 //-aqui empieza componente PublicFooter y es para reutilizar el footer público-//
 /**
@@ -14,27 +14,28 @@ import { T } from "@/components/T";
 export function PublicFooter() {
   return (
     <footer className="w-full border-t border-white/10 bg-black py-12 text-white">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between px-8 md:flex-row">
-        <div className="mb-6 md:mb-0">
-          <span className="text-xl font-bold tracking-tighter text-white">Reserva Latina</span>
-          <p className="mt-2 text-sm text-white/90"><T>© 2026 Reserva Latina. Built for Hospitality.</T></p>
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-8 md:flex-row">
+        <div>
+          <span className="text-xl font-bold tracking-tighter text-white">Full Haus</span>
+          <p className="mt-2 text-sm text-white/60">© 2026 Full Haus. Built for Hospitality.</p>
         </div>
 
-        <div className="flex gap-8">
-          <a href="#" className="text-sm text-white transition-opacity hover:text-white/80">
-            <T>Política de privacidad</T>
+        <div className="flex flex-wrap justify-center gap-6 md:justify-end">
+          <a href="mailto:info@fullhaus.es" className="text-sm text-white/60 transition-opacity hover:text-white">
+            info@fullhaus.es
           </a>
-          <a href="#" className="text-sm text-white transition-opacity hover:text-white/80">
-            <T>Términos del servicio</T>
-          </a>
-          <a href="#" className="text-sm text-white transition-opacity hover:text-white/80">
-            <T>Configuración de cookies</T>
-          </a>
-        </div>
-
-        <div className="mt-8 flex items-center gap-4 md:mt-0">
-        
-          <PublicIcon name="share" className="cursor-pointer text-white transition-opacity hover:opacity-80" />
+          <Link href="/contact" className="text-sm text-white/60 transition-opacity hover:text-white">
+            <T>Contacto</T>
+          </Link>
+          <Link href="/privacy" className="text-sm text-white/60 transition-opacity hover:text-white">
+            <T>Privacidad</T>
+          </Link>
+          <Link href="/terms" className="text-sm text-white/60 transition-opacity hover:text-white">
+            <T>Términos</T>
+          </Link>
+          <Link href="/cookies" className="text-sm text-white/60 transition-opacity hover:text-white">
+            <T>Cookies</T>
+          </Link>
         </div>
       </div>
     </footer>

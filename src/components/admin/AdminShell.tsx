@@ -73,10 +73,11 @@ function AdminSidebar({ activePathname, sectionLabel }: AdminSidebarProps) {
   return (
     <aside className="hidden w-80 shrink-0 flex-col border-r border-outline-variant/20 bg-surface-container-lowest p-6 lg:flex">
       <div className="mb-10">
-        <p className="text-lg font-black tracking-tight text-primary">
-          <T>Reserva Latina</T>
-        </p>
-        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
+        <Link href="/">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logoHeader.png" alt="Full Haus" className="w-full object-contain" />
+        </Link>
+        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
           <T>Admin SaaS</T>
         </p>
       </div>

@@ -17,93 +17,51 @@ export default function DemoPage() {
 
       <main className="mx-auto max-w-7xl px-8 py-16 md:py-24">
         <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-12">
-          {/*-aqui empieza columna izquierda con formulario-*/}
+          {/*-aqui empieza columna izquierda con propuesta de valor y CTA al onboarding-*/}
           <div className="lg:col-span-7">
             <header className="mb-12">
               <span className="mb-4 block text-sm font-semibold uppercase tracking-widest text-secondary">
-                <T>Personalized Demo</T>
+                <T>Sin tarjeta de crédito</T>
               </span>
               <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-primary md:text-6xl">
-                <T>Agenda una demo personalizada</T>
+                <T>60 días gratis. Empieza hoy.</T>
               </h1>
               <p className="max-w-xl text-lg leading-relaxed text-on-surface-variant">
                 <T>
-                  Descubre cómo Reserva Latina optimiza la gestión de tu restaurante con tecnología diseñada para la alta hospitalidad. Sin compromisos, solo soluciones.
+                  Accede a todas las funcionalidades del Plan Pro sin coste durante 60 días. Configura tu restaurante en minutos y comprueba el impacto en tu operación antes de comprometerte.
                 </T>
               </p>
             </header>
 
-            <section className="rounded-xl bg-surface-container-lowest p-8 md:p-10">
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block px-1 text-sm font-medium text-on-surface">
-                      <T>Nombre completo</T>
-                    </label>
-                    <input
-                      className="h-12 w-full rounded-lg border-0 bg-surface-container-low px-4 transition-all focus:ring-1 focus:ring-primary"
-                      placeholder="Ej. Javier García"
-                      type="text"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block px-1 text-sm font-medium text-on-surface">
-                      <T>Nombre del Restaurante</T>
-                    </label>
-                    <input
-                      className="h-12 w-full rounded-lg border-0 bg-surface-container-low px-4 transition-all focus:ring-1 focus:ring-primary"
-                      placeholder="Ej. El Celler de Can Roca"
-                      type="text"
-                    />
-                  </div>
-                </div>
+            <section className="space-y-6">
+              <ul className="space-y-4">
+                {([
+                  { icon: "checkCircle", text: "Gestión completa de reservas y mesas" },
+                  { icon: "checkCircle", text: "Panel operativo en tiempo real" },
+                  { icon: "checkCircle", text: "Lista de espera y recordatorios automáticos" },
+                  { icon: "checkCircle", text: "Métricas y reportes de conversión" },
+                  { icon: "checkCircle", text: "Soporte prioritario durante todo el trial" },
+                ] as const).map(({ icon, text }) => (
+                  <li key={text} className="flex items-center gap-3">
+                    <PublicIcon name={icon} className="h-5 w-5 shrink-0 text-secondary" />
+                    <span className="text-base text-on-surface">
+                      <T>{text}</T>
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
-                <div className="space-y-2">
-                  <label className="block px-1 text-sm font-medium text-on-surface">
-                    <T>Número de Mesas</T>
-                  </label>
-                  <select className="h-12 w-full appearance-none rounded-lg border-0 bg-surface-container-low px-4 transition-all focus:ring-1 focus:ring-primary">
-                    <option>1 - 10 mesas</option>
-                    <option>11 - 30 mesas</option>
-                    <option>30+ mesas</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block px-1 text-sm font-medium text-on-surface">
-                      <T>Email corporativo</T>
-                    </label>
-                    <input
-                      className="h-12 w-full rounded-lg border-0 bg-surface-container-low px-4 transition-all focus:ring-1 focus:ring-primary"
-                      placeholder="javier@restaurante.com"
-                      type="email"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block px-1 text-sm font-medium text-on-surface">
-                      <T>Teléfono</T>
-                    </label>
-                    <input
-                      className="h-12 w-full rounded-lg border-0 bg-surface-container-low px-4 transition-all focus:ring-1 focus:ring-primary"
-                      placeholder="+34 000 000 000"
-                      type="tel"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <Link
-                    className="inline-flex h-14 w-full items-center justify-center rounded-lg bg-primary px-10 font-bold text-on-primary shadow-lg shadow-black/5 transition-all duration-200 hover:scale-95 md:w-auto"
-                    href="/onboarding/restaurant"
-                  >
-                    <T>Continuar al onboarding demo</T>
-                  </Link>
-                  <p className="mt-4 text-xs text-on-primary-container">
-                    <T>La demo es el punto de entrada al alta guiada del restaurante.</T>
-                  </p>
-                </div>
-              </form>
+              <div className="pt-4">
+                <Link
+                  className="inline-flex h-14 items-center justify-center rounded-lg bg-primary px-10 font-bold text-on-primary shadow-lg transition-all duration-200 hover:scale-95"
+                  href="/onboarding/restaurant"
+                >
+                  <T>Comenzar prueba gratuita →</T>
+                </Link>
+                <p className="mt-4 text-xs text-on-surface-variant">
+                  <T>Sin tarjeta de crédito. Configura tu restaurante en menos de 5 minutos.</T>
+                </p>
+              </div>
             </section>
           </div>
 
