@@ -4,16 +4,11 @@
  * Tipo: UI
  */
 
+import { AdminResumen } from "@/components/admin/resumen/AdminResumen";
 import Link from "next/link";
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
-
-interface AdminMetricDefinition {
-  label: string;
-  value: string;
-  caption: string;
-  tone: "primary" | "secondary" | "surface" | "warning";
-}
+import { getPlatformMetrics } from "./actions";
 
 interface AdminShortcutDefinition {
   label: string;
@@ -28,33 +23,6 @@ interface AdminActivityDefinition {
   title: string;
   description: string;
 }
-
-const adminMetricDefinitions: ReadonlyArray<AdminMetricDefinition> = [
-  {
-    label: "Restaurantes activos",
-    value: "128",
-    caption: "tenants supervisados hoy",
-    tone: "primary",
-  },
-  {
-    label: "MRR estimado",
-    value: "€34.8k",
-    caption: "ingreso recurrente mensual del SaaS",
-    tone: "secondary",
-  },
-  {
-    label: "Incidencias abiertas",
-    value: "3",
-    caption: "eventos operativos que requieren seguimiento",
-    tone: "surface",
-  },
-  {
-    label: "Usuarios activos",
-    value: "412",
-    caption: "cuentas con actividad reciente",
-    tone: "warning",
-  },
-] as const;
 
 const adminShortcutDefinitions: ReadonlyArray<AdminShortcutDefinition> = [
   {
@@ -112,28 +80,6 @@ const adminActivityDefinitions: ReadonlyArray<AdminActivityDefinition> = [
   },
 ] as const;
 
-//-aqui empieza funcion getAdminMetricToneClassName y es para pintar el tono visual de las metricas-//
-/**
- * Devuelve la clase de tono para las métricas del panel admin.
- *
- * @pure
- */
-function getAdminMetricToneClassName(tone: AdminMetricDefinition["tone"]): string {
-  switch (tone) {
-    case "primary":
-      return "bg-primary text-on-primary";
-    case "secondary":
-      return "bg-secondary-container text-secondary";
-    case "surface":
-      return "bg-surface-container-low text-on-surface";
-    case "warning":
-      return "bg-warning-container text-warning";
-    default:
-      return "bg-surface-container-low text-on-surface";
-  }
-}
-//-aqui termina funcion getAdminMetricToneClassName-//
-
 //-aqui empieza funcion getAdminShortcutToneClassName y es para pintar el tono de los accesos rapidos-//
 /**
  * Devuelve la clase de tono para los accesos rápidos.
@@ -155,36 +101,6 @@ function getAdminShortcutToneClassName(tone: AdminShortcutDefinition["tone"]): s
   }
 }
 //-aqui termina funcion getAdminShortcutToneClassName-//
-
-//-aqui empieza componente AdminMetricCard y es para mostrar una metrica de plataforma-//
-interface AdminMetricCardProps {
-  label: string;
-  value: string;
-  caption: string;
-  tone: AdminMetricDefinition["tone"];
-}
-
-/**
- * Renderiza una tarjeta de métrica del panel admin.
- *
- * @pure
- */
-function AdminMetricCard({ label, value, caption, tone }: AdminMetricCardProps) {
-  return (
-    <article className={`rounded-[24px] px-5 py-6 shadow-sm ${getAdminMetricToneClassName(tone)}`}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.22em] opacity-80">
-        <T>{label}</T>
-      </p>
-      <p className="mt-3 text-4xl font-black tracking-tight">
-        <T>{value}</T>
-      </p>
-      <p className="mt-2 text-sm leading-5 opacity-80">
-        <T>{caption}</T>
-      </p>
-    </article>
-  );
-}
-//-aqui termina componente AdminMetricCard-//
 
 //-aqui empieza componente AdminShortcutCard y es para mostrar accesos rapidos del panel-//
 interface AdminShortcutCardProps {
@@ -267,7 +183,9 @@ function AdminActivityRail() {
 /**
  * Renderiza la vista principal del panel de administración.
  */
-export default function AdminPage() {
+export default async function AdminPage() {
+  const platformMetrics = await getPlatformMetrics();
+
   return (
     <>
       <section className="rounded-[28px] bg-primary px-6 py-8 text-on-primary shadow-sm md:px-8 md:py-10">
@@ -295,17 +213,12 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {adminMetricDefinitions.map((metricDefinition) => (
-          <AdminMetricCard
-            caption={metricDefinition.caption}
-            key={metricDefinition.label}
-            label={metricDefinition.label}
-            tone={metricDefinition.tone}
-            value={metricDefinition.value}
-          />
-        ))}
-      </section>
+      <AdminResumen
+        estimatedMrrCents={platformMetrics.estimatedMrrCents}
+        pendingIncidents={platformMetrics.pendingIncidents}
+        totalActiveRestaurants={platformMetrics.totalActiveRestaurants}
+        totalActiveUsers={platformMetrics.totalActiveUsers}
+      />
 
       <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.5fr_0.95fr]">
         <div className="space-y-6">
