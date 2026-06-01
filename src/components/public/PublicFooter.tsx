@@ -17,7 +17,7 @@ export function PublicFooter() {
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between px-8 md:flex-row">
         <div className="mb-6 md:mb-0">
           <span className="text-xl font-bold tracking-tighter text-white">Reserva Latina</span>
-          <p className="mt-2 text-sm text-white/90"><T>© 2024 Reserva Latina. Built for Hospitality.</T></p>
+          <p className="mt-2 text-sm text-white/90"><T>© 2026 Reserva Latina. Built for Hospitality.</T></p>
         </div>
 
         <div className="flex gap-8">

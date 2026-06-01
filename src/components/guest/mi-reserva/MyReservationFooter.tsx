@@ -36,7 +36,7 @@ export function MyReservationFooter({ restaurantName, links }: MyReservationFoot
       </div>
 
       <p className="text-xs font-medium text-on-surface-variant">
-        <T>© 2024 Reserva Latina. Built for Hospitality.</T>
+        <T>© 2026 Reserva Latina. Built for Hospitality.</T>
       </p>
     </footer>
   );

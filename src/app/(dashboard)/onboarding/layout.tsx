@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/modules/auth/get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
+import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billing-infrastructure";
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -38,13 +39,17 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
 
   const restaurantId = memberships[0]!.toPrimitives().restaurantId;
   const { restaurantSettingsRepository, diningTableRepository } = getCatalogInfrastructure();
+  const { subscriptionRepository } = getBillingInfrastructure();
 
-  const [settings, tables] = await Promise.all([
+  const [settings, tables, subscription] = await Promise.all([
     restaurantSettingsRepository.findByRestaurantId(restaurantId),
     diningTableRepository.findByRestaurantId(restaurantId),
+    subscriptionRepository.findByRestaurantId(restaurantId),
   ]);
 
-  const onboardingComplete = settings !== null && tables.length > 0;
+  // El onboarding solo está completo cuando el usuario también pasó por el paso de plan
+  // (tiene suscripción activa o en trial). Sin suscripción, aún falta el paso de plan.
+  const onboardingComplete = settings !== null && tables.length > 0 && subscription !== null;
 
   if (onboardingComplete) {
     redirect("/dashboard");
