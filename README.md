@@ -1,4 +1,4 @@
-# 🌎 Reserva Latina SaaS — Plataforma Premium de Reservas para Restaurantes
+# 🌎 FullHaus SaaS — Plataforma Premium de Reservas para Restaurantes
 
 SaaS multitenant (marca blanca) premium de nivel empresarial diseñado para la reserva en tiempo real, distribución inteligente de salas, optimización de mesas en planos interactivos y gestión operativa de restaurantes latinoamericanos.
 
@@ -129,9 +129,9 @@ stateDiagram-v2
     Suspended --> Active : Regularización de pago / Suscripción reactivada
 ```
 
-1.  **Fase de Gracia (Días 0-7):** Acceso sin interrupciones. Se muestra un banner amarillo.
-2.  **Fase de Solo Lectura (Días 7-14):** Permiso de escritura bloqueado (`canWrite: false`). El personal puede ver reservas existentes y configurar el plano, pero no puede registrar nuevas reservas ni modificar mesas. Se muestra un banner naranja.
-3.  **Fase de Suspensión (Días 14+):** Todo el dashboard redirige obligatoriamente a la sección de Facturación. La página pública del restaurante se inhabilita para evitar reservas no deseadas. Se muestra un banner rojo.
+1. **Fase de Gracia (Días 0-7):** Acceso sin interrupciones. Se muestra un banner amarillo.
+2. **Fase de Solo Lectura (Días 7-14):** Permiso de escritura bloqueado (`canWrite: false`). El personal puede ver reservas existentes y configurar el plano, pero no puede registrar nuevas reservas ni modificar mesas. Se muestra un banner naranja.
+3. **Fase de Suspensión (Días 14+):** Todo el dashboard redirige obligatoriamente a la sección de Facturación. La página pública del restaurante se inhabilita para evitar reservas no deseadas. Se muestra un banner rojo.
 
 ### B. Gestión de Planes de Suscripción (Upgrade/Downgrade)
 
@@ -146,13 +146,13 @@ stateDiagram-v2
 
 El acceso al dashboard está controlado por roles a nivel de membresía de restaurante:
 
-| Rol                  | Gestión de Mesas y Zonas | Gestión de Reservas y Agenda | CRM / Clientes | Facturación y Planes | Configuración General |
-| :------------------- | :----------------------: | :--------------------------: | :------------: | :------------------: | :-------------------: |
-| **RESTAURANT_OWNER** |            SÍ            |              SÍ              |       SÍ       |          SÍ          |          SÍ           |
-| **MANAGER**          |            SÍ            |              SÍ              |       SÍ       |          NO          |          SÍ           |
-| **STAFF_WAITER**     |    NO (Solo lectura)     |              SÍ              |       SÍ       |          NO          |          NO           |
-| **STAFF_BAR**        |            NO            |      SÍ (Solo consulta)      |       NO       |          NO          |          NO           |
-| **STAFF_KITCHEN**    |            NO            |      NO (Solo timeline)      |       NO       |          NO          |          NO           |
+| Rol                        | Gestión de Mesas y Zonas | Gestión de Reservas y Agenda | CRM / Clientes | Facturación y Planes | Configuración General |
+| :------------------------- | :-----------------------: | :---------------------------: | :------------: | :-------------------: | :--------------------: |
+| **RESTAURANT_OWNER** |            SÍ            |              SÍ              |      SÍ      |          SÍ          |          SÍ          |
+| **MANAGER**          |            SÍ            |              SÍ              |      SÍ      |          NO          |          SÍ          |
+| **STAFF_WAITER**     |     NO (Solo lectura)     |              SÍ              |      SÍ      |          NO          |           NO           |
+| **STAFF_BAR**        |            NO            |      SÍ (Solo consulta)      |       NO       |          NO          |           NO           |
+| **STAFF_KITCHEN**    |            NO            |      NO (Solo timeline)      |       NO       |          NO          |           NO           |
 
 ---
 
@@ -302,4 +302,4 @@ Declara de forma explícita el comportamiento de los métodos:
 
 _Diseñado con dedicación y trabajo duro por y para la industria gastronomica._
 
-                         Desarrollador: LuckyDev
+    Desarrollador: LuckyDev
