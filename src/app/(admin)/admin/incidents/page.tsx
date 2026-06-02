@@ -181,6 +181,10 @@ function IncidentActionsRail() {
 export default function AdminIncidentsPage() {
   return (
     <>
+      <div className="rounded-2xl border border-dashed border-warning bg-warning-container/40 px-5 py-4 text-sm font-semibold text-on-surface">
+        <T>TODO: Esta pantalla es un placeholder. No existe lógica de backend, schema de Prisma ni integración real para incidencias. Los datos mostrados son ficticios.</T>
+      </div>
+
       <section className="rounded-[28px] bg-warning-container px-6 py-8 shadow-sm md:px-8 md:py-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
           <div>

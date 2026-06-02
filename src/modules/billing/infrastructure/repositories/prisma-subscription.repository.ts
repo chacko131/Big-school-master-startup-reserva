@@ -165,4 +165,35 @@ export class PrismaSubscriptionRepository implements SubscriptionRepository {
     });
   }
   //-aqui termina funcion findByStripeCustomerId-//
+
+  //-aqui empieza funcion findAll y es para obtener todas las suscripciones de la plataforma-//
+  /**
+   * Devuelve todas las suscripciones de la plataforma ordenadas por fecha de creación descendente.
+   * @pure
+   */
+  async findAll(): Promise<Subscription[]> {
+    const records = await this.prismaClient.subscription.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return records.map((record) =>
+      Subscription.fromPrimitives({
+        id: record.id,
+        restaurantId: record.restaurantId,
+        stripeCustomerId: record.stripeCustomerId,
+        stripeSubscriptionId: record.stripeSubscriptionId,
+        status: record.status as SubscriptionStatus,
+        planId: record.planId as SubscriptionPlanId,
+        priceId: record.priceId,
+        currentPeriodStart: record.currentPeriodStart,
+        currentPeriodEnd: record.currentPeriodEnd,
+        trialEndsAt: record.trialEndsAt,
+        cancelAtPeriodEnd: record.cancelAtPeriodEnd,
+        version: record.version,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      })
+    );
+  }
+  //-aqui termina funcion findAll-//
 }

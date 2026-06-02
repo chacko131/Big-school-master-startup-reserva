@@ -30,4 +30,11 @@ export interface SubscriptionRepository {
    * @pure
    */
   findByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | null>;
+
+  /**
+   * Devuelve todas las suscripciones de la plataforma.
+   * Útil para vistas administrativas globales.
+   * @pure
+   */
+  findAll(): Promise<Subscription[]>;
 }
