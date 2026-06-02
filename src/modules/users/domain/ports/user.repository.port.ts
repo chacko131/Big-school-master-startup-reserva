@@ -41,6 +41,13 @@ export interface UserRepository {
   findManyByIds(ids: string[]): Promise<User[]>;
 
   /**
+   * Devuelve todos los usuarios de la plataforma.
+   * Útil para vistas administrativas globales.
+   * @sideEffect
+   */
+  findAll(): Promise<User[]>;
+
+  /**
    * Persiste un User (insert si es nuevo, update si ya existe).
    * @sideEffect
    */

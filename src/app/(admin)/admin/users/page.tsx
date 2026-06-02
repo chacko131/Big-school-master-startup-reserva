@@ -1,91 +1,16 @@
 /**
  * Archivo: page.tsx
- * Responsabilidad: Renderizar la vista MVP de usuarios globales del panel SaaS.
+ * Responsabilidad: Renderizar la vista de usuarios globales del panel SaaS con datos reales.
  * Tipo: UI
  */
 
 import { T } from "@/components/T";
 import { OnboardingIcon } from "@/components/onboarding/OnboardingIcon";
+import { AdminMetricCard } from "@/components/admin/resumen/AdminMetricCard";
+import { getAdminUsersData, type AdminUserRow } from "./actions";
 
-interface UserMetricDefinition {
-  label: string;
-  value: string;
-  caption: string;
-  tone: "primary" | "secondary" | "surface" | "warning";
-}
-
-interface UserRowDefinition {
-  name: string;
-  email: string;
-  role: string;
-  tenant: string;
-  status: string;
-}
-
-interface UserAccessDefinition {
-  title: string;
-  description: string;
-}
-
-const userMetricDefinitions: ReadonlyArray<UserMetricDefinition> = [
-  {
-    label: "Usuarios totales",
-    value: "412",
-    caption: "cuentas activas y revisables",
-    tone: "primary",
-  },
-  {
-    label: "Owners",
-    value: "128",
-    caption: "cuentas con rol propietario",
-    tone: "secondary",
-  },
-  {
-    label: "Staff activo",
-    value: "196",
-    caption: "usuarios operativos en restaurantes",
-    tone: "surface",
-  },
-  {
-    label: "Invitados",
-    value: "22",
-    caption: "pendientes de verificación o acceso",
-    tone: "warning",
-  },
-] as const;
-
-const userRowDefinitions: ReadonlyArray<UserRowDefinition> = [
-  {
-    name: "Julian Rossi",
-    email: "julian@casaluma.com",
-    role: "Owner",
-    tenant: "Casa Luma",
-    status: "Activo",
-  },
-  {
-    name: "Carla Méndez",
-    email: "carla@taquerianorte.com",
-    role: "Manager",
-    tenant: "Taquería Norte",
-    status: "Activo",
-  },
-  {
-    name: "Leo Vargas",
-    email: "leo@maresdelsur.com",
-    role: "Host",
-    tenant: "Mareas del Sur",
-    status: "Revisar",
-  },
-  {
-    name: "Ana Pineda",
-    email: "ana@saborandino.com",
-    role: "Support",
-    tenant: "Sabor Andino",
-    status: "Pendiente",
-  },
-] as const;
-
-const userAccessDefinitions: ReadonlyArray<UserAccessDefinition> = [
+//-aqui empieza constante userAccessDefinitions-//
+const userAccessDefinitions = [
   {
     title: "Acceso global",
     description: "Vista consolidada para controlar roles y membresías multi-tenant.",
@@ -99,63 +24,32 @@ const userAccessDefinitions: ReadonlyArray<UserAccessDefinition> = [
     description: "Facilitar desbloqueos o validaciones manuales desde plataforma.",
   },
 ] as const;
+//-aqui termina constante userAccessDefinitions-//
 
-//-aqui empieza funcion getUserToneClassName y es para pintar el tono de las metricas-//
+//-aqui empieza funcion formatRole y es para traducir el rol de membership a texto legible-//
 /**
- * Devuelve la clase visual para el tono de una métrica de usuarios.
- *
+ * Traduce el MembershipRole a un label legible para la tabla.
  * @pure
  */
-function getUserToneClassName(tone: UserMetricDefinition["tone"]): string {
-  switch (tone) {
-    case "primary":
-      return "bg-primary text-on-primary";
-    case "secondary":
-      return "bg-secondary-container text-secondary";
-    case "surface":
-      return "bg-surface-container-low text-on-surface";
-    case "warning":
-      return "bg-warning-container text-warning";
-    default:
-      return "bg-surface-container-low text-on-surface";
-  }
-}
-//-aqui termina funcion getUserToneClassName-//
+function formatRole(role: string | null, globalRole: string): string {
+  if (globalRole === "SUPER_ADMIN") return "Super Admin";
+  if (!role) return "—";
 
-//-aqui empieza componente UserMetricCard y es para mostrar una metrica de usuarios-//
-interface UserMetricCardProps {
-  label: string;
-  value: string;
-  caption: string;
-  tone: UserMetricDefinition["tone"];
-}
+  const roleLabels: Record<string, string> = {
+    RESTAURANT_OWNER: "Owner",
+    MANAGER: "Manager",
+    STAFF_WAITER: "Mesero",
+    STAFF_KITCHEN: "Cocina",
+    STAFF_BAR: "Bar",
+  };
 
-/**
- * Renderiza una tarjeta de métrica del panel de usuarios.
- *
- * @pure
- */
-function UserMetricCard({ label, value, caption, tone }: UserMetricCardProps) {
-  return (
-    <article className={`rounded-[24px] px-5 py-6 shadow-sm ${getUserToneClassName(tone)}`}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.22em] opacity-80">
-        <T>{label}</T>
-      </p>
-      <p className="mt-3 text-4xl font-black tracking-tight">
-        <T>{value}</T>
-      </p>
-      <p className="mt-2 text-sm leading-5 opacity-80">
-        <T>{caption}</T>
-      </p>
-    </article>
-  );
+  return roleLabels[role] ?? role;
 }
-//-aqui termina componente UserMetricCard-//
+//-aqui termina funcion formatRole-//
 
 //-aqui empieza componente UserAccessRail y es para mostrar el control de accesos-//
 /**
  * Renderiza las notas de control del panel de usuarios.
- *
  * @pure
  */
 function UserAccessRail() {
@@ -185,11 +79,44 @@ function UserAccessRail() {
 }
 //-aqui termina componente UserAccessRail-//
 
-//-aqui empieza pagina AdminUsersPage y es para listar usuarios globales-//
+//-aqui empieza componente UserTableRow y es para renderizar una fila de usuario en la tabla-//
 /**
- * Renderiza la vista de usuarios del panel admin.
+ * Renderiza una fila de la tabla de usuarios.
+ * @pure
  */
-export default function AdminUsersPage() {
+function UserTableRow({ user }: { user: AdminUserRow }) {
+  return (
+    <div className="grid grid-cols-5 gap-4 px-4 py-4 text-sm" key={user.id}>
+      <span className="font-semibold text-on-surface">
+        {user.fullName ?? "—"}
+      </span>
+      <span className="truncate text-on-surface-variant">
+        {user.email}
+      </span>
+      <span className="font-semibold text-primary">
+        <T>{formatRole(user.primaryRole, user.globalRole)}</T>
+      </span>
+      <span className="text-on-surface-variant">
+        {user.primaryTenantName ?? "—"}
+      </span>
+      <span className="font-semibold text-on-surface">
+        <T>{user.derivedStatus}</T>
+      </span>
+    </div>
+  );
+}
+//-aqui termina componente UserTableRow-//
+
+//-aqui empieza pagina AdminUsersPage y es para listar usuarios globales con datos reales-//
+/**
+ * Renderiza la vista de usuarios del panel admin con datos reales de la base de datos.
+ *
+ * TODO: El estado "Revisar" no existe en el schema actual. No hay un reviewStatus
+ * en User ni Membership. Si se necesita, requiere cambio de Prisma schema.
+ */
+export default async function AdminUsersPage() {
+  const { stats, users } = await getAdminUsersData();
+
   return (
     <>
       <section className="rounded-[28px] bg-secondary-container px-6 py-8 shadow-sm md:px-8 md:py-10">
@@ -218,15 +145,30 @@ export default function AdminUsersPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {userMetricDefinitions.map((metricDefinition) => (
-          <UserMetricCard
-            caption={metricDefinition.caption}
-            key={metricDefinition.label}
-            label={metricDefinition.label}
-            tone={metricDefinition.tone}
-            value={metricDefinition.value}
-          />
-        ))}
+        <AdminMetricCard
+          label="Usuarios totales"
+          value={String(stats.totalUsers)}
+          caption="cuentas registradas en la plataforma"
+          tone="primary"
+        />
+        <AdminMetricCard
+          label="Owners"
+          value={String(stats.totalOwners)}
+          caption="cuentas con rol propietario activo"
+          tone="secondary"
+        />
+        <AdminMetricCard
+          label="Staff activo"
+          value={String(stats.totalActiveStaff)}
+          caption="usuarios operativos en restaurantes"
+          tone="surface"
+        />
+        <AdminMetricCard
+          label="Invitaciones pendientes"
+          value={String(stats.totalPendingInvitations)}
+          caption="memberships pendientes de aceptar"
+          tone="warning"
+        />
       </section>
 
       <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.35fr_0.95fr]">
@@ -257,25 +199,15 @@ export default function AdminUsersPage() {
               </span>
             </div>
             <div className="divide-y divide-outline-variant/20 bg-surface-container-lowest">
-              {userRowDefinitions.map((userDefinition) => (
-                <div className="grid grid-cols-5 gap-4 px-4 py-4 text-sm" key={userDefinition.email}>
-                  <span className="font-semibold text-on-surface">
-                    <T>{userDefinition.name}</T>
-                  </span>
-                  <span className="text-on-surface-variant">
-                    {userDefinition.email}
-                  </span>
-                  <span className="font-semibold text-primary">
-                    <T>{userDefinition.role}</T>
-                  </span>
-                  <span className="text-on-surface-variant">
-                    <T>{userDefinition.tenant}</T>
-                  </span>
-                  <span className="font-semibold text-on-surface">
-                    <T>{userDefinition.status}</T>
-                  </span>
+              {users.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-on-surface-variant">
+                  <T>No hay usuarios registrados todavía.</T>
                 </div>
-              ))}
+              ) : (
+                users.map((user) => (
+                  <UserTableRow key={user.id} user={user} />
+                ))
+              )}
             </div>
           </div>
         </div>

@@ -4,7 +4,11 @@
  * Tipo: lógica
  */
 
-import { UserRestaurantMembership } from "../entities/user-restaurant-membership.entity";
+import {
+  UserRestaurantMembership,
+  type MembershipRole,
+  type MembershipStatus,
+} from "../entities/user-restaurant-membership.entity";
 
 //-aqui empieza interfaz MembershipRepository y es para abstraer la persistencia de memberships-//
 /**
@@ -54,5 +58,26 @@ export interface MembershipRepository {
    * @sideEffect
    */
   deleteById(id: string): Promise<void>;
+
+  /**
+   * Devuelve todas las memberships de la plataforma.
+   * Útil para vistas administrativas globales.
+   * @sideEffect
+   */
+  findAll(): Promise<UserRestaurantMembership[]>;
+
+  /**
+   * Cuenta el total de memberships con un status determinado.
+   * Útil para métricas globales del panel de administración.
+   * @sideEffect
+   */
+  countByStatus(status: MembershipStatus): Promise<number>;
+
+  /**
+   * Cuenta el total de memberships con un rol y status determinados.
+   * Útil para métricas como "total owners activos" o "staff activo".
+   * @sideEffect
+   */
+  countByRoleAndStatus(role: MembershipRole, status: MembershipStatus): Promise<number>;
 }
 //-aqui termina interfaz MembershipRepository-//

@@ -110,6 +110,43 @@ export class PrismaMembershipRepository implements MembershipRepository {
   }
   //-aqui termina funcion save-//
 
+  //-aqui empieza funcion findAll y es para obtener todas las memberships de la plataforma-//
+  /**
+   * Devuelve todas las memberships de la plataforma ordenadas por fecha de creación descendente.
+   * @sideEffect
+   */
+  async findAll(): Promise<UserRestaurantMembership[]> {
+    const records = await this.prismaClient.userRestaurantMembership.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map(mapRecordToEntity);
+  }
+  //-aqui termina funcion findAll-//
+
+  //-aqui empieza funcion countByStatus y es para contar memberships por status globalmente-//
+  /**
+   * Cuenta el total de memberships con un status determinado.
+   * @sideEffect
+   */
+  async countByStatus(status: MembershipStatus): Promise<number> {
+    return this.prismaClient.userRestaurantMembership.count({
+      where: { status },
+    });
+  }
+  //-aqui termina funcion countByStatus-//
+
+  //-aqui empieza funcion countByRoleAndStatus y es para contar memberships por rol y status-//
+  /**
+   * Cuenta el total de memberships con un rol y status determinados.
+   * @sideEffect
+   */
+  async countByRoleAndStatus(role: MembershipRole, status: MembershipStatus): Promise<number> {
+    return this.prismaClient.userRestaurantMembership.count({
+      where: { role, status },
+    });
+  }
+  //-aqui termina funcion countByRoleAndStatus-//
+
   //-aqui empieza funcion deleteById y es para borrar permanentemente una membership-//
   /**
    * Elimina permanentemente una membership por su ID.

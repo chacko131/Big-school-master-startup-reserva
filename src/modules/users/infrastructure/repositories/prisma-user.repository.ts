@@ -65,6 +65,19 @@ export class PrismaUserRepository implements UserRepository {
   }
   //-aqui termina funcion findManyByIds-//
 
+  //-aqui empieza funcion findAll y es para obtener todos los usuarios de la plataforma-//
+  /**
+   * Devuelve todos los usuarios de la plataforma ordenados por fecha de creación descendente.
+   * @sideEffect
+   */
+  async findAll(): Promise<User[]> {
+    const records = await this.prismaClient.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map(mapRecordToEntity);
+  }
+  //-aqui termina funcion findAll-//
+
   //-aqui empieza funcion save y es para persistir un user con upsert-//
   /**
    * Guarda un User en la base de datos mediante upsert.
