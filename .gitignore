@@ -48,3 +48,6 @@ next-env.d.ts
 #agentes
 .agents
 
+
+# Sentry Config File
+.env.sentry-build-plugin
