@@ -9,6 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { ToggleRestaurantStatus } from "@/modules/catalog/application/use-cases/toggle-restaurant-status.use-case";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 //-aqui empieza funcion toggleRestaurantStatusAction y es para alternar el estado de un restaurante desde la UI-//
 /**
@@ -23,7 +24,8 @@ export async function toggleRestaurantStatusAction(restaurantId: string) {
     await useCase.execute(restaurantId);
 
     revalidatePath("/admin/restaurants");
-  } catch {
+  } catch (err) {
+    captureUnexpectedError(err, { action: "toggleRestaurantStatusAction", restaurantId });
     throw new Error("No se pudo cambiar el estado del restaurante.");
   }
 }

@@ -168,7 +168,41 @@ El acceso al dashboard está controlado por roles a nivel de membresía de resta
 
 ---
 
-## 🚀 4. Guía de Inicio Rápido para Desarrollo
+## 📡 4. Observabilidad y Monitoreo en Producción
+
+### Sentry — Monitoreo de Errores y Rendimiento
+
+La aplicación integra [Sentry](https://sentry.io) para captura automática de errores, trazado de rendimiento y reproducción de sesiones en producción.
+
+**Qué monitoriza:**
+- Errores no controlados en Server Actions, API Routes y componentes cliente
+- Trazas de rendimiento (Tracing) para detectar cuellos de botella
+- Session Replay para reproducir visualmente la sesión de un usuario cuando ocurre un error
+- Logs de aplicación enviados directamente a Sentry
+
+**Archivos de configuración:**
+- sentry.server.config.ts — inicialización en el servidor (Node.js runtime)
+- sentry.edge.config.ts — inicialización en el edge runtime (middleware)
+- src/instrumentation.ts — punto de entrada de instrumentación de Next.js
+- src/instrumentation-client.ts — inicialización en el cliente (browser)
+- src/app/global-error.tsx — captura de errores globales no controlados de React
+
+**Variables de entorno requeridas:**
+
+`nv
+# Token de autenticación para subir source maps durante el build (solo build time, nunca runtime)
+SENTRY_AUTH_TOKEN="sntrys_..."
+`
+
+> ⚠️ El SENTRY_AUTH_TOKEN debe añadirse como variable de entorno en Vercel pero **nunca** commitearse al repositorio. Ya está incluido en .gitignore automáticamente.
+
+**Dashboard de monitoreo:** [fullhaus.sentry.io](https://fullhaus.sentry.io)
+
+**Estado actual en producción:** ✅ Activo — Crash Free Rate 100%
+
+---
+
+## 🚀 5. Guía de Inicio Rápido para Desarrollo
 
 ### 1. Prerrequisitos
 
@@ -230,7 +264,7 @@ El panel de administración estará disponible en `http://localhost:3000/dashboa
 
 ---
 
-## 🧪 5. Suite de Pruebas y Control de Calidad
+## 🧪 6. Suite de Pruebas y Control de Calidad
 
 El proyecto implementa desarrollo defensivo estricto. Toda lógica de dominio crítica debe contar con cobertura de pruebas automatizadas en Vitest.
 
@@ -247,7 +281,7 @@ npx tsc --noEmit
 
 ---
 
-## 📜 6. Reglas de Oro de Desarrollo (Cumplimiento Obligatorio)
+## 📜 7. Reglas de Oro de Desarrollo (Cumplimiento Obligatorio)
 
 Si vas a colaborar o modificar este repositorio, debes seguir estas directrices sin excepción:
 

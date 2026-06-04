@@ -13,6 +13,7 @@ import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billi
 import { CreateCheckoutSession } from "@/modules/billing/application/use-cases/CreateCheckoutSession/create-checkout-session.use-case";
 import { CreateCustomerPortalSession } from "@/modules/billing/application/use-cases/CreateCustomerPortalSession/create-customer-portal-session.use-case";
 import { ChangeSubscriptionPlan } from "@/modules/billing/application/use-cases/ChangeSubscriptionPlan/change-subscription-plan.use-case";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 export interface SubscribeToPlanResult {
   success: boolean;
@@ -112,6 +113,7 @@ export async function subscribeToPlanAction(planId: "basic" | "pro"): Promise<Su
     };
   } catch (error) {
     console.error("[subscribeToPlanAction] Error crítico durante el flujo de suscripción:", error);
+    captureUnexpectedError(error, { action: "subscribeToPlanAction", planId });
     const message = error instanceof Error ? error.message : "Error desconocido al procesar el pago.";
     return {
       success: false,
@@ -144,6 +146,7 @@ export async function redirectToCustomerPortalAction(): Promise<void> {
     portalUrl = result.portalUrl;
   } catch (error) {
     console.error("[redirectToCustomerPortalAction] Error al generar sesión del portal de Stripe:", error);
+    captureUnexpectedError(error, { action: "redirectToCustomerPortalAction" });
     throw error;
   }
 

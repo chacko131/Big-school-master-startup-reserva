@@ -8,6 +8,7 @@
 
 import { Resend } from "resend";
 import { z } from "zod";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 //-aqui empieza schema de validacion del formulario de contacto-//
 const contactFormSchema = z.object({
@@ -97,6 +98,7 @@ export async function sendContactEmail(
 
     return { success: true, message: "Mensaje enviado correctamente" };
   } catch (err) {
+    captureUnexpectedError(err, { action: "sendContactEmail" });
     const errorMessage = err instanceof Error ? err.message : "Error desconocido";
     return { success: false, error: `Error al enviar: ${errorMessage}` };
   }

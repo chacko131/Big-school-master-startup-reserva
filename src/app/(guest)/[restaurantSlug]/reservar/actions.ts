@@ -16,6 +16,7 @@ import { CreateReservationFull } from "@/modules/reservations/application/use-ca
 import { DuplicateReservationError } from "@/modules/reservations/application/errors/duplicate-reservation.error";
 import { NoAvailabilityError } from "@/modules/reservations/application/errors/no-availability.error";
 import { OutsideBusinessHoursError } from "@/modules/reservations/application/errors/outside-business-hours.error";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 export interface FetchAvailableSlotsResult {
   slots: string[];
@@ -71,7 +72,8 @@ export async function fetchAvailableSlots(
       date: parsedDate,
       partySize,
     });
-  } catch {
+  } catch (err) {
+    captureUnexpectedError(err, { action: "fetchAvailableSlots", restaurantSlug, date });
     return { slots: [], closedDays, error: "No se pudieron obtener los horarios disponibles." };
   }
 
@@ -194,6 +196,7 @@ export async function createGuestReservationAction(
     if (error instanceof DuplicateReservationError) {
       return { success: false, error: "Ya tienes una reserva activa en esa franja horaria." };
     }
+    captureUnexpectedError(error, { action: "createGuestReservationAction", restaurantSlug });
     return { success: false, error: "Error inesperado al crear la reserva." };
   }
 }

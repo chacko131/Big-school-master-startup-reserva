@@ -19,6 +19,7 @@ import { DeleteMenuItem } from "@/modules/catalog/application/use-cases/delete-m
 import { type MenuCategoryPrimitives } from "@/modules/catalog/domain/entities/menu-category.entity";
 import { type MenuItemPrimitives } from "@/modules/catalog/domain/entities/menu-item.entity";
 import { cloudinaryService } from "@/services/cloudinary.service";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ export async function fetchMenuCategoriesAction(): Promise<
 
     return { success: true, data: categoriesWithItems };
   } catch (error) {
+    captureUnexpectedError(error, { action: "fetchMenuCategoriesAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -103,6 +105,7 @@ export async function addMenuCategoryAction(
 
     return { success: true, data: category.toPrimitives() };
   } catch (error) {
+    captureUnexpectedError(error, { action: "addMenuCategoryAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -138,6 +141,7 @@ export async function updateMenuCategoryAction(
 
     return { success: true, data: updated.toPrimitives() };
   } catch (error) {
+    captureUnexpectedError(error, { action: "updateMenuCategoryAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -176,6 +180,7 @@ export async function deleteMenuCategoryAction(categoryId: string): Promise<Menu
 
     return { success: true };
   } catch (error) {
+    captureUnexpectedError(error, { action: "deleteMenuCategoryAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -220,6 +225,7 @@ export async function addMenuItemAction(
 
     return { success: true, data: item.toPrimitives() };
   } catch (error) {
+    captureUnexpectedError(error, { action: "addMenuItemAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -274,6 +280,7 @@ export async function updateMenuItemAction(
 
     return { success: true, data: updated.toPrimitives() };
   } catch (error) {
+    captureUnexpectedError(error, { action: "updateMenuItemAction" });
     return { success: false, error: String(error) };
   }
 }
@@ -309,6 +316,7 @@ export async function deleteMenuItemAction(itemId: string): Promise<MenuActionRe
 
     return { success: true };
   } catch (error) {
+    captureUnexpectedError(error, { action: "deleteMenuItemAction" });
     return { success: false, error: String(error) };
   }
 }

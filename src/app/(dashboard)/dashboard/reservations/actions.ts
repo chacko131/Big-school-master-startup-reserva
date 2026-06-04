@@ -19,6 +19,7 @@ import { type GetTodayReservationsOutput } from "@/modules/reservations/applicat
 import { DuplicateReservationError } from "@/modules/reservations/application/errors/duplicate-reservation.error";
 import { NoAvailabilityError } from "@/modules/reservations/application/errors/no-availability.error";
 import { OutsideBusinessHoursError } from "@/modules/reservations/application/errors/outside-business-hours.error";
+import { captureUnexpectedError } from "@/lib/sentry";
 
 
 //-aqui empieza funcion fetchTodayReservations y es para obtener reservas del dia desde el servidor-//
@@ -166,6 +167,7 @@ export async function createReservationAction(formData: FormData): Promise<Creat
       };
     }
 
+    captureUnexpectedError(error, { action: "createReservationAction", restaurantId });
     return { success: false, error: "Error inesperado al crear la reserva." };
   }
 }
@@ -253,6 +255,7 @@ export async function updateReservationAction(
     if (err instanceof Error && err.name === "ReservationValidationError") {
       return { success: false, error: "No se puede modificar una reserva en ese estado." };
     }
+    captureUnexpectedError(err, { action: "updateReservationAction", reservationId });
     return { success: false, error: "Error inesperado al actualizar la reserva." };
   }
 }
@@ -349,6 +352,9 @@ export async function updateReservationStatusAction(
     return { success: true };
   } catch (err) {
     const userMessage = mapDomainErrorToUserMessage(err);
+    if (userMessage === "Ocurrió un error al actualizar la reserva.") {
+      captureUnexpectedError(err, { action: "updateReservationStatusAction", reservationId, targetStatus });
+    }
     return { success: false, error: userMessage };
   }
 }
