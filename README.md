@@ -266,7 +266,11 @@ El panel de administración estará disponible en `http://localhost:3000/dashboa
 
 ## 🧪 6. Suite de Pruebas y Control de Calidad
 
-El proyecto implementa desarrollo defensivo estricto. Toda lógica de dominio crítica debe contar con cobertura de pruebas automatizadas en Vitest.
+El proyecto implementa desarrollo defensivo estricto con dos niveles de testing:
+
+### Tests unitarios e integración — Vitest
+
+Toda lógica de dominio crítica cuenta con cobertura de pruebas en Vitest.
 
 ```bash
 # Ejecutar suite completa de tests unitarios y de integración
@@ -278,6 +282,30 @@ pnpm lint
 # Verificar compilación estricta de TypeScript
 npx tsc --noEmit
 ```
+
+### Tests end-to-end — Playwright
+
+El proyecto incluye tests e2e con [Playwright](https://playwright.dev) que verifican los flujos críticos de la aplicación en un navegador real (Chromium).
+
+**Tests incluidos:**
+- `acceso-publico.spec.ts` — verifica que rutas protegidas (`/dashboard`, `/admin`, `/onboarding`) redirigen a login sin sesión activa, y que rutas públicas son accesibles sin autenticación
+- `reserva-publica.spec.ts` — verifica que el flujo de reserva pública del huésped carga correctamente
+- `seguridad-headers.spec.ts` — verifica que los security headers HTTP (OWASP A05) están activos en producción: `X-Frame-Options`, `X-Content-Type-Options`, `Content-Security-Policy`, etc.
+
+**Requisito previo:** la app debe estar corriendo localmente (`pnpm dev`) antes de ejecutar los tests.
+
+```bash
+# Ejecutar todos los tests e2e en modo headless
+pnpm test:e2e
+
+# Abrir la interfaz visual interactiva de Playwright (recomendado)
+pnpm test:e2e:ui
+
+# Ver el reporte HTML con resultados detallados tras la ejecución
+pnpm test:e2e:report
+```
+
+> El slug del restaurante de prueba se puede configurar con la variable `TEST_RESTAURANT_SLUG` en `.env`. Por defecto usa `al-carbon`.
 
 ---
 
