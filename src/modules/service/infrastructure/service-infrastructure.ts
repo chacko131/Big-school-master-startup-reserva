@@ -11,6 +11,10 @@ import type {
   OrderItemRepository,
 } from "../domain/ports/order.repository.port";
 import { PrismaMenuItemCostingRepository } from "./repositories/prisma-menu-item-costing.repository";
+import {
+  PrismaOrderRepository,
+  PrismaOrderItemRepository,
+} from "./repositories/prisma-order.repository";
 
 // ---------------------------------------------------------------------------
 // Interfaz pública de la infraestructura del módulo
@@ -18,8 +22,8 @@ import { PrismaMenuItemCostingRepository } from "./repositories/prisma-menu-item
 
 export interface ServiceInfrastructure {
   costingRepository: MenuItemCostingRepository;
-  orderRepository: OrderRepository;       // implementado en Fase 2
-  orderItemRepository: OrderItemRepository; // implementado en Fase 2
+  orderRepository: OrderRepository;
+  orderItemRepository: OrderItemRepository;
 }
 
 //-aqui empieza funcion getServiceInfrastructure y es para ensamblar la infraestructura del módulo service-//
@@ -28,14 +32,13 @@ export interface ServiceInfrastructure {
  * Reutiliza el PrismaClient global de la app.
  * @pure (referencial — misma instancia de Prisma siempre)
  */
-export function getServiceInfrastructure(): Pick<
-  ServiceInfrastructure,
-  "costingRepository"
-> {
+export function getServiceInfrastructure(): ServiceInfrastructure {
   const prisma = getPrismaClient();
 
   return {
     costingRepository: new PrismaMenuItemCostingRepository(prisma),
+    orderRepository: new PrismaOrderRepository(prisma),
+    orderItemRepository: new PrismaOrderItemRepository(prisma),
   };
 }
 //-aqui termina funcion getServiceInfrastructure-//
