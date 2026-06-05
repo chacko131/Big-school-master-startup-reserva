@@ -19,7 +19,7 @@ import { type FloorPlanTable } from "@/components/dashboard/tables/floorPlanMock
 import { type RestaurantZonePrimitives } from "@/modules/catalog/domain/entities/restaurant-zone.entity";
 import { type FloorPlanElementPrimitives } from "@/modules/catalog/domain/entities/floor-plan-element.entity";
 import { type DiningTablePrimitives } from "@/modules/catalog/domain/entities/dining-table.entity";
-import { captureUnexpectedError } from "@/lib/sentry";
+import { captureUnexpectedError as _captureUnexpectedError } from "@/lib/sentry";
 
 
 //-aqui empieza funcion ensureDefaultZoneAction y es para garantizar que el restaurante tenga al menos la zona principal-//

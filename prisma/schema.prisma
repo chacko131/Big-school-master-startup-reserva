@@ -103,6 +103,7 @@ model Restaurant {
   invitationTokens   TeamInvitationToken[]
   rolePagePermissions RolePagePermission[]
   subscription        Subscription?
+  orders              Order[]
 
   @@index([isActive])
   @@index([slug])
@@ -161,6 +162,7 @@ model DiningTable {
   restaurant       Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   zone             RestaurantZone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   reservationLinks ReservationTable[]
+  orders           Order[]
 
   @@unique([restaurantId, name])
   @@index([restaurantId, isActive])
@@ -297,7 +299,9 @@ model MenuItem {
   sortOrder      Int          @default(0)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  category       MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category       MenuCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+  costing        MenuItemCosting?
 
   @@index([categoryId, isAvailable])
   @@index([categoryId, sortOrder])
@@ -439,4 +443,119 @@ model Subscription {
   updatedAt            DateTime  @updatedAt
 
   restaurant           Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// MÓDULO: SERVICE (Servicio en Sala)
+// ---------------------------------------------------------------------------
+
+/// Estado global de una orden de mesa.
+/// OPEN       → el camarero está tomando o ampliando el pedido.
+/// SUBMITTED  → pedido enviado a cocina/barra; ya no se puede modificar sin autorización.
+/// CLOSED     → orden cerrada y pagada (el arqueo del día la incluye).
+/// CANCELLED  → orden anulada (no genera cifras de venta).
+enum OrderStatus {
+  OPEN
+  SUBMITTED
+  CLOSED
+  CANCELLED
+}
+
+/// Estado de un ítem individual dentro de una orden.
+/// QUEUED     → esperando en la cola de la estación.
+/// PREPARING  → la estación lo ha tomado y está en preparación.
+/// READY      → listo para que el camarero lo recoja.
+/// SERVED     → entregado al cliente.
+/// CANCELLED  → ítem anulado (no genera venta).
+enum OrderItemStatus {
+  QUEUED
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+/// Estación de preparación a la que se enruta el ítem.
+/// KITCHEN → cocina (platos calientes/fríos).
+/// BAR     → barra (bebidas, cócteles).
+/// NONE    → sin preparación (pan, cubiertos, etc.).
+enum PreparationArea {
+  KITCHEN
+  BAR
+  NONE
+}
+
+/// Orden de mesa: agrupa los ítems pedidos por un camarero para una mesa concreta.
+/// Los totales (totalPublic, totalCost) se calculan y persisten al cerrar la orden.
+/// version controla la concurrencia optimista.
+model Order {
+  id            String      @id @default(cuid())
+  restaurantId  String
+  tableId       String
+  openedByUserId String     /// ID del camarero que abrió la orden (User.id).
+  status        OrderStatus @default(OPEN)
+  totalPublic   Decimal     @default(0) @db.Decimal(10, 2) /// Suma de precios públicos al cierre.
+  totalCost     Decimal     @default(0) @db.Decimal(10, 2) /// Suma de costos al cierre.
+  openedAt      DateTime    @default(now())
+  closedAt      DateTime?
+  version       Int         @default(1)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table         DiningTable @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  items         OrderItem[]
+
+  @@index([restaurantId, status])
+  @@index([restaurantId, tableId, status])
+  @@index([restaurantId, openedAt])
+}
+
+/// Ítem individual dentro de una orden.
+/// Guarda los precios en el momento de la venta para auditoría histórica inmutable.
+model OrderItem {
+  id               String          @id @default(cuid())
+  orderId          String
+  menuItemId       String
+  menuItemName     String          /// Snapshot del nombre en el momento de la venta.
+  qty              Int             /// Cantidad pedida (≥ 1).
+  publicUnitPrice  Decimal         @db.Decimal(10, 2) /// Precio público unitario aplicado en el momento de la venta.
+  costUnitPrice    Decimal         @db.Decimal(10, 2) /// Costo unitario aplicado en el momento de la venta.
+  area             PreparationArea @default(NONE)
+  status           OrderItemStatus @default(QUEUED)
+  queuedAt         DateTime        @default(now())
+  preparingAt      DateTime?
+  readyAt          DateTime?
+  servedAt         DateTime?
+  cancelledAt      DateTime?
+  version          Int             @default(1)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  order            Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem         MenuItem    @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([orderId, area, status])
+  @@index([menuItemId])
+}
+
+/// Costing privado de un plato de la carta.
+/// Solo visible para Owner/Manager (Plan Pro).
+/// Snapshot de precios guardado en OrderItem al vender; editar esto no altera histórico.
+model MenuItemCosting {
+  id              String          @id @default(cuid())
+  menuItemId      String          @unique
+  costUnitPrice   Decimal         @db.Decimal(10, 2) /// Costo unitario del plato.
+  publicUnitPrice Decimal         @db.Decimal(10, 2) /// Precio público de venta.
+  area            PreparationArea @default(NONE)     /// Estación de preparación del plato.
+  gramsMeta       Json?           /// Notas internas opcionales (gramos, descripción de ingredientes, etc.).
+  isActive        Boolean         @default(true)     /// false = no aparece disponible para ordenar.
+  version         Int             @default(1)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  menuItem        MenuItem        @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
 }
