@@ -53,6 +53,7 @@ class InMemoryOrderItemRepository implements OrderItemRepository {
   async saveMany(items: OrderItemPrimitives[]): Promise<void> {
     this.saved.push(...items);
   }
+  async findById(_id: string): Promise<OrderItemPrimitives | null> { return null; }
   async findByOrderId(_orderId: string): Promise<OrderItemPrimitives[]> { return []; }
   async findByRestaurantAreaAndStatus(
     _restaurantId: string,

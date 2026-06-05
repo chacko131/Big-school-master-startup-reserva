@@ -78,6 +78,12 @@ export interface OrderItemRepository {
   saveMany(items: OrderItemPrimitives[]): Promise<void>;
 
   /**
+   * Busca un ítem de orden por su id.
+   * @pure
+   */
+  findById(id: string): Promise<OrderItemPrimitives | null>;
+
+  /**
    * Devuelve todos los ítems de una orden.
    * @pure
    */

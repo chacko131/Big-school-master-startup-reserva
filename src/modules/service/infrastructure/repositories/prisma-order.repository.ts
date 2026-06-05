@@ -161,6 +161,14 @@ export class PrismaOrderItemRepository implements OrderItemRepository {
   }
   //-aqui termina funcion saveMany-//
 
+  //-aqui empieza funcion findById y es para buscar un ítem de orden por id-//
+  /** @pure */
+  async findById(id: string): Promise<OrderItemPrimitives | null> {
+    const record = await this.prisma.orderItem.findUnique({ where: { id } });
+    return record ? this.itemToPrimitives(record) : null;
+  }
+  //-aqui termina funcion findById-//
+
   //-aqui empieza funcion findByOrderId y es para obtener todos los ítems de una orden-//
   /** @pure */
   async findByOrderId(orderId: string): Promise<OrderItemPrimitives[]> {

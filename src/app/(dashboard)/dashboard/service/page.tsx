@@ -4,6 +4,7 @@
  * Tipo: UI
  */
 
+import Link from "next/link";
 import { T } from "@/components/T";
 import { fetchServiceOverview } from "./actions";
 import { ServiceTableGrid } from "@/components/dashboard/service/ServiceTableGrid";
@@ -66,12 +67,18 @@ export default async function ServicePage() {
             <T>Orden abierta</T>
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-background p-5 text-center shadow-sm">
+        <Link
+          href="/dashboard/service/kds"
+          className="rounded-xl border border-border bg-background p-5 text-center shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5"
+        >
           <p className="text-3xl font-black text-primary">{submittedCount}</p>
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <T>En cocina</T>
           </p>
-        </div>
+          <p className="mt-1 text-[10px] text-primary/70">
+            <T>Ver KDS →</T>
+          </p>
+        </Link>
       </section>
 
       {/* Grid de mesas */}
