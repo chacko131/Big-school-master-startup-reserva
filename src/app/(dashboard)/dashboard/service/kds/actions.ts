@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
 import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
 import { getServiceInfrastructure } from "@/modules/service/infrastructure/service-infrastructure";
+import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { PickItemForPrep } from "@/modules/service/application/use-cases/PickItemForPrep/pick-item-for-prep.use-case";
 import { MarkItemReady } from "@/modules/service/application/use-cases/MarkItemReady/mark-item-ready.use-case";
 import { captureUnexpectedError } from "@/lib/sentry";
@@ -47,29 +48,40 @@ export async function fetchKdsQueue(
 ): Promise<ActionResult<KdsItem[]>> {
   try {
     const restaurantId = await getRestaurantIdFromSession();
+    console.log(`[kds/fetchKdsQueue] area=${area} restaurantId=${restaurantId}`);
     const { orderItemRepository, orderRepository } = getServiceInfrastructure();
+    const { diningTableRepository } = getCatalogInfrastructure();
 
-    const [items, activeOrders] = await Promise.all([
-      orderItemRepository.findByRestaurantAreaAndStatus(restaurantId, area, [
-        "QUEUED",
-        "PREPARING",
-      ]),
+    // Áreas a buscar: KITCHEN incluye también NONE (platos sin área asignada)
+    const areasToFetch: PreparationArea[] = area === "KITCHEN" ? ["KITCHEN", "NONE"] : [area];
+
+    const [allItems, activeOrders, tables] = await Promise.all([
+      Promise.all(
+        areasToFetch.map((a) =>
+          orderItemRepository.findByRestaurantAreaAndStatus(restaurantId, a, ["QUEUED", "PREPARING"])
+        )
+      ).then((results) => results.flat()),
       orderRepository.findActiveByRestaurantId(restaurantId),
+      diningTableRepository.findByRestaurantId(restaurantId),
     ]);
 
     const orderMap = new Map(activeOrders.map((o) => [o.id, o]));
+    const tableMap = new Map(tables.map((t) => {
+      const p = t.toPrimitives();
+      return [p.id, p.name];
+    }));
 
-    const enriched: KdsItem[] = items.map((item) => {
+    const enriched: KdsItem[] = allItems.map((item) => {
       const order = orderMap.get(item.orderId);
-      return {
-        ...item,
-        tableId: order?.tableId ?? "",
-        tableName: order?.tableId ?? "Mesa",
-      };
+      const tableId = order?.tableId ?? "";
+      const tableName = tableMap.get(tableId) ?? (tableId || "Mesa");
+      return { ...item, tableId, tableName };
     });
 
+    console.log(`[kds/fetchKdsQueue] ✓ area=${area} ítems=${enriched.length}`);
     return { ok: true, data: enriched };
   } catch (err) {
+    console.error(`[kds/fetchKdsQueue] ERROR area=${area}:`, err);
     if (err instanceof Error) return { ok: false, error: err.message };
     captureUnexpectedError(err);
     return { ok: false, error: "Error inesperado." };
@@ -90,15 +102,18 @@ export async function pickItemAction(
   orderItemId: string
 ): Promise<ActionResult<OrderItemPrimitives>> {
   try {
+    console.log(`[kds/pickItemAction] orderItemId=${orderItemId}`);
     await assertCanWrite();
     const { orderItemRepository } = getServiceInfrastructure();
     const useCase = new PickItemForPrep(orderItemRepository);
 
     const result = await useCase.execute({ orderItemId });
 
+    console.log(`[kds/pickItemAction] ✓ ítem=${orderItemId} estado=${result.status}`);
     revalidatePath("/dashboard/service/kds");
     return { ok: true, data: result };
   } catch (err) {
+    console.error(`[kds/pickItemAction] ERROR ítem=${orderItemId}:`, err);
     if (err instanceof Error) return { ok: false, error: err.message };
     captureUnexpectedError(err);
     return { ok: false, error: "Error inesperado." };
@@ -119,16 +134,19 @@ export async function markReadyAction(
   orderItemId: string
 ): Promise<ActionResult<OrderItemPrimitives>> {
   try {
+    console.log(`[kds/markReadyAction] orderItemId=${orderItemId}`);
     await assertCanWrite();
     const { orderItemRepository } = getServiceInfrastructure();
     const useCase = new MarkItemReady(orderItemRepository);
 
     const result = await useCase.execute({ orderItemId });
 
+    console.log(`[kds/markReadyAction] ✓ ítem=${orderItemId} estado=${result.status}`);
     revalidatePath("/dashboard/service/kds");
     revalidatePath("/dashboard/service");
     return { ok: true, data: result };
   } catch (err) {
+    console.error(`[kds/markReadyAction] ERROR ítem=${orderItemId}:`, err);
     if (err instanceof Error) return { ok: false, error: err.message };
     captureUnexpectedError(err);
     return { ok: false, error: "Error inesperado." };

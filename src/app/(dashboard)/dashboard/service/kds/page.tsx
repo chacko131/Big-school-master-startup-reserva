@@ -23,31 +23,31 @@ export default async function KdsPage() {
   const barItems = barResult.ok ? barResult.data : [];
 
   return (
-    <>
-      {/* Cabecera */}
-      <section className="flex flex-col gap-6 rounded-[28px] bg-surface-container-lowest p-8 shadow-sm md:p-10">
+    <div className="flex flex-col gap-6">
+      {/* Header compacto operativo */}
+      <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-            <T>Cocina y barra</T>
-          </p>
-          <h2 className="mt-4 text-5xl font-black tracking-tighter text-primary md:text-6xl">
-            <T>Cola de preparación.</T>
-          </h2>
-          <p className="mt-4 max-w-xl text-on-surface-variant md:text-lg md:leading-8">
-            <T>
-              Toma un ítem para marcarlo como "Preparando" y confírmalo como "Listo" cuando esté
-              acabado.
-            </T>
+          <h2 className="text-2xl font-black tracking-tight"><T>Cocina</T></h2>
+          <p className="text-xs text-muted-foreground">
+            {kitchenItems.length + barItems.length} <T>plato(s) pendientes</T>
           </p>
         </div>
-      </section>
+        <span className="rounded-xl bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+          <T>Vista en tiempo real · recarga para actualizar</T>
+        </span>
+      </div>
 
-      {/* Boards por estación */}
-      <section className="grid gap-6 lg:grid-cols-2">
-        <KdsBoard area="KITCHEN" items={kitchenItems} />
-        <KdsBoard area="BAR" items={barItems} />
-      </section>
-    </>
+      {/* Cocina — ocupa todo el ancho */}
+      <KdsBoard area="KITCHEN" items={kitchenItems} />
+
+      {/* Divider */}
+      {barItems.length > 0 && (
+        <>
+          <hr className="border-border" />
+          <KdsBoard area="BAR" items={barItems} />
+        </>
+      )}
+    </div>
   );
 }
 //-aqui termina pagina KdsPage-//

@@ -62,7 +62,7 @@ export class AddItemsToOrder {
     }
 
     const order = Order.fromPrimitives(raw);
-    if (order.status !== "OPEN") {
+    if (order.status !== "OPEN" && order.status !== "SUBMITTED") {
       throw new OrderValidationError(
         `No se pueden añadir ítems a una orden en estado ${order.status}.`
       );

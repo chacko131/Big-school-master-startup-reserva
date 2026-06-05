@@ -1,21 +1,18 @@
 /**
  * Archivo: ServiceTableGrid.tsx
- * Responsabilidad: Grid interactivo de mesas con estado de orden y acciones POS.
+ * Responsabilidad: Grid de tarjetas de mesas con apertura de modal por mesa.
+ *   Delega la lógica del modal a TableModal y la carta a MenuBook.
  * Tipo: UI
  */
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { T } from "@/components/T";
-import {
-  createOrderAction,
-  addItemsToOrderAction,
-  submitOrderAction,
-} from "@/app/(dashboard)/dashboard/service/actions";
-import type { TableWithOrder } from "@/app/(dashboard)/dashboard/service/actions";
-import type { MenuItemCostingWithMenuItemName } from "@/modules/service/domain/ports/menu-item-costing.repository.port";
-import type { PreparationArea } from "@/modules/service/domain/types/service.types";
+import { StatusBadge } from "./StatusBadge";
+import { TableModal } from "./TableModal";
+import type { TableWithOrder, MenuItemCostingWithMenuItemName } from "./service-table.types";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -27,216 +24,110 @@ interface ServiceTableGridProps {
 }
 
 // ---------------------------------------------------------------------------
-// Badge de estado de mesa
-// ---------------------------------------------------------------------------
-
-//-aqui empieza funcion StatusBadge y es para mostrar el estado de la orden de una mesa-//
-function StatusBadge({ status }: { status: string | null }) {
-  if (!status) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-        <T>Libre</T>
-      </span>
-    );
-  }
-  if (status === "OPEN") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-        <T>Orden abierta</T>
-      </span>
-    );
-  }
-  if (status === "SUBMITTED") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-        <T>En cocina</T>
-      </span>
-    );
-  }
-  return null;
-}
-//-aqui termina funcion StatusBadge-//
-
-// ---------------------------------------------------------------------------
-// Panel de selección de platos (inline, por mesa)
-// ---------------------------------------------------------------------------
-
-interface OrderPanelProps {
-  table: TableWithOrder;
-  menuItems: MenuItemCostingWithMenuItemName[];
-  onDone: () => void;
-}
-
-//-aqui empieza componente OrderPanel y es para añadir platos y enviar la orden a cocina-//
-function OrderPanel({ table, menuItems, onDone }: OrderPanelProps) {
-  const [, startTransition] = useTransition();
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const hasOrder = table.order !== null;
-  const isOpen = table.order?.status === "OPEN";
-
-  function setQty(menuItemId: string, qty: number) {
-    setQuantities((prev) => ({ ...prev, [menuItemId]: Math.max(0, qty) }));
-  }
-
-  const selectedItems = menuItems.filter((m) => (quantities[m.menuItemId] ?? 0) > 0);
-
-  function handleSendToKitchen() {
-    if (!table.order) return;
-    if (selectedItems.length === 0) {
-      setError("Selecciona al menos un plato.");
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
-    startTransition(async () => {
-      const items = selectedItems.map((m) => ({
-        menuItemId: m.menuItemId,
-        menuItemName: m.menuItemName,
-        qty: quantities[m.menuItemId]!,
-        publicUnitPrice: m.publicUnitPrice,
-        costUnitPrice: m.costUnitPrice,
-        area: m.area as PreparationArea,
-      }));
-
-      const addResult = await addItemsToOrderAction(table.order!.id, items);
-      if (!addResult.ok) {
-        setError(addResult.error);
-        setSubmitting(false);
-        return;
-      }
-
-      const submitResult = await submitOrderAction(table.order!.id);
-      if (!submitResult.ok) {
-        setError(submitResult.error);
-        setSubmitting(false);
-        return;
-      }
-
-      setSubmitting(false);
-      onDone();
-    });
-  }
-
-  async function handleOpenOrder() {
-    setError(null);
-    const result = await createOrderAction(table.tableId);
-    if (!result.ok) setError(result.error);
-  }
-
-  return (
-    <div className="mt-3 space-y-3">
-      {!hasOrder && (
-        <button
-          onClick={handleOpenOrder}
-          className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          <T>Abrir orden</T>
-        </button>
-      )}
-
-      {hasOrder && isOpen && (
-        <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <T>Añadir platos</T>
-          </p>
-          <div className="max-h-56 overflow-y-auto space-y-1">
-            {menuItems.map((m) => (
-              <div key={m.menuItemId} className="flex items-center justify-between gap-2">
-                <span className="flex-1 truncate text-sm">{m.menuItemName}</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setQty(m.menuItemId, (quantities[m.menuItemId] ?? 0) - 1)}
-                    className="h-6 w-6 rounded border border-border text-sm leading-none hover:bg-muted"
-                  >−</button>
-                  <span className="w-5 text-center text-sm font-medium">
-                    {quantities[m.menuItemId] ?? 0}
-                  </span>
-                  <button
-                    onClick={() => setQty(m.menuItemId, (quantities[m.menuItemId] ?? 0) + 1)}
-                    className="h-6 w-6 rounded border border-border text-sm leading-none hover:bg-muted"
-                  >+</button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {error && <p className="text-xs text-destructive">{error}</p>}
-
-          <button
-            onClick={handleSendToKitchen}
-            disabled={submitting || selectedItems.length === 0}
-            className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {submitting ? <T>Enviando…</T> : <T>Enviar a cocina</T>}
-          </button>
-        </>
-      )}
-
-      {hasOrder && !isOpen && (
-        <p className="text-xs text-muted-foreground italic">
-          <T>Orden ya enviada a cocina.</T>
-        </p>
-      )}
-    </div>
-  );
-}
-//-aqui termina componente OrderPanel-//
-
-// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
-//-aqui empieza componente ServiceTableGrid y es para mostrar todas las mesas con su estado-//
+//-aqui empieza componente ServiceTableGrid y es para mostrar el grid de mesas con modal de gestión-//
 export function ServiceTableGrid({ tables, menuItems }: ServiceTableGridProps) {
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [activeTableId, setActiveTableId] = useState<string | null>(null);
+  // Inicializa vacío en SSR para evitar hydration mismatch; se hidrata desde localStorage en el cliente
+  const [seenReadyCount, setSeenReadyCount] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("kds_seen_ready");
+      if (stored) setSeenReadyCount(JSON.parse(stored));
+    } catch { /* ignorar errores de parse */ }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("kds_seen_ready", JSON.stringify(seenReadyCount));
+  }, [seenReadyCount]);
+
+  function openTable(tableId: string) {
+    const t = tables.find((t) => t.tableId === tableId);
+    setActiveTableId(tableId);
+    setSeenReadyCount((prev) => ({ ...prev, [tableId]: t?.readyCount ?? 0 }));
+  }
 
   if (tables.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground italic">
+      <p className="text-sm italic text-muted-foreground">
         <T>No hay mesas configuradas. Ve a Configuración para añadirlas.</T>
       </p>
     );
   }
 
+  const activeTable = tables.find((t) => t.tableId === activeTableId) ?? null;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {tables.map((table) => (
-        <div
-          key={table.tableId}
-          className="rounded-xl border border-border bg-background p-4 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold">{table.tableName}</p>
-              <p className="text-xs text-muted-foreground">
-                {table.capacity} <T>personas</T>
-              </p>
-            </div>
-            <StatusBadge status={table.order?.status ?? null} />
-          </div>
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {tables.map((table) => {
+          const status = table.order?.status ?? null;
+          // Dot visible si hay más ítems READY que los que vio el camarero al abrir
+          const showDot = table.readyCount > 0 && table.readyCount > (seenReadyCount[table.tableId] ?? 0);
 
-          <button
-            onClick={() => setExpanded(expanded === table.tableId ? null : table.tableId)}
-            className="mt-3 w-full rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
-          >
-            {expanded === table.tableId ? <T>Cerrar</T> : <T>Gestionar</T>}
-          </button>
+          return (
+            <motion.div
+              key={table.tableId}
+              layout
+              className="relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-border bg-background p-4 shadow-sm transition-shadow hover:shadow-md"
+              onClick={() => openTable(table.tableId)}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Dot de alerta: platos listos para recoger */}
+              {showDot && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-[8px] font-black text-white">
+                    {table.readyCount}
+                  </span>
+                </span>
+              )}
 
-          {expanded === table.tableId && (
-            <OrderPanel
-              table={table}
-              menuItems={menuItems}
-              onDone={() => setExpanded(null)}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-bold">{table.tableName}</p>
+                  <p className="text-xs text-muted-foreground">{table.capacity} <T>personas</T></p>
+                </div>
+                <StatusBadge status={status} />
+              </div>
+
+              {/* Barra de estado */}
+              <div
+                className={`h-1.5 w-full rounded-full ${
+                  showDot ? "bg-emerald-400" :
+                  status === null ? "bg-emerald-200" :
+                  status === "OPEN" ? "bg-amber-300" :
+                  "bg-primary/40"
+                }`}
+              />
+
+              <button className={`w-full rounded-xl border py-2 text-xs font-semibold transition-colors ${
+                showDot
+                  ? "border-emerald-400 bg-emerald-50 font-bold text-emerald-700 hover:bg-emerald-100"
+                  : "border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              }`}>
+                {showDot ? <><T>Recoger</T> ({table.readyCount})</> : <T>Gestionar</T>}
+              </button>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Modal con AnimatePresence para animar entrada/salida */}
+      <AnimatePresence>
+        {activeTable && (
+          <TableModal
+            table={activeTable}
+            menuItems={menuItems}
+            onClose={() => setActiveTableId(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 //-aqui termina componente ServiceTableGrid-//
