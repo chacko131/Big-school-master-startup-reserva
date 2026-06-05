@@ -17,6 +17,7 @@ export type DashboardSectionKey =
   | "team"
   | "settings"
   | "menu"
+  | "service"
 
 export type DashboardMetricTone = "primary" | "secondary" | "surface";
 
@@ -109,6 +110,12 @@ export const dashboardNavigationDefinitions: ReadonlyArray<DashboardNavigationDe
     label: "Gestión",
     href: "/dashboard/menu",
     icon: "payments",
+  },
+  {
+    key: "service",
+    label: "Servicio",
+    href: "/dashboard/service",
+    icon: "restaurant",
   },
 ] as const;
 
