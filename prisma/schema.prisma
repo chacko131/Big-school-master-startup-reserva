@@ -547,7 +547,6 @@ model MenuItemCosting {
   id              String          @id @default(cuid())
   menuItemId      String          @unique
   costUnitPrice   Decimal         @db.Decimal(10, 2) /// Costo unitario del plato.
-  publicUnitPrice Decimal         @db.Decimal(10, 2) /// Precio público de venta.
   area            PreparationArea @default(NONE)     /// Estación de preparación del plato.
   gramsMeta       Json?           /// Notas internas opcionales (gramos, descripción de ingredientes, etc.).
   isActive        Boolean         @default(true)     /// false = no aparece disponible para ordenar.

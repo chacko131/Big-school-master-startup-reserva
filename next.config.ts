@@ -46,8 +46,8 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       // Imágenes: Cloudinary, Unsplash, Google (avatares Clerk), datos inline
       "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com https://*.clerk.com https://*.gravatar.com",
-      // Conexiones fetch/XHR: Clerk, Stripe, Sentry, Google Translate, Neon (no llega al cliente)
-      "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.stripe.com https://*.sentry.io https://o*.ingest.de.sentry.io https://translate.googleapis.com",
+      // Conexiones fetch/XHR: Clerk, Stripe, Sentry, Google Translate, Cloudinary upload directo
+      "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.stripe.com https://*.sentry.io https://o*.ingest.de.sentry.io https://translate.googleapis.com https://api.cloudinary.com",
       // Frames: Stripe Checkout y Clerk (embedded components)
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://*.clerk.com https://*.clerk.accounts.dev",
       // Workers: Sentry usa service workers

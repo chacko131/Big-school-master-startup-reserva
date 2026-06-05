@@ -42,7 +42,6 @@ export class MenuItemCosting {
       id,
       menuItemId: props.menuItemId,
       costUnitPrice: props.costUnitPrice,
-      publicUnitPrice: props.publicUnitPrice,
       area: props.area,
       gramsMeta: props.gramsMeta ?? null,
       isActive: props.isActive ?? true,
@@ -71,7 +70,6 @@ export class MenuItemCosting {
     return new MenuItemCosting({
       ...this.props,
       costUnitPrice: props.costUnitPrice,
-      publicUnitPrice: props.publicUnitPrice,
       area: props.area,
       gramsMeta: props.gramsMeta ?? this.props.gramsMeta,
       isActive: props.isActive ?? this.props.isActive,
@@ -93,16 +91,6 @@ export class MenuItemCosting {
     if (props.costUnitPrice < 0) {
       throw new MenuItemCostingValidationError("El costo no puede ser negativo.");
     }
-    if (props.publicUnitPrice <= 0) {
-      throw new MenuItemCostingValidationError(
-        "El precio público debe ser mayor que 0."
-      );
-    }
-    if (props.publicUnitPrice < props.costUnitPrice) {
-      throw new MenuItemCostingValidationError(
-        "El precio público no puede ser menor que el costo."
-      );
-    }
     const validAreas: PreparationArea[] = ["KITCHEN", "BAR", "NONE"];
     if (!validAreas.includes(props.area)) {
       throw new MenuItemCostingValidationError(
@@ -116,12 +104,6 @@ export class MenuItemCosting {
   get id(): string { return this.props.id; }
   get menuItemId(): string { return this.props.menuItemId; }
   get costUnitPrice(): number { return this.props.costUnitPrice; }
-  get publicUnitPrice(): number { return this.props.publicUnitPrice; }
-  get margin(): number { return this.props.publicUnitPrice - this.props.costUnitPrice; }
-  get marginPercent(): number {
-    if (this.props.publicUnitPrice === 0) return 0;
-    return Math.round((this.margin / this.props.publicUnitPrice) * 100);
-  }
   get area(): PreparationArea { return this.props.area; }
   get gramsMeta(): Record<string, unknown> | null { return this.props.gramsMeta; }
   get isActive(): boolean { return this.props.isActive; }

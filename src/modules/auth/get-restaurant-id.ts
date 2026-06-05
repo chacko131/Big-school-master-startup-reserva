@@ -6,7 +6,7 @@
  */
 
 import { redirect } from "next/navigation";
-import { requireCurrentUser } from "./get-current-user";
+import { getCurrentUser } from "./get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 
 //-aqui empieza funcion getRestaurantIdFromSession y es para obtener el restaurantId del usuario autenticado-//
@@ -17,7 +17,11 @@ import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-inf
  * @sideEffect
  */
 export async function getRestaurantIdFromSession(): Promise<string> {
-  const user = await requireCurrentUser();
+  const user = await getCurrentUser();
+
+  if (user === null) {
+    redirect("/sign-in?redirect_url=/dashboard");
+  }
 
   const { membershipRepository } = getUsersInfrastructure();
   const memberships = await membershipRepository.findActiveByUserId(user.id);

@@ -32,7 +32,6 @@ export class PrismaMenuItemCostingRepository
       create: {
         menuItemId: props.menuItemId,
         costUnitPrice: props.costUnitPrice,
-        publicUnitPrice: props.publicUnitPrice,
         area: props.area,
         gramsMeta: props.gramsMeta
           ? (props.gramsMeta as Prisma.InputJsonValue)
@@ -41,7 +40,6 @@ export class PrismaMenuItemCostingRepository
       },
       update: {
         costUnitPrice: props.costUnitPrice,
-        publicUnitPrice: props.publicUnitPrice,
         area: props.area,
         gramsMeta: props.gramsMeta
           ? (props.gramsMeta as Prisma.InputJsonValue)
@@ -88,12 +86,8 @@ export class PrismaMenuItemCostingRepository
     for (const cat of categories) {
       for (const item of cat.items) {
         const costing = item.costing;
-        const costUnitPrice = costing
-          ? Number(costing.costUnitPrice)
-          : 0;
-        const publicUnitPrice = costing
-          ? Number(costing.publicUnitPrice)
-          : 0;
+        const costUnitPrice = costing ? Number(costing.costUnitPrice) : 0;
+        const publicUnitPrice = item.price ? Number(item.price) : 0;
 
         result.push({
           id: costing?.id ?? "",
@@ -144,7 +138,7 @@ export class PrismaMenuItemCostingRepository
           c &&
           c.isActive &&
           Number(c.costUnitPrice) >= 0 &&
-          Number(c.publicUnitPrice) > 0 &&
+          item.price !== null &&
           c.area !== "NONE";
 
         if (!isComplete) {
@@ -168,7 +162,6 @@ export class PrismaMenuItemCostingRepository
       id: record.id,
       menuItemId: record.menuItemId,
       costUnitPrice: Number(record.costUnitPrice),
-      publicUnitPrice: Number(record.publicUnitPrice),
       area: record.area as MenuItemCostingPrimitives["area"],
       gramsMeta: record.gramsMeta
         ? (record.gramsMeta as Record<string, unknown>)

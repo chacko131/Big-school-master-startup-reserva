@@ -43,8 +43,8 @@ interface SettingsPhotosPanelProps {
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const DEFAULT_HERO_URL =
-  "https://res.cloudinary.com/dvfptzqig/image/upload/v1740941916/reserva-latina/mock-restaurant.jpg";
+// Fallback local para evitar 404 remotos y depender de un recurso controlado
+const DEFAULT_HERO_URL = "/logoHeader.png";
 
 const MAX_GALLERY_IMAGES = 6;
 
@@ -300,6 +300,14 @@ export function SettingsPhotosPanel({
         window.location.href = "/dashboard/settings?photosSaved=photos";
 
       } catch (err) {
+        // Los NEXT_REDIRECT lanzados por server actions deben propagarse sin atraparse
+        if (
+          err instanceof Error &&
+          (err.message === "NEXT_REDIRECT" ||
+            (err as { digest?: string }).digest?.startsWith("NEXT_REDIRECT"))
+        ) {
+          throw err;
+        }
         console.error("[Photos] ❌ Error durante el proceso:", err);
         setLocalError("Hubo un error al subir las fotos. Comprueba tu conexión e inténtalo de nuevo.");
         setUploadStatus("");

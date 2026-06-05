@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { T } from "@/components/T";
 import { getRestaurantIdFromSession } from "@/modules/auth/get-restaurant-id";
-import { requireCurrentUser } from "@/modules/auth/get-current-user";
+import { getCurrentUser } from "@/modules/auth/get-current-user";
 import { getReservationsInfrastructure } from "@/modules/reservations/infrastructure/reservations-infrastructure";
 import { getCatalogInfrastructure } from "@/modules/catalog/infrastructure/catalog-infrastructure";
 import { GetTodayReservations } from "@/modules/reservations/application/use-cases/get-today-reservations.use-case";
@@ -45,10 +45,10 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
   const inviteAcceptedKey = Array.isArray(inviteAcceptedValue) ? inviteAcceptedValue[0] ?? "" : inviteAcceptedValue ?? "";
   const showInviteSuccess = inviteAcceptedKey === "1";
 
-  // 1. Obtener usuario en sesión y restauranteId
-  const user = await requireCurrentUser();
+  // 1. Obtener usuario en sesión y restauranteId (sin lanzar errores)
+  const user = await getCurrentUser();
   const restaurantId = await getRestaurantIdFromSession();
-  const firstName = user.fullName ? user.fullName.split(" ")[0] : "";
+  const firstName = user?.fullName ? user.fullName.split(" ")[0] : "";
 
   // 2. Resolver dependencias a través de la infraestructura
   const { diningTableRepository, zoneRepository } = getCatalogInfrastructure();

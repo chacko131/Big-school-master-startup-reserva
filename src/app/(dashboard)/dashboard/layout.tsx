@@ -170,6 +170,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     if (membership.role === "RESTAURANT_OWNER") {
       planKeys.add("billing");
       planKeys.add("settings");
+      // El backoffice de costeo solo es visible con Plan Pro (o durante el trial)
+      if (accessLevel.planId === "pro" || accessLevel.isTrialActive) {
+        planKeys.add("menu");
+      }
       return planKeys;
     }
 

@@ -50,5 +50,6 @@ export interface MenuItemCostingWithMenuItemName
   extends MenuItemCostingPrimitives {
   menuItemName: string;
   categoryName: string;
-  margin: number; // publicUnitPrice - costUnitPrice
+  publicUnitPrice: number; // leído de MenuItem.price, no almacenado en MenuItemCosting
+  margin: number;         // publicUnitPrice - costUnitPrice
 }

@@ -62,7 +62,6 @@ export interface MenuItemCostingPrimitives {
   id: string;
   menuItemId: string;
   costUnitPrice: number;
-  publicUnitPrice: number;
   area: PreparationArea;
   gramsMeta: Record<string, unknown> | null;
   isActive: boolean;
@@ -98,7 +97,6 @@ export interface CreateOrderItemProps {
 export interface UpsertMenuItemCostingProps {
   menuItemId: string;
   costUnitPrice: number;
-  publicUnitPrice: number;
   area: PreparationArea;
   gramsMeta?: Record<string, unknown> | null;
   isActive?: boolean;
