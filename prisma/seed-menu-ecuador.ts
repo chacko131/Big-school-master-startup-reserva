@@ -19,7 +19,7 @@ neonConfig.webSocketConstructor = WebSocket;
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-const RESTAURANT_ID = "ff7e38ef-b7d4-4177-9312-477211f859a1";
+const RESTAURANT_ID = "402ef4b9-ff30-4595-ad62-4450fd6971d0";
 
 // ---------------------------------------------------------------------------
 // Datos de la carta

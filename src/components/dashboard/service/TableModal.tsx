@@ -173,7 +173,7 @@ export function TableModal({ table, menuItems, onClose }: TableModalProps) {
                 </div>
                 <button
                   onClick={handleOpenOrder}
-                  className="rounded-xl bg-primary px-8 py-3 text-base font-bold text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
+                  className="rounded-xl bg-emerald-600 px-8 py-3 text-base font-bold text-primary-foreground shadow-sm hover:bg-emerald-700 active:scale-95"
                 >
                   <T>Abrir orden</T>
                 </button>

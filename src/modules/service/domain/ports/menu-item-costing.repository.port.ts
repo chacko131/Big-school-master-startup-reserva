@@ -39,6 +39,15 @@ export interface MenuItemCostingRepository {
    * @pure
    */
   findIncompleteByRestaurantId(restaurantId: string): Promise<string[]>;
+
+  /**
+   * Devuelve TODOS los platos disponibles del restaurante para el panel de servicio.
+   * No filtra por isActive en categoría — muestra todo lo que el dueño haya creado.
+   * @pure
+   */
+  findAllActiveForService(
+    restaurantId: string
+  ): Promise<MenuItemCostingWithMenuItemName[]>;
 }
 //-aqui termina interfaz MenuItemCostingRepository-//
 

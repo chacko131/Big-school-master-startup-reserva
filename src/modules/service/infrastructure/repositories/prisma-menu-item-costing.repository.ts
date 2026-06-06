@@ -113,6 +113,59 @@ export class PrismaMenuItemCostingRepository
   }
   //-aqui termina funcion findAllByRestaurantId-//
 
+  //-aqui empieza funcion findAllActiveForService y es para la carta del panel de servicio, incluye todos los platos disponibles-//
+  /**
+   * Devuelve TODOS los ítems disponibles del restaurante con su categoryName,
+   * sin filtrar por isActive en la categoría ni requerir costing configurado.
+   * Usado en el panel de servicio (tomar pedidos).
+   * @pure
+   */
+  async findAllActiveForService(
+    restaurantId: string
+  ): Promise<MenuItemCostingWithMenuItemName[]> {
+    const categories = await this.prisma.menuCategory.findMany({
+      where: { restaurantId },
+      include: {
+        items: {
+          include: { costing: true },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    const result: MenuItemCostingWithMenuItemName[] = [];
+
+    for (const cat of categories) {
+      for (const item of cat.items) {
+        const costing = item.costing;
+        const costUnitPrice = costing ? Number(costing.costUnitPrice) : 0;
+        const publicUnitPrice = item.price ? Number(item.price) : 0;
+
+        result.push({
+          id: costing?.id ?? "",
+          menuItemId: item.id,
+          menuItemName: item.name,
+          categoryName: cat.name,
+          costUnitPrice,
+          publicUnitPrice,
+          area: (costing?.area ?? "NONE") as MenuItemCostingPrimitives["area"],
+          gramsMeta: costing?.gramsMeta
+            ? (costing.gramsMeta as Record<string, unknown>)
+            : null,
+          isActive: costing?.isActive ?? true,
+          margin: publicUnitPrice - costUnitPrice,
+          version: costing?.version ?? 0,
+          createdAt: costing?.createdAt ?? new Date(),
+          updatedAt: costing?.updatedAt ?? new Date(),
+        });
+      }
+    }
+
+    return result;
+  }
+  //-aqui termina funcion findAllActiveForService-//
+
   //-aqui empieza funcion findIncompleteByRestaurantId y es para detectar ítems sin costeo completo-//
   /**
    * Devuelve los menuItemIds activos que NO tienen costeo configurado.

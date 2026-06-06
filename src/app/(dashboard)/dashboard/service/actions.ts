@@ -62,7 +62,7 @@ export async function fetchServiceOverview(): Promise<
     const [tables, activeOrders, menuItems] = await Promise.all([
       diningTableRepository.findByRestaurantId(restaurantId),
       orderRepository.findActiveByRestaurantId(restaurantId),
-      costingRepository.findAllByRestaurantId(restaurantId),
+      costingRepository.findAllActiveForService(restaurantId),
     ]);
 
     const orderByTable = new Map(activeOrders.map((o) => [o.tableId, o]));
@@ -92,7 +92,8 @@ export async function fetchServiceOverview(): Promise<
       };
     });
 
-    console.log(`[service/fetchServiceOverview] mesas=${result.length} menuItems=${menuItems.length} ordenesActivas=${activeOrders.length}`);
+    const uniqueCats = [...new Set(menuItems.map((m) => m.categoryName))];
+    console.log(`[service/fetchServiceOverview] mesas=${result.length} menuItems=${menuItems.length} categorias=${JSON.stringify(uniqueCats)}`);
     return { ok: true, data: { tables: result, menuItems } };
   } catch (err) {
     console.error(`[service/fetchServiceOverview] ERROR:`, err);
