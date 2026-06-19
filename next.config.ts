@@ -39,7 +39,7 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // Scripts: Next.js, Clerk, Stripe, Sentry
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com https://browser.sentry-cdn.com https://js.sentry-cdn.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev https://js.stripe.com https://browser.sentry-cdn.com https://js.sentry-cdn.com https://challenges.cloudflare.com",
       // Estilos: Tailwind inline + Google Fonts
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       // Fuentes: Google Fonts
@@ -47,9 +47,9 @@ const securityHeaders = [
       // Imágenes: Cloudinary, Unsplash, Google (avatares Clerk), datos inline
       "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://lh3.googleusercontent.com https://*.clerk.com https://*.gravatar.com",
       // Conexiones fetch/XHR: Clerk, Stripe, Sentry, Google Translate, Cloudinary upload directo
-      "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.stripe.com https://*.sentry.io https://o*.ingest.de.sentry.io https://translate.googleapis.com https://api.cloudinary.com",
+      "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.stripe.com https://*.sentry.io https://o*.ingest.de.sentry.io https://translate.googleapis.com https://api.cloudinary.com https://challenges.cloudflare.com",
       // Frames: Stripe Checkout y Clerk (embedded components)
-      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://*.clerk.com https://*.clerk.accounts.dev",
+      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
       // Workers: Sentry usa service workers
       "worker-src 'self' blob:",
     ].join("; "),
@@ -57,6 +57,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["10.5.0.2", "192.168.1.130"],
   async headers() {
     return [
       {
