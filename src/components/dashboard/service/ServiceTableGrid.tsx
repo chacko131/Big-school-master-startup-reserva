@@ -30,15 +30,15 @@ interface ServiceTableGridProps {
 //-aqui empieza componente ServiceTableGrid y es para mostrar el grid de mesas con modal de gestión-//
 export function ServiceTableGrid({ tables, menuItems }: ServiceTableGridProps) {
   const [activeTableId, setActiveTableId] = useState<string | null>(null);
-  // Inicializa vacío en SSR para evitar hydration mismatch; se hidrata desde localStorage en el cliente
-  const [seenReadyCount, setSeenReadyCount] = useState<Record<string, number>>({});
-
-  useEffect(() => {
+  // Inicializador lazy: se ejecuta solo una vez en cliente, nunca en SSR
+  const [seenReadyCount, setSeenReadyCount] = useState<Record<string, number>>(() => {
     try {
       const stored = localStorage.getItem("kds_seen_ready");
-      if (stored) setSeenReadyCount(JSON.parse(stored));
-    } catch { /* ignorar errores de parse */ }
-  }, []);
+      return stored ? (JSON.parse(stored) as Record<string, number>) : {};
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     localStorage.setItem("kds_seen_ready", JSON.stringify(seenReadyCount));

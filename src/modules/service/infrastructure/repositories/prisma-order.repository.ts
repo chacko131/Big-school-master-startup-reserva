@@ -15,6 +15,8 @@ import type {
   OrderStatus,
   OrderItemStatus,
   PreparationArea,
+  MenuItemSalesStat,
+  HourlySalesStat,
 } from "../../domain/types/service.types";
 
 // ---------------------------------------------------------------------------
@@ -244,6 +246,108 @@ export class PrismaOrderItemRepository implements OrderItemRepository {
     };
   }
   //-aqui termina funcion toCreateInput-//
+
+  //-aqui empieza funcion getMenuItemSalesStats y es para calcular ventas agrupadas por plato-//
+  /**
+   * Agrega en memoria los ítems de órdenes CLOSED del rango.
+   * Agrupa por menuItemId sumando qty, revenue y cost.
+   * @pure
+   */
+  async getMenuItemSalesStats(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<MenuItemSalesStat[]> {
+    const items = await this.prisma.orderItem.findMany({
+      where: {
+        order: {
+          restaurantId,
+          status: "CLOSED",
+          closedAt: { gte: from, lte: to },
+        },
+        status: { not: "CANCELLED" },
+      },
+      select: {
+        menuItemId: true,
+        menuItemName: true,
+        qty: true,
+        publicUnitPrice: true,
+        costUnitPrice: true,
+      },
+    });
+
+    const map = new Map<string, MenuItemSalesStat>();
+
+    for (const item of items) {
+      const revenue = Number(item.publicUnitPrice) * item.qty;
+      const cost = Number(item.costUnitPrice) * item.qty;
+      const existing = map.get(item.menuItemId);
+
+      if (existing) {
+        existing.qtySold += item.qty;
+        existing.revenue += revenue;
+        existing.cost += cost;
+        existing.margin = existing.revenue - existing.cost;
+      } else {
+        map.set(item.menuItemId, {
+          menuItemId: item.menuItemId,
+          menuItemName: item.menuItemName,
+          qtySold: item.qty,
+          revenue,
+          cost,
+          margin: revenue - cost,
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+  }
+  //-aqui termina funcion getMenuItemSalesStats-//
+
+  //-aqui empieza funcion getHourlySalesStats y es para calcular ventas por franja horaria-//
+  /**
+   * Agrupa las órdenes CLOSED del rango por hora de apertura.
+   * Cuenta órdenes y suma revenue por franja horaria (0–23).
+   * @pure
+   */
+  async getHourlySalesStats(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<HourlySalesStat[]> {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        restaurantId,
+        status: "CLOSED",
+        closedAt: { gte: from, lte: to },
+      },
+      select: {
+        openedAt: true,
+        totalPublic: true,
+      },
+    });
+
+    const map = new Map<number, HourlySalesStat>();
+
+    for (const order of orders) {
+      const hour = order.openedAt.getHours();
+      const existing = map.get(hour);
+
+      if (existing) {
+        existing.orderCount += 1;
+        existing.revenue += Number(order.totalPublic);
+      } else {
+        map.set(hour, {
+          hour,
+          orderCount: 1,
+          revenue: Number(order.totalPublic),
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.hour - b.hour);
+  }
+  //-aqui termina funcion getHourlySalesStats-//
 
   //-aqui empieza funcion itemToPrimitives y es para mapear el registro Prisma a primitivos-//
   /** @pure */

@@ -21,6 +21,7 @@ import {
   getDashboardActiveNavigationDefinition,
   getDashboardSectionLabel,
   type DashboardSectionKey,
+  type DashboardNavigationSubitem,
 } from "@/constants/dashboard";
 
 interface DashboardContextType {
@@ -106,6 +107,41 @@ function DashboardSidebarLink({ href, label, icon, active, onNavigate, isCollaps
   );
 }
 //-aqui termina componente DashboardSidebarLink-//
+
+//-aqui empieza componente DashboardSubitemLink y es para renderizar subitems de navegación indentados-//
+/**
+ * Renderiza un subitem del sidebar con indentación y estado activo por pathname exacto.
+ *
+ * @pure
+ */
+function DashboardSubitemLink({
+  href,
+  label,
+  activePathname,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  activePathname: string;
+  onNavigate?: () => void;
+}) {
+  const isActive = activePathname === href || activePathname.startsWith(href + "/");
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className={`ml-8 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+        isActive
+          ? "bg-surface-container text-primary"
+          : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+      }`}
+    >
+      <span className="h-1 w-1 rounded-full bg-current opacity-60" />
+      <T>{label}</T>
+    </Link>
+  );
+}
+//-aqui termina componente DashboardSubitemLink-//
 
 const sidebarBaseClassName = "flex h-full flex-col overflow-y-auto bg-surface-container-lowest transition-all duration-300";
 
@@ -199,17 +235,32 @@ function DashboardSidebarContent({ activePathname, sectionLabel, allowedKeys, cl
       <nav className="flex flex-1 flex-col gap-1">
         {filteredNav.map((navigationDefinition) => {
           const isActive = activeNavigationKey === navigationDefinition.key;
+          const hasSubitems = !isCollapsed && isActive && (navigationDefinition.subitems?.length ?? 0) > 0;
 
           return (
-            <DashboardSidebarLink
-              key={navigationDefinition.key}
-              active={isActive}
-              href={navigationDefinition.href}
-              icon={navigationDefinition.icon}
-              isCollapsed={isCollapsed}
-              label={navigationDefinition.label}
-              onNavigate={onNavigate}
-            />
+            <div key={navigationDefinition.key}>
+              <DashboardSidebarLink
+                active={isActive}
+                href={navigationDefinition.href}
+                icon={navigationDefinition.icon}
+                isCollapsed={isCollapsed}
+                label={navigationDefinition.label}
+                onNavigate={onNavigate}
+              />
+              {hasSubitems && (
+                <div className="mt-0.5 flex flex-col gap-0.5">
+                  {(navigationDefinition.subitems as ReadonlyArray<DashboardNavigationSubitem>).map((sub) => (
+                    <DashboardSubitemLink
+                      key={sub.href}
+                      href={sub.href}
+                      label={sub.label}
+                      activePathname={activePathname}
+                      onNavigate={onNavigate}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

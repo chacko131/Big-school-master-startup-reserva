@@ -10,6 +10,8 @@ import type {
   OrderStatus,
   OrderItemStatus,
   PreparationArea,
+  MenuItemSalesStat,
+  HourlySalesStat,
 } from "../types/service.types";
 
 // ---------------------------------------------------------------------------
@@ -108,5 +110,27 @@ export interface OrderItemRepository {
     status: OrderItemStatus,
     timestamp: Date
   ): Promise<void>;
+
+  /**
+   * Devuelve estadísticas de ventas agrupadas por menuItem en un rango de fechas.
+   * Solo incluye ítems de órdenes CLOSED en el rango.
+   * @pure
+   */
+  getMenuItemSalesStats(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<MenuItemSalesStat[]>;
+
+  /**
+   * Devuelve estadísticas de ventas agrupadas por hora del día en un rango de fechas.
+   * Solo incluye ítems de órdenes CLOSED en el rango.
+   * @pure
+   */
+  getHourlySalesStats(
+    restaurantId: string,
+    from: Date,
+    to: Date
+  ): Promise<HourlySalesStat[]>;
 }
 //-aqui termina interfaz OrderItemRepository-//

@@ -21,11 +21,17 @@ export type DashboardSectionKey =
 
 export type DashboardMetricTone = "primary" | "secondary" | "surface";
 
+export interface DashboardNavigationSubitem {
+  label: string;
+  href: string;
+}
+
 export interface DashboardNavigationDefinition {
   key: DashboardSectionKey;
   label: string;
   href: string;
   icon: OnboardingIconName;
+  subitems?: ReadonlyArray<DashboardNavigationSubitem>;
 }
 
 export interface DashboardHomeCardDefinition {
@@ -92,6 +98,10 @@ export const dashboardNavigationDefinitions: ReadonlyArray<DashboardNavigationDe
     label: "Analítica",
     href: "/dashboard/analytics",
     icon: "gridView",
+    subitems: [
+      { label: "Reservas", href: "/dashboard/analytics" },
+      { label: "Servicio", href: "/dashboard/analytics/service" },
+    ],
   },
   {
     key: "team",

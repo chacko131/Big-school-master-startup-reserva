@@ -32,13 +32,14 @@ export function TableModal({ table, menuItems, onClose }: TableModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [existingItems, setExistingItems] = useState<OrderItemPrimitives[]>([]);
 
+  const orderId = table.order?.id ?? null;
+
   useEffect(() => {
-    if (table.order) {
-      fetchOrderItemsAction(table.order.id).then((r) => {
-        if (r.ok) setExistingItems(r.data);
-      });
-    }
-  }, [table.order?.id]);
+    if (!orderId) return;
+    fetchOrderItemsAction(orderId).then((r) => {
+      if (r.ok) setExistingItems(r.data);
+    });
+  }, [orderId]);
 
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
