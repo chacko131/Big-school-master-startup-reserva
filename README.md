@@ -1,6 +1,6 @@
 # 🌎 FullHaus SaaS — Plataforma Premium de Reservas para Restaurantes
 
-SaaS multitenant (marca blanca) premium de nivel empresarial diseñado para la reserva en tiempo real, distribución inteligente de salas, optimización de mesas en planos interactivos y gestión operativa de restaurantes latinoamericanos.
+SaaS multitenant (marca blanca) premium de nivel empresarial diseñado para la reserva en tiempo real, distribución inteligente de salas, optimización de mesas en planos interactivos y gestión operativa de restaurantes.
 
 El proyecto está diseñado bajo los principios de **Clean Architecture (Separation of Concerns)** y **Domain-Driven Design (DDD)** para garantizar la máxima portabilidad del código, mantenibilidad modular, desacoplamiento del framework (Next.js) e infraestructura (Prisma/Stripe) y una sólida separación de responsabilidades.
 
