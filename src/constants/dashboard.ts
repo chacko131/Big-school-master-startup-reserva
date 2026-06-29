@@ -121,12 +121,6 @@ export const dashboardNavigationDefinitions: ReadonlyArray<DashboardNavigationDe
     href: "/dashboard/menu",
     icon: "payments",
   },
-  {
-    key: "service",
-    label: "Servicio",
-    href: "/dashboard/service",
-    icon: "restaurant",
-  },
 ] as const;
 
 export const dashboardHomeCardDefinitions: ReadonlyArray<DashboardHomeCardDefinition> = [
