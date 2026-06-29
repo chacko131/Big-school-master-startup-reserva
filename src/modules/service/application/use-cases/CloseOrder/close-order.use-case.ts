@@ -42,8 +42,16 @@ export class CloseOrder {
 
     const order = Order.fromPrimitives(raw);
 
-    // Calcular totales desde los ítems reales
+    // Calcular totales desde los ítems reales y validar que no queden sin servir
     const items = await this.orderItemRepository.findByOrderId(input.orderId);
+    const unserved = items.filter(
+      (i) => i.status !== "SERVED" && i.status !== "CANCELLED"
+    );
+    if (unserved.length > 0) {
+      throw new OrderValidationError(
+        `No se puede cerrar la orden: ${unserved.length} ítem(s) aún pendientes de servir.`
+      );
+    }
     const totalPublic = items.reduce((acc, i) => acc + i.publicUnitPrice * i.qty, 0);
     const totalCost   = items.reduce((acc, i) => acc + i.costUnitPrice   * i.qty, 0);
 
