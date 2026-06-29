@@ -10,6 +10,9 @@ No gestiona login ni signup — eso lo hace Clerk. Aquí solo resolvemos quién 
 ## Archivos
 
 - **`get-current-user.ts`** → exporta `getCurrentUser()` y `requireCurrentUser()`. Son los helpers que usan Server Components y Server Actions para obtener el `User` de negocio con su rol y sus memberships.
+- **`get-restaurant-id.ts`** → exporta `getRestaurantIdFromSession()`. Devuelve el `restaurantId` de la membership activa del usuario. Redirige si no hay sesión o membership.
+- **`get-service-session.ts`** → exporta `getServiceSession()`. Devuelve `{ restaurantId, userId, role }` en una sola llamada. Usado exclusivamente por el módulo de servicio independiente (`/service`).
+- **`require-service-role.ts`** → exporta `requireServiceRole(allowedRoles)` y `resolveServiceRoute(role)`. Protege cada ruta del módulo de servicio verificando el rol antes de renderizar. Si el rol no está permitido, redirige automáticamente a la ruta correcta para ese usuario.
 
 ## Cómo usar
 

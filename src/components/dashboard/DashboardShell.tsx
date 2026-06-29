@@ -356,6 +356,19 @@ function DashboardHeader({ sectionLabel, onOpenMobileSidebar, isMobileSidebarOpe
         </div>
 
         <div className="flex items-center gap-2 text-on-surface-variant">
+          <Link
+            href="/service"
+            className="hidden items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-xs font-bold text-on-secondary transition-opacity hover:opacity-90 sm:flex"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 10h18" />
+              <path d="M3 6h18" />
+              <path d="M3 14h12" />
+              <circle cx="17" cy="18" r="3" />
+              <path d="M17 15v3l2 1" />
+            </svg>
+            <T>Servicio del día</T>
+          </Link>
           <LanguageToggle />
           <NotificationInbox />
           <UserButton />
