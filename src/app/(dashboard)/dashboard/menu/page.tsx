@@ -37,26 +37,39 @@ export default function MenuManagementLanding() {
           </div>
         </Link>
 
-        {/* Placeholder de futuras secciones */}
-        <div className="rounded-lg border border-border bg-background p-5 opacity-60">
+        <Link
+          href="/service/floor"
+          className="group rounded-lg border border-border bg-background p-5 shadow-sm transition-colors hover:bg-muted/40"
+        >
           <div className="mb-2 text-sm font-semibold text-muted-foreground">
             <T>Operación</T>
           </div>
           <h2 className="text-lg font-bold"><T>Panel de servicio</T></h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            <T>Próximamente: flujo POS, KDS cocina/bar y estado de mesas en tiempo real.</T>
+            <T>Gestiona mesas, KDS de cocina/bar y el estado del turno en tiempo real.</T>
           </p>
-        </div>
+          <div className="mt-4 inline-flex items-center text-emerald-700">
+            <span className="text-sm font-medium"><T>Ir al servicio</T></span>
+            <span className="ml-1">→</span>
+          </div>
+        </Link>
 
-        <div className="rounded-lg border border-border bg-background p-5 opacity-60">
+        <Link
+          href="/dashboard/analytics"
+          className="group rounded-lg border border-border bg-background p-5 shadow-sm transition-colors hover:bg-muted/40"
+        >
           <div className="mb-2 text-sm font-semibold text-muted-foreground">
             <T>Analítica</T>
           </div>
           <h2 className="text-lg font-bold"><T>Resumen de ventas</T></h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            <T>Próximamente: métricas de ingresos, margen y top productos por periodo.</T>
+            <T>Métricas de reservas, ocupación y rendimiento por periodo.</T>
           </p>
-        </div>
+          <div className="mt-4 inline-flex items-center text-emerald-700">
+            <span className="text-sm font-medium"><T>Ver analítica</T></span>
+            <span className="ml-1">→</span>
+          </div>
+        </Link>
       </div>
     </div>
   );
