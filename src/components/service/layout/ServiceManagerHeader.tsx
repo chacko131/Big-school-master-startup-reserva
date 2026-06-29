@@ -35,7 +35,7 @@ export function ServiceManagerHeader({ role }: ServiceManagerHeaderProps) {
       {/* Marca */}
       <Link href="/dashboard" className="shrink-0 flex items-center gap-2" aria-label="Volver al dashboard">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logoHeader.png" alt="Reserva Latina" className="h-7 object-contain brightness-0 invert" />
+        <img src="/logoHeader.png" alt="Full Haus" className="h-24 object-contain" />
       </Link>
 
       {/* Switcher central */}
