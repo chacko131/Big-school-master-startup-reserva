@@ -160,6 +160,31 @@ export function OnboardingIcon({ name, className = "" }: OnboardingIconProps) {
           <path d="M17.5 2.5a2.12 2.12 0 0 1 3 3L12 14l-4 1 1-4Z" />
         </svg>
       );
+    case "kitchen":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 4v6a4 4 0 0 0 8 0V4" />
+          <path d="M4 20h16" />
+          <path d="M10 14v6" />
+          <path d="M14 14v6" />
+        </svg>
+      );
+    case "localBar":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 3h8l-4 7-4-7Z" />
+          <path d="M12 10v9" />
+          <path d="M8 19h8" />
+        </svg>
+      );
+    case "warningArea":
+      return (
+        <svg className={svgClassName} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3 2 21h20L12 3Z" />
+          <path d="M12 9v5" />
+          <circle cx="12" cy="17.5" r=".6" fill="currentColor" stroke="none" />
+        </svg>
+      );
     default:
       return null;
   }

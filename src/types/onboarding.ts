@@ -23,7 +23,10 @@ export type OnboardingChromeIconName =
   | "rocketLaunch"
   | "schedule"
   | "checkCircle"
-  | "edit";
+  | "edit"
+  | "kitchen"
+  | "localBar"
+  | "warningArea";
 
 export type OnboardingIconName = OnboardingStepIconName | OnboardingChromeIconName;
 

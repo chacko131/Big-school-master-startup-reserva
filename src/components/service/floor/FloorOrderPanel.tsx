@@ -44,7 +44,7 @@ export function FloorOrderPanel({ table, menuItems, onClose }: FloorOrderPanelPr
   const [activeTab, setActiveTab] = useState<PanelTab>("order");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [items, setItems] = useState<OrderItemPrimitives[]>([]);
-  const [loadingItems, setLoadingItems] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(() => !!(table?.order));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -52,23 +52,13 @@ export function FloorOrderPanel({ table, menuItems, onClose }: FloorOrderPanelPr
   const order = table?.order ?? null;
   const openedAt = order?.openedAt;
 
-  //-aqui empieza efecto reset al cambiar de mesa-//
-  useEffect(() => {
-    setQuantities({});
-    setError(null);
-    setActiveTab("order");
-  }, [table?.tableId]);
-  //-aqui termina efecto reset al cambiar de mesa-//
-
   //-aqui empieza efecto carga de ítems con guard de cancelación-//
   useEffect(() => {
     if (!order) {
-      setItems([]);
       return;
     }
 
     let cancelled = false;
-    setLoadingItems(true);
     fetchOrderItemsAction(order.id)
       .then((result) => {
         if (cancelled) return;
@@ -82,7 +72,7 @@ export function FloorOrderPanel({ table, menuItems, onClose }: FloorOrderPanelPr
     return () => {
       cancelled = true;
     };
-  }, [order?.id]);
+  }, [order]);
   //-aqui termina efecto carga de ítems-//
 
   const elapsed = openedAt ? formatElapsed(openedAt) : null;
@@ -438,7 +428,7 @@ function OrderItemsList({ items, loading, readyCount }: OrderItemsListProps) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-on-surface-variant text-center py-8">
-        <T>Sin ítems. Abre la pestaña "Añadir platos".</T>
+        <T>Sin ítems. Abre la pestaña &quot;Añadir platos&quot;.</T>
       </p>
     );
   }

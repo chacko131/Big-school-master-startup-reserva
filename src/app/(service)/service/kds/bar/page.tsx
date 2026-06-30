@@ -60,7 +60,7 @@ export default async function BarKdsPage() {
         <div className="flex-1 overflow-x-auto">
           <div className="flex gap-6 p-6 items-start min-h-full pb-12">
             {groups.map((group) => (
-              <KdsOrderCard key={group.orderId} group={group} now={now} />
+              <KdsOrderCard key={group.orderId} group={group} now={now} area="BAR" />
             ))}
             <div className="w-8 shrink-0" />
           </div>

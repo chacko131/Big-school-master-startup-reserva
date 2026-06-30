@@ -12,6 +12,7 @@ import {
   markAllReadyForOrderFormAction,
 } from "@/app/(service)/service/kds/actions";
 import type { KdsItem } from "@/app/(service)/service/kds/actions";
+import type { PreparationArea } from "@/modules/service/domain/types/service.types";
 
 // ---------------------------------------------------------------------------
 // Tipo de grupo de comanda
@@ -52,6 +53,7 @@ function formatElapsed(minutes: number): string {
 interface KdsOrderCardProps {
   group: KdsOrderGroup;
   now: Date;
+  area: PreparationArea;
 }
 
 //-aqui empieza componente KdsOrderCard y es para mostrar una comanda completa en el KDS-//
@@ -62,7 +64,7 @@ interface KdsOrderCardProps {
  * - Lista de ítems con botones de acción por estado.
  * @pure
  */
-export function KdsOrderCard({ group, now }: KdsOrderCardProps) {
+export function KdsOrderCard({ group, now, area }: KdsOrderCardProps) {
   const elapsed = getElapsedMinutes(group.oldestQueuedAt, now);
   const isUrgent = elapsed > 15;
 
@@ -118,7 +120,7 @@ export function KdsOrderCard({ group, now }: KdsOrderCardProps) {
         <footer className="p-3 border-t border-zinc-800 bg-zinc-900/50 flex gap-2">
           {queuedCount > 0 && (
             <form
-              action={pickAllItemsForOrderFormAction.bind(null, group.orderId)}
+              action={pickAllItemsForOrderFormAction.bind(null, group.orderId, area)}
               className="flex-1"
             >
               <button
@@ -132,7 +134,7 @@ export function KdsOrderCard({ group, now }: KdsOrderCardProps) {
           )}
           {preparingCount > 0 && (
             <form
-              action={markAllReadyForOrderFormAction.bind(null, group.orderId)}
+              action={markAllReadyForOrderFormAction.bind(null, group.orderId, area)}
               className="flex-1"
             >
               <button

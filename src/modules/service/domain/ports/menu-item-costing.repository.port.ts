@@ -61,4 +61,6 @@ export interface MenuItemCostingWithMenuItemName
   categoryName: string;
   publicUnitPrice: number; // leído de MenuItem.price, no almacenado en MenuItemCosting
   margin: number;         // publicUnitPrice - costUnitPrice
+  imageUrl: string | null;
+  imagePublicId: string | null;
 }

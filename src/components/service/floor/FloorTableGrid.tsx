@@ -97,6 +97,7 @@ export function FloorTableGrid({ tables, menuItems }: FloorTableGridProps) {
 
       {/* Panel lateral de gestión de orden */}
       <FloorOrderPanel
+        key={selectedTable?.tableId ?? "none"}
         table={selectedTable}
         menuItems={menuItems}
         onClose={() => setSelectedTableId(null)}

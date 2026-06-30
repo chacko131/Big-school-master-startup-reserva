@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { T } from "@/components/T";
 import type { MenuItemCostingWithMenuItemName } from "@/modules/service/domain/ports/menu-item-costing.repository.port";
 
@@ -32,13 +32,11 @@ export function FloorMenuBook({ menuItems, quantities, onChangeQty }: FloorMenuB
     [menuItems]
   );
 
-  //-aqui empieza efecto sincronizacion de categoria activa cuando cambia el menu-//
-  useEffect(() => {
-    if (categories.length > 0 && !categories.includes(activeCategory)) {
-      setActiveCategory(categories[0] ?? "");
-    }
-  }, [categories, activeCategory]);
-  //-aqui termina efecto sincronizacion de categoria activa-//
+  //-aqui empieza sincronizacion de categoria activa cuando cambia el menu-//
+  const resolvedCategory = categories.includes(activeCategory)
+    ? activeCategory
+    : (categories[0] ?? "");
+  //-aqui termina sincronizacion de categoria activa-//
 
   const isSearching = search.trim().length > 0;
 
@@ -48,8 +46,8 @@ export function FloorMenuBook({ menuItems, quantities, onChangeQty }: FloorMenuB
         m.menuItemName.toLowerCase().includes(search.toLowerCase())
       );
     }
-    return menuItems.filter((m) => m.categoryName === activeCategory);
-  }, [menuItems, search, activeCategory, isSearching]);
+    return menuItems.filter((m) => m.categoryName === resolvedCategory);
+  }, [menuItems, search, resolvedCategory, isSearching]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -113,7 +111,7 @@ export function FloorMenuBook({ menuItems, quantities, onChangeQty }: FloorMenuB
                   type="button"
                   onClick={() => setActiveCategory(cat)}
                   className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
-                    activeCategory === cat
+                    resolvedCategory === cat
                       ? "bg-primary text-on-primary"
                       : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
                   }`}

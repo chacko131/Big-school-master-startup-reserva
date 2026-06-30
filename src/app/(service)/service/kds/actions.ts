@@ -178,18 +178,21 @@ export async function markReadyFormAction(orderItemId: string): Promise<void> {
  * Útil para que cocina tome toda una comanda de golpe.
  * @sideEffect escribe en BD y revalida KDS + sala
  */
-export async function pickAllItemsForOrderFormAction(orderId: string): Promise<void> {
+export async function pickAllItemsForOrderFormAction(orderId: string, area: PreparationArea): Promise<void> {
   try {
     await assertCanWrite();
     const { orderItemRepository } = getServiceInfrastructure();
     const useCase = new PickItemForPrep(orderItemRepository);
     const items = await orderItemRepository.findByOrderId(orderId);
-    const queued = items.filter((i) => i.status === "QUEUED");
+    const areasToMatch: PreparationArea[] = area === "KITCHEN" ? ["KITCHEN", "NONE"] : [area];
+    const queued = items.filter((i) => i.status === "QUEUED" && areasToMatch.includes(i.area));
     await Promise.all(queued.map((i) => useCase.execute({ orderItemId: i.id })));
-    revalidatePath("/service/kds/kitchen");
-    revalidatePath("/service/kds/bar");
   } catch (err) {
     console.error(`[kds/pickAllItemsForOrderFormAction] ERROR orderId=${orderId}:`, err);
+    throw err;
+  } finally {
+    revalidatePath("/service/kds/kitchen");
+    revalidatePath("/service/kds/bar");
   }
 }
 //-aqui termina funcion pickAllItemsForOrderFormAction-//
@@ -200,19 +203,22 @@ export async function pickAllItemsForOrderFormAction(orderId: string): Promise<v
  * Útil para terminar toda una comanda de golpe.
  * @sideEffect escribe en BD y revalida KDS + sala
  */
-export async function markAllReadyForOrderFormAction(orderId: string): Promise<void> {
+export async function markAllReadyForOrderFormAction(orderId: string, area: PreparationArea): Promise<void> {
   try {
     await assertCanWrite();
     const { orderItemRepository } = getServiceInfrastructure();
     const useCase = new MarkItemReady(orderItemRepository);
     const items = await orderItemRepository.findByOrderId(orderId);
-    const preparing = items.filter((i) => i.status === "PREPARING");
+    const areasToMatch: PreparationArea[] = area === "KITCHEN" ? ["KITCHEN", "NONE"] : [area];
+    const preparing = items.filter((i) => i.status === "PREPARING" && areasToMatch.includes(i.area));
     await Promise.all(preparing.map((i) => useCase.execute({ orderItemId: i.id })));
+  } catch (err) {
+    console.error(`[kds/markAllReadyForOrderFormAction] ERROR orderId=${orderId}:`, err);
+    throw err;
+  } finally {
     revalidatePath("/service/kds/kitchen");
     revalidatePath("/service/kds/bar");
     revalidatePath("/service/floor");
-  } catch (err) {
-    console.error(`[kds/markAllReadyForOrderFormAction] ERROR orderId=${orderId}:`, err);
   }
 }
 //-aqui termina funcion markAllReadyForOrderFormAction-//

@@ -10,6 +10,9 @@ import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/modules/auth/get-current-user";
 import { getUsersInfrastructure } from "@/modules/users/infrastructure/users-infrastructure";
 import { assertCanWrite } from "@/modules/billing/infrastructure/write-access-guard";
+import { v2 as cloudinary } from "cloudinary";
+import { updateMenuItemAction } from "@/app/(dashboard)/dashboard/settings/menu-actions";
+import type { CloudinaryUploadSignature } from "@/lib/cloudinary-client-upload.lib";
 import { getBillingInfrastructure } from "@/modules/billing/infrastructure/billing-infrastructure";
 import { GetRestaurantAccessLevel } from "@/modules/billing/application/use-cases/GetRestaurantAccessLevel/get-restaurant-access-level.use-case";
 import { getServiceInfrastructure } from "@/modules/service/infrastructure/service-infrastructure";
@@ -140,3 +143,39 @@ export async function upsertMenuItemCostingAction(
   }
 }
 //-aqui termina funcion upsertMenuItemCostingAction-//
+
+// ---------------------------------------------------------------------------
+// Action: actualizar precio de venta de un plato (reutiliza catalog use-case)
+// ---------------------------------------------------------------------------
+
+export { updateMenuItemAction };
+
+// ---------------------------------------------------------------------------
+// Action: generar firma para subida directa a Cloudinary
+// ---------------------------------------------------------------------------
+
+//-aqui empieza funcion generateCostingImageSignatureAction y es para firmar subidas de imagen desde CostingTable-//
+/**
+ * Genera firma segura para que el cliente suba imágenes directamente a Cloudinary.
+ * @sideEffect accede a variables de entorno del servidor
+ */
+const COSTING_IMAGES_FOLDER = "reserva-latina/menu-items" as const;
+
+export async function generateCostingImageSignatureAction(): Promise<CloudinaryUploadSignature> {
+  await assertCanWrite();
+  cloudinary.config({ secure: true });
+  const cfg = cloudinary.config();
+  const timestamp = Math.round(Date.now() / 1000);
+  const signature = cloudinary.utils.api_sign_request(
+    { folder: COSTING_IMAGES_FOLDER, timestamp },
+    cfg.api_secret as string
+  );
+  return {
+    signature,
+    timestamp,
+    apiKey: cfg.api_key as string,
+    cloudName: cfg.cloud_name as string,
+    folder: COSTING_IMAGES_FOLDER,
+  };
+}
+//-aqui termina funcion generateCostingImageSignatureAction-//
